@@ -1,0 +1,7 @@
+{
+  "B-9001": { "name": "Basic blood panel", "components": ["P-1002", "P-1003", "P-1004"], "price": 1000 },
+  "B-9002": { "name": "Appendectomy package", "components": ["P-2001", "P-2002"], "price": 36000 },
+  "B-9003": { "name": "Cholecystectomy package", "components": ["P-2003", "P-2002", "P-1007"], "price": 65000 },
+  "B-9004": { "name": "Root canal package", "components": ["P-3003", "P-3002", "P-3001"], "price": 7000 },
+  "B-9005": { "name": "General health check", "components": ["P-1001", "P-1002", "P-1005", "P-1006"], "price": 2200 }
+}

@@ -1,0 +1,22 @@
+{
+  "P-1001": { "name": "Consultation", "category": "medical", "reference_price": 800 },
+  "P-1002": { "name": "Complete blood count", "category": "medical", "reference_price": 400 },
+  "P-1003": { "name": "Blood glucose", "category": "medical", "reference_price": 200 },
+  "P-1004": { "name": "Liver function test", "category": "medical", "reference_price": 600 },
+  "P-1005": { "name": "Urinalysis", "category": "medical", "reference_price": 300 },
+  "P-1006": { "name": "X-ray", "category": "medical", "reference_price": 1200 },
+  "P-1007": { "name": "Abdominal ultrasound", "category": "medical", "reference_price": 2000 },
+  "P-1008": { "name": "Abdominal CT", "category": "medical", "reference_price": 9000 },
+  "P-1009": { "name": "Electrocardiogram", "category": "medical", "reference_price": 700 },
+  "P-1010": { "name": "HbA1c", "category": "medical", "reference_price": 600 },
+  "P-1011": { "name": "Physiotherapy", "category": "medical", "reference_price": 900 },
+  "P-2001": { "name": "Appendectomy", "category": "surgical", "reference_price": 30000 },
+  "P-2002": { "name": "Anesthesia", "category": "surgical", "reference_price": 8000 },
+  "P-2003": { "name": "Laparoscopic cholecystectomy", "category": "surgical", "reference_price": 60000 },
+  "P-2004": { "name": "Forearm fracture fixation", "category": "surgical", "reference_price": 55000 },
+  "P-2005": { "name": "Wound suturing", "category": "surgical", "reference_price": 3000 },
+  "P-3001": { "name": "Dental filling", "category": "dental", "reference_price": 1500 },
+  "P-3002": { "name": "Dental X-ray", "category": "dental", "reference_price": 500 },
+  "P-3003": { "name": "Root canal treatment", "category": "dental", "reference_price": 6000 },
+  "P-3004": { "name": "Tooth extraction", "category": "dental", "reference_price": 1200 }
+}

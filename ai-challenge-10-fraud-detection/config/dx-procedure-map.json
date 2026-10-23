@@ -1,0 +1,17 @@
+{
+  "J06.9": { "claim_type": "OUTPATIENT", "protocols": [["P-1001"], ["P-1001", "P-1002"]] },
+  "J18.9": { "claim_type": "OUTPATIENT", "protocols": [["P-1001", "P-1006"], ["P-1001", "P-1002", "P-1006"]] },
+  "A09": { "claim_type": "OUTPATIENT", "protocols": [["P-1001"], ["P-1001", "P-1002"]] },
+  "N39.0": { "claim_type": "OUTPATIENT", "protocols": [["P-1001", "P-1005"]] },
+  "E11.9": { "claim_type": "OUTPATIENT", "protocols": [["P-1001", "P-1010"], ["P-1001", "B-9001"]] },
+  "I10": { "claim_type": "OUTPATIENT", "protocols": [["P-1001"], ["P-1001", "P-1009"]] },
+  "M54.5": { "claim_type": "OUTPATIENT", "protocols": [["P-1001", "P-1011"], ["P-1001", "P-1006"]] },
+  "Z00.0": { "claim_type": "OUTPATIENT", "protocols": [["B-9005"]] },
+  "S61.0": { "claim_type": "OUTPATIENT", "protocols": [["P-1001", "P-2005"]] },
+  "K35.80": { "claim_type": "INPATIENT", "protocols": [["P-1007", "B-9002"], ["P-1008", "B-9002"]] },
+  "K80.20": { "claim_type": "INPATIENT", "protocols": [["B-9003"]] },
+  "S52.50": { "claim_type": "INPATIENT", "protocols": [["P-1006", "P-2004", "P-2002"]] },
+  "K02.9": { "claim_type": "DENTAL", "protocols": [["P-3001"], ["P-3002", "P-3001"]] },
+  "K04.0": { "claim_type": "DENTAL", "protocols": [["B-9004"]] },
+  "K08.1": { "claim_type": "DENTAL", "protocols": [["P-3002", "P-3004"]] }
+}

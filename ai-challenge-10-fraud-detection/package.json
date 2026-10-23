@@ -1,0 +1,25 @@
+{
+  "name": "fraud-detection-scoring-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "tsx src/generate.ts",
+    "inspect": "tsx src/inspect.ts",
+    "score": "tsx src/score.ts",
+    "report": "tsx src/report.ts",
+    "all": "npm run generate && npm run score && npm run report",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^6.4.5",
+    "vitest": "^4.1.12"
+  }
+}

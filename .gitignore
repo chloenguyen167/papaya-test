@@ -1,4 +1,10 @@
-node_modules/, 
-dist/, .
-DS_Store, 
-.env
+# Các thư mục và tệp cần bỏ qua (ignore)
+node_modules/
+dist/
+coverage/
+.DS_Store
+*.log
+
+# Đảm bảo KHÔNG bỏ qua thư mục data/ và output/ (ngay cả khi có quy tắc chung khác)
+!data/
+!output/

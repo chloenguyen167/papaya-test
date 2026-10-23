@@ -1,0 +1,19 @@
+{
+  "weights": {
+    "duplicate_claim": 5,
+    "phantom_billing": 5,
+    "upcoding": 4,
+    "unbundling": 4,
+    "weekend_anomaly": 3,
+    "rapid_resubmission": 2,
+    "dx_procedure_mismatch": 2,
+    "amount_clustering": 2
+  },
+  "rules": {
+    "rapid_resubmission": { "min_gap_days": 1, "max_gap_days": 7 },
+    "upcoding": { "z_threshold": 2, "min_group_size": 10 },
+    "phantom_billing": { "max_claims_per_provider_day": 30 },
+    "weekend_anomaly": { "max_weekend_share": 0.05, "min_provider_claims": 20 },
+    "amount_clustering": { "auto_approval_threshold": 50000, "min_amount": 47500, "max_amount": 49999 }
+  }
+}
