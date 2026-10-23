@@ -1,0 +1,2173 @@
+
+❯ Làm phase "setup" trong docs/PLAN.md:
+  - Tạo package.json với các script: generate, inspect, score, report, all,
+  test, typecheck. tsconfig bật strict. Cài vitest và tsx làm dev dependency.
+  - src/types.ts định nghĩa: Claim (ngày là chuỗi 'YYYY-MM-DD', không dùng Date
+  object), FraudLabel, RuleName là union của 8 tên rule, Flag, ScoredClaim,
+  Config, RuleContext.
+  - Tạo config/procedures.json, bundles.json, dx-procedure-map.json,
+  thresholds.json từ docs/DATA_DESIGN.md và docs/DECISIONS.md. Viết hàm đọc
+  config báo lỗi rõ ràng (nêu tên key) nếu thiếu trọng số hay ngưỡng.
+  - src/csv.ts đọc/ghi claims; procedure_codes nối bằng '|'; trường có dấu phẩy
+  hoặc ngoặc kép phải được bọc theo RFC 4180.
+    Chưa viết generator, chưa viết rule. Xong thì chạy typecheck và dán kết
+  quả.
+
+⏺ Tôi sẽ đọc các tài liệu trước.
+
+  Listed 1 directory, ran 1 shell command (ctrl+o to expand)
+
+⏺ Không thấy docs/PLAN.md hay docs/DATA_DESIGN.md. Kiểm tra git xem chúng có ở
+  đâu khác không.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ PLAN.md và DATA_DESIGN.md không có trong repo (dù commit message nhắc tới). Có
+  thể nội dung nằm trong DECISIONS.md hoặc transcript — tôi đọc hết.
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Shell cwd không giữ; dùng đường dẫn tuyệt đối.
+
+  Read 1 file, ran 1 shell command (ctrl+o to expand)
+  ⎿  Loaded CLAUDE.md
+
+⏺ Lưu ý là docs/PLAN.md và docs/DATA_DESIGN.md không tồn tại trong repo — thiết
+  kế dữ liệu A–F chỉ nằm trong transcript, nên tôi sẽ lấy danh mục thủ thuật,
+  gói và mapping từ đó. Trọng số rule chưa được chốt ở đâu cả, nên cần bạn quyết
+  định điểm này.
+
+⏺ User answered Claude's questions:
+  ⎿  · Trọng số severity (1–5) cho 8 rule chưa được chốt ở đâu. Dùng bộ nào cho
+     config/thresholds.json? → Đề xuất (Recommended)
+
+⏺ Đã chốt trọng số. Kiểm tra môi trường Node:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/package.json)
+  ⎿  Wrote 18 lines to ai-challenge-10-fraud-detection/package.json
+       1 {
+       2   "name": "fraud-detection-scoring-engine",
+       3   "version": "0.1.0",
+       4   "private": true,
+       5   "type": "module",
+       6   "scripts": {
+       7     "generate": "tsx src/generate.ts",
+       8     "inspect": "tsx src/inspect.ts",
+       9     "score": "tsx src/score.ts",
+      10     "report": "tsx src/report.ts",
+     … +8 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/tsconfig.json)
+  ⎿  Wrote 20 lines to ai-challenge-10-fraud-detection/tsconfig.json
+       1 {
+       2   "compilerOptions": {
+       3     "target": "ES2022",
+       4     "module": "ESNext",
+       5     "moduleResolution": "Bundler",
+       6     "lib": ["ES2022"],
+       7     "types": ["node"],
+       8     "strict": true,
+       9     "noUncheckedIndexedAccess": true,
+      10     "noImplicitOverride": true,
+     … +10 lines (ctrl+o to expand)
+
+  Listed 1 directory, ran 1 shell command (ctrl+o to expand)
+
+⏺ Lỗi peer-set đã biết của arborist trong npm 11. Thử cài từng bước:
+
+  Ran 4 shell commands (ctrl+o to expand)
+
+⏺ Cài được với --legacy-peer-deps (đã cài vite thủ công làm peer). Thêm .npmrc
+  để npm install sạch cũng chạy được trên máy khác cùng npm 11:
+
+⏺ Bash(printf 'legacy-peer-deps=true\n' > .npmrc && rm -rf node_modules && npm
+      install 2>&1 | tail -2)
+  ⎿  Created ai-challenge-10-fraud-detection/.npmrc (+1 -0)
+      1 +legacy-peer-deps=true                                           
+  ⎿  … 1 more file changed (part of the diff is unavailable)
+
+⏺ Giờ viết types:
+
+⏺ Write(ai-challenge-10-fraud-detection/src/types.ts)
+  ⎿  Wrote 97 lines to ai-challenge-10-fraud-detection/src/types.ts
+       1 /** Calendar date as 'YYYY-MM-DD'. Day of week is always compute
+         d in UTC. */
+       2 export type IsoDate = string;
+       4 export const CLAIM_TYPES = ['OUTPATIENT', 'INPATIENT', 'DENTAL']
+          as const;
+       5 export type ClaimType = (typeof CLAIM_TYPES)[number];
+       6
+       8   claim_id: string;
+       9   member_id: string;
+      10   provider_id: string;
+     … +96 lines (ctrl+o to expand)
+
+⏺ Config files theo thiết kế A–C trong transcript và DECISIONS.md:
+
+⏺ Write(ai-challenge-10-fraud-detection/config/procedures.json)
+  ⎿  Wrote 22 lines to
+     ai-challenge-10-fraud-detection/config/procedures.json
+      1 {
+        erence_price": 800 },
+      3   "P-1002": { "name": "Complete blood count", "category": "medica
+      4   "P-1003": { "name": "Blood glucose", "category": "medical", "re
+      5   "P-1004": { "name": "Liver function test", "category": "medical
+        ", "reference_price": 600 },
+        ence_price": 300 },
+      7   "P-1006": { "name": "X-ray", "category": "medical", "reference_
+      8   "P-1007": { "name": "Abdominal ultrasound", "category": "medica
+      9   "P-1008": { "name": "Abdominal CT", "category": "medical", "
+     … +32 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/config/bundles.json)
+  ⎿  Wrote 7 lines to ai-challenge-10-fraud-detection/config/bundles.json
+      1 {
+      2   "B-9001": { "name": "Basic blood panel", "components": ["P-1002
+        ", "P-1003", "P-1004"], "price": 1000 },
+        001", "P-2002"], "price": 36000 },
+      4   "B-9003": { "name": "Cholecystectomy package", "components": ["
+        P-2003", "P-2002", "P-1007"], "price": 65000 },
+      5   "B-9004": { "name": "Root canal package", "components": ["P-300
+      6   "B-9005": { "name": "General health check", "components": ["P-1
+        001", "P-1002", "P-1005", "P-1006"], "price": 2200 }
+      7 }
+     … +2 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/config/dx-procedure-map.json)
+  ⎿  Wrote 17 lines to
+     ai-challenge-10-fraud-detection/config/dx-procedure-map.json
+      1 {
+        , ["P-1001", "P-1002"]] },
+      3   "J18.9": { "claim_type": "OUTPATIENT", "protocols": [["P-1001",
+      4   "A09": { "claim_type": "OUTPATIENT", "protocols": [["P-1001"],
+      5   "N39.0": { "claim_type": "OUTPATIENT", "protocols": [["P-1001",
+         "P-1005"]] },
+         "P-1010"], ["P-1001", "B-9001"]] },
+      7   "I10": { "claim_type": "OUTPATIENT", "protocols": [["P-1001"],
+      8   "M54.5": { "claim_type": "OUTPATIENT", "protocols": [["P-1001",
+      9   "Z00.0": { "claim_
+     … +21 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/config/thresholds.json)
+  ⎿  Wrote 19 lines to
+     ai-challenge-10-fraud-detection/config/thresholds.json
+       1 {
+       2   "weights": {
+       3     "duplicate_claim": 5,
+       4     "phantom_billing": 5,
+       5     "upcoding": 4,
+       6     "unbundling": 4,
+       7     "weekend_anomaly": 3,
+       8     "rapid_resubmission": 2,
+       9     "dx_procedure_mismatch": 2,
+      10     "amount_clustering": 2
+     … +11 lines (ctrl+o to expand)
+
+⏺ Bộ đọc config — gom mọi lỗi kèm đường dẫn key đầy đủ rồi ném một lần:
+⏺ Write(ai-challenge-10-fraud-detection/src/config.ts)
+  ⎿  Wrote 309 lines to ai-challenge-10-fraud-detection/src/config.ts
+       1 import { readFileSync } from 'node:fs';
+       2 import { join } from 'node:path';
+       3 import {
+       4   CLAIM_TYPES,
+       5   RULE_NAMES,
+       6   type Bundle,
+       7   type ClaimType,
+       8   type Config,
+       9   type DiagnosisProtocols,
+      10   type Procedure,
+     … +355 lines (ctrl+o to expand)
+
+⏺ Giờ src/csv.ts:
+
+⏺ Write(ai-challenge-10-fraud-detection/src/csv.ts)
+  ⎿  Wrote 164 lines to ai-challenge-10-fraud-detection/src/csv.ts
+       1 import { readFileSync, writeFileSync } from 'node:fs';
+       2 import { CLAIM_TYPES, type Claim, type ClaimType } from './types
+         .js';
+       3
+       4 export const CLAIM_COLUMNS = [
+       6   'member_id',
+       7   'provider_id',
+       8   'provider_name',
+       9   'claim_date',
+      10   'claim_type',
+     … +174 lines (ctrl+o to expand)
+
+⏺ Thêm vài test cho csv và config (CLAUDE.md yêu cầu chạy npm test trước khi báo
+  xong; nếu không có test file thì vitest sẽ exit 1):
+
+⏺ Write(ai-challenge-10-fraud-detection/tests/csv.test.ts)
+  ⎿  Wrote 52 lines to ai-challenge-10-fraud-detection/tests/csv.test.ts
+       1 import { describe, expect, it } from 'vitest';
+       2 import { claimsFromCsv, claimsToCsv, escapeField, parseCsv } fro
+         m '../src/csv.js';
+       3 import type { Claim } from '../src/types.js';
+       4
+       6   claim_id: 'CLM-00001',
+       7   member_id: 'M-0001',
+       8   provider_id: 'PRV-01',
+       9   provider_name: 'Bangkok General Hospital',
+      10   claim_date: '2024-03-05',
+     … +50 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/tests/config.test.ts)
+  ⎿  Wrote 64 lines to ai-challenge-10-fraud-detection/tests/config.test.ts
+       1 import { readFileSync } from 'node:fs';
+       2 import { join } from 'node:path';
+       3 import { describe, expect, it } from 'vitest';
+         e RawConfig } from '../src/config.js';
+       5
+       6 const dir = join(__dirname, '..', 'config');
+       7 const read = (file: string): unknown => JSON.parse(readFileSync(
+       8
+       9 function rawConfig(): RawConfig {
+      10   return {
+     … +65 lines (ctrl+o to expand)
+
+⏺ Update(ai-challenge-10-fraud-detection/tests/config.test.ts)
+  ⎿  Added 1 line, removed 1 line
+      3  import { describe, expect, it } from 'vitest';
+      4  import { CONFIG_FILES, ConfigError, loadConfig, parseConfig, typ
+         e RawConfig } from '../src/config.js';
+      5  
+      6 -const dir = join(__dirname, '..', 'config');                    
+      6 +const dir = join(import.meta.dirname, '..', 'config');          
+      7  const read = (file: string): unknown => JSON.parse(readFileSync(
+         join(dir, file), 'utf8')) as unknown;
+      8  
+      9  function rawConfig(): RawConfig {
+
+⏺ Bash(npm run typecheck; echo "exit=$?"; npm test; echo "exit=$?")
+  ⎿  Created ai-challenge-10-fraud-detection/node_modules/.vite/vitest/da39
+     a3ee5e6b4b0d3255bfef95601890afd80709/results.json (+1 -0)
+      1 +{"version":"4.1.12","results":[[":tests/csv.test.ts",{"duration"
+        +:3.6624160000000074,"failed":false}],[":tests/config.test.ts",{"
+        +duration":4.490375,"failed":false}]]}                           
+
+⏺ Đã xong phase setup. Typecheck và test đều pass, chưa commit.
+
+  Trước hết: docs/PLAN.md và docs/DATA_DESIGN.md không có trong repo. Commit
+  6356df8 ghi "data design and implementation plan" nhưng chỉ thêm DECISIONS.md,
+  CLAUDE.md và transcript. Vì vậy:
+  - Danh mục thủ thuật, 5 gói và mapping chẩn đoán → phác đồ tôi lấy nguyên từ
+    thiết kế A–C bạn viết trong transcript
+    (ai-conversation/01-understand-and-plan.txt#L543-L607).
+  - Các ngưỡng lấy từ DECISIONS.md (docs/DECISIONS.md).
+  - Trọng số theo bộ bạn vừa chọn: duplicate 5, phantom 5, upcoding 4,
+    unbundling 4, weekend 3, rapid 2, mismatch 2, clustering 2.
+
+  Kết quả
+  > tsc --noEmit
+  exit=0
+
+  > vitest run
+   Test Files  2 passed (2)
+        Tests  11 passed (11)
+  exit=0
+
+  Các file đã tạo
+  - package.json: đủ 7 script. generate, inspect, score, report đang trỏ tới
+    src/generate.ts và các file tương tự, nên sẽ chưa chạy được cho tới khi viết
+    các file đó.
+  - tsconfig.json: bật strict, thêm noUncheckedIndexedAccess và
+    exactOptionalPropertyTypes.
+  - src/types.ts: RuleName lấy từ mảng RULE_NAMES, để bộ đọc config kiểm tra
+    được đủ 8 trọng số. FraudLabel nằm ở file nhãn riêng, rule không đọc nó.
+  - config/: 4 file JSON. Trong dx-procedure-map.json, mỗi chẩn đoán lưu loại
+    claim và các phác đồ của nó. Danh sách thủ thuật hợp lệ (gồm cả thành phần
+    của gói, theo quyết định 7) được tính khi đọc config, không ghi tay.
+  - src/config.ts: gom mọi lỗi rồi báo một lần, mỗi lỗi kèm tên file và key, ví
+    dụ thresholds.json weights.upcoding: missing weight. Nó còn kiểm tra trọng
+    số là số nguyên 1–5, các khoảng ngưỡng hợp lệ, và mã trong gói hoặc mapping
+    có tồn tại.
+  - src/csv.ts: đọc và ghi theo RFC 4180, bọc trường có dấu phẩy, ngoặc kép hoặc
+    xuống dòng; procedure_codes nối bằng |. Dòng sai báo số dòng, ví dụ ngày
+    không đúng YYYY-MM-DD.
+  - tests/: 11 test cho CSV (round-trip, dấu phẩy, ngoặc kép, lỗi) và config
+    (báo đúng tên key khi thiếu trọng số hoặc ngưỡng).
+
+  Cần bạn biết
+  1. Lỗi npm: npm 11.0.0 trên máy này bị lỗi (edgesOut) khi cài vitest. Tôi thêm
+     .npmrc với legacy-peer-deps=true và cài vite thủ công. Đã thử xoá
+     node_modules rồi npm install lại thì chạy được. Vitest cài ra bản 4.1.12.
+  2. Mã phẫu thuật: tôi gán category: "surgical" cho P-2001 đến P-2005 theo nhóm
+     "Phẫu thuật" trong thiết kế của bạn, nên P-2005 (khâu vết thương) cũng
+     được tính. Cách xử lý các gói có mổ (B-9002, B-9003) cho rule weekend sẽ để
+     lại tới lúc viết rule.
+  3. Chưa chốt từ lần phản biện trước, chưa ảnh hưởng setup nhưng sẽ cần trước
+     khi viết generator và rule:
+     - Clustering trên claim rẻ làm hỏng upcoding.
+     - Claim sạch nội trú tự rơi vào dải 47.500–49.999.
+     - Hướng dời ngày của claim rapid.
+     - Provider "chỉ mổ ngày thường" cần ≥ 22 claim.
+     - Dùng SD mẫu hay SD tổng thể, và mức 10 claim tính trước hay sau khi bỏ
+       chính claim đang xét.
+
+❯ Trước khi viết generator, hãy chốt các điểm còn mở bằng những quyết định sau.
+  Ghi mỗi quyết định vào docs/DECISIONS.md (đánh số tiếp theo, nêu lý do), rồi
+  tạo docs/DATA_DESIGN.md và docs/PLAN.md (ngắn gọn, lấy từ thiết kế A–C trong
+  transcript cộng các quyết định này, vì hai file đó chưa có trong repo).
+
+  1. Clustering và upcoding:
+     - Generator claim sạch phải lấy mẫu lại nếu số tiền rơi vào 47.500–49.999.
+  Ghi rõ đây là giả định của dữ liệu tổng hợp và là hạn chế cần nêu trong
+  README.
+     - Claim gian lận clustering chỉ gắn vào tổ hợp mã thủ thuật có trung bình
+  sạch ≥ 35.000 và SD ≥ 5.000, để số tiền 47.500–49.999 nằm trong 2 SD và không
+  kích hoạt thêm upcoding. Nếu config chưa có tổ hợp nào thỏa điều kiện thì
+  báo lại, không tự hạ điều kiện.
+  2. Rapid re-submission:
+     - Claim gian lận luôn là bản sau (ngày = ngày claim gốc + 1..7), claim gốc
+  giữ nguyên là sạch.
+     - Chỉ áp cho thủ thuật không phải phẫu thuật. Nếu ngày mới rơi vào cuối
+  tuần thì chọn lại offset.
+     - Claim sạch cùng member + provider + mã thủ thuật phải cách nhau ≥ 8
+  ngày.
+     - Duplicate dùng đúng cùng ngày nên không dính rapid.
+  3. Weekend:
+     - Provider "chỉ mổ ngày thường" có ≥ 30 claim phẫu thuật và chỉ được tiêm
+  tối đa 2 claim cuối tuần. Khi loại chính claim đang xét, tỷ lệ cuối tuần luôn
+  < 5%.
+     - Claim sạch ở các provider này không bao giờ rơi vào cuối tuần.
+     - Claim được coi là phẫu thuật nếu có ít nhất một mã category "surgical",
+  kể cả thành phần của gói.
+     - Đổi P-2005 (khâu vết thương) khỏi nhóm surgical, vì khâu vết thương ở
+  cấp cứu cuối tuần là bình thường. Cập nhật config và test nếu có ảnh hưởng.
+  4. Upcoding thống kê:
+     - Dùng SD mẫu (chia n−1).
+     - Điều kiện tối thiểu 10 claim tính trên các claim KHÁC (sau khi bỏ chính
+  claim đang xét), tức nhóm tổng ≥ 11.
+     - Thêm test biên: 10 claim khác thì được chấm, 9 thì không.
+
+  Sau khi cập nhật, chạy lại tsc và vitest, rồi commit "docs: resolve open
+  design points, add data design and plan". Chưa viết generator.
+
+⏺ Trước khi ghi, tôi kiểm tra bằng số xem config hiện tại có tổ hợp nào thỏa
+  điều kiện của quyết định 1 không. Nhiễu theo thiết kế E là lognormal khoảng
+  15% cho mỗi mã, làm tròn đến 10, và claim sạch rơi vào 47.500–49.999 sẽ được
+  lấy mẫu lại.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Mô phỏng phát hiện quyết định 1 có lỗ hổng: tổ hợp K35.80 thỏa điều kiện nhưng
+  mean + 2SD chỉ 48.581, khiến khoảng 48.600-49.999 vẫn kích hoạt upcoding —
+  tôi sẽ giữ nguyên quyết định như đã đưa và ghi nhận vấn đề này vào danh sách
+  việc mở, không tự ý siết điều kiện. Tiếp theo tôi sẽ cập nhật config: chuyển
+  P-2005 sang nhóm medical và đổi tên min_group_size thành min_other_claims cho
+  rõ nghĩa.
+
+⏺ Bash(sed -i '' 's/"name": "Wound suturing", "category": "surgical"/"name":
+      "Wound suturing", "category": "medical"/' config/procedures.json && sed -i
+      '' 's/"min_grou…)
+  ⎿  Updated ai-challenge-10-fraud-detection/config/procedures.json (+1 -1)
+      14    "P-2002": { "name": "Anesthesia", "category": "surgical", "re
+          ference_price": 8000 },
+      15    "P-2003": { "name": "Laparoscopic cholecystectomy", "category
+          ": "surgical", "reference_price": 60000 },
+      16    "P-2004": { "name": "Forearm fracture fixation", "category": 
+          "surgical", "reference_price": 55000 },
+      17 -  "P-2005": { "name": "Wound suturing", "category": "surgical",
+         - "reference_price": 3000 },                                    
+      17 +  "P-2005": { "name": "Wound suturing", "category": "medical", 
+         +"reference_price": 3000 },                                     
+      18    "P-3001": { "name": "Dental filling", "category": "dental", "
+          reference_price": 1500 },
+      19    "P-3002": { "name": "Dental X-ray", "category": "dental", "re
+          ference_price": 500 },
+      20    "P-3003": { "name": "Root canal treatment", "category": "dent
+          al", "reference_price": 6000 },
+  ⎿  Updated ai-challenge-10-fraud-detection/config/thresholds.json (+1 -1)
+      11    },
+      12    "rules": {
+      13      "rapid_resubmission": { "min_gap_days": 1, "max_gap_days": 
+          7 },
+      14 -    "upcoding": { "z_threshold": 2, "min_group_size": 10 },    
+      14 +    "upcoding": { "z_threshold": 2, "min_other_claims": 10 },  
+      15      "phantom_billing": { "max_claims_per_provider_day": 30 },
+      16      "weekend_anomaly": { "max_weekend_share": 0.05, "min_provid
+          er_claims": 20 },
+      17      "amount_clustering": { "auto_approval_threshold": 50000, "m
+          in_amount": 47500, "max_amount": 49999 }
+  ⎿  Updated ai-challenge-10-fraud-detection/src/config.ts (+1 -1)
+      192      },
+      193      upcoding: {
+      194        z_threshold: v.number(upcoding, 'z_threshold', `${base}.
+           upcoding`),
+      195 -      min_group_size: v.number(upcoding, 'min_group_size', `${
+          -base}.upcoding`),                                             
+      195 +      min_other_claims: v.number(upcoding, 'min_other_claims',
+          + `${base}.upcoding`),                                         
+      196      },
+      197      phantom_billing: {
+      198        max_claims_per_provider_day: v.number(phantom, 'max_clai
+           ms_per_provider_day', `${base}.phantom_billing`),
+  ⎿  Updated ai-challenge-10-fraud-detection/src/types.ts (+1 -1)
+      71  
+      72  export interface Thresholds {
+      73    rapid_resubmission: { min_gap_days: number; max_gap_days: num
+          ber };
+      74 -  upcoding: { z_threshold: number; min_group_size: number };   
+      74 +  upcoding: { z_threshold: number; min_other_claims: number }; 
+      75    phantom_billing: { max_claims_per_provider_day: number };
+      76    weekend_anomaly: { max_weekend_share: number; min_provider_cl
+          aims: number };
+      77    amount_clustering: { auto_approval_threshold: number; min_amo
+          unt: number; max_amount: number };
+  ⎿  Updated ai-challenge-10-fraud-detection/tests/config.test.ts (+1 -1)
+      57          'thresholds.json weights.amount_clustering: weight must
+           be an integer from 1 to 5, got 7',
+      58          'thresholds.json rules.upcoding: missing',
+      59          'thresholds.json rules.upcoding.z_threshold: missing',
+      60 -        'thresholds.json rules.upcoding.min_group_size: missing
+         -',                                                             
+      60 +        'thresholds.json rules.upcoding.min_other_claims: missi
+         +ng',                                                           
+      61        ]);
+      62      }
+      63    });
+
+⏺ Update(ai-challenge-10-fraud-detection/src/types.ts)
+  ⎿  Added 1 line
+      71  
+      72  export interface Thresholds {
+      73    rapid_resubmission: { min_gap_days: number; max_gap_days: num
+          ber };
+      74 +  /** min_other_claims counts the group's claims excluding the 
+         +claim being evaluated (Decision 15). */                        
+      75    upcoding: { z_threshold: number; min_other_claims: number };
+      76    phantom_billing: { max_claims_per_provider_day: number };
+      77    weekend_anomaly: { max_weekend_share: number; min_provider_cl
+          aims: number };
+
+⏺ Phần thống kê leave-one-out được tách thành một helper riêng. Nhờ vậy test
+  biên 10/9 của quyết định 4 chạy được ngay mà chưa phải viết rule upcoding:
+
+⏺ Write(ai-challenge-10-fraud-detection/src/stats.ts)
+  ⎿  Wrote 31 lines to ai-challenge-10-fraud-detection/src/stats.ts
+       1 export interface ReferenceStats {
+       2   /** Number of values used, i.e. excluding the evaluated one. *
+         /
+       4   mean: number;
+       5   /** Sample standard deviation (divides by n − 1). */
+       6   sd: number;
+       7 }
+       9 /**
+      10  * Mean and sample SD of every value except the one at `excludeI
+         ndex` (Decision 15).
+     … +23 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/tests/stats.test.ts)
+  ⎿  Wrote 24 lines to ai-challenge-10-fraud-detection/tests/stats.test.ts
+       1 import { describe, expect, it } from 'vitest';
+       2 import { leaveOneOutStats } from '../src/stats.js';
+       4 describe('leaveOneOutStats', () => {
+       5   it('evaluates a claim when exactly 10 other claims remain (gro
+         up of 11)', () => {
+       7     expect(leaveOneOutStats(values, 10, 10)).toEqual({ n: 10, me
+         an: 1000, sd: 0 });
+       8   });
+      10   it('skips a claim when only 9 other claims remain (group of 10
+         )', () => {
+     … +18 lines (ctrl+o to expand)
+
+⏺ Giờ đến DECISIONS.md: thêm chú thích dẫn chiếu ở mục 3 và 6, rồi ghi các mục
+  12–15.
+
+⏺ Bash(sed -i '' 's/^- Skip groups with fewer than 10 claims\.$/- Skip groups
+      with fewer than 10 claims (refined by Decision 15)./' docs/DECISIONS.md &&
+      sed -i '' 's/^…)
+  ⎿  Updated ai-challenge-10-fraud-detection/docs/DECISIONS.md (+2 -2)
+      31  **Decision:**
+      32  - Group claims by procedure-code combination (codes sorted, the
+          n joined).
+      33  - Compute mean and SD leave-one-out, excluding the claim being 
+          evaluated.
+      34 -- Skip groups with fewer than 10 claims.                       
+      34 +- Skip groups with fewer than 10 claims (refined by Decision 15
+         +).                                                             
+      35  
+      36  **Consequence:**
+      37  - Each claim is compared against claims that bill the same set 
+          of procedures.
+     ...
+      68  - The provider's weekend share excludes the claim being evaluat
+          ed.
+      69  - The provider must have ≥ 20 claims.
+      70  - In the generator, "weekday-only" providers have no clean week
+          end claims.
+      71 -- At most 2 cases are injected per provider.                   
+      71 +- At most 2 cases are injected per provider (generator constrai
+         +nts refined by Decision 14).                                   
+      72  
+      73  **Consequence:** Injected cases do not dilute their own detecti
+          on. Providers with too few claims are not evaluated.
+      74  
+
+⏺ Bash(cat >> docs/DECISIONS.md <<'EOF'…)
+  ⎿  Updated ai-challenge-10-fraud-detection/docs/DECISIONS.md (+77 -0)
+      125  - Run an additional holdout dataset generated with a different
+            seed, without any tuning.
+      126  
+      127  **Consequence:** The report shows the reviewer workload behind
+            the alerts. The holdout run shows whether the results hold on
+            data that was not used for tuning.
+      128 +                                                              
+      129 +---                                                           
+      130 +                                                              
+      131 +## 12. Clean amounts avoid the clustering band; clustering onl
+          +y on high-cost combinations                                   
+      132 +                                                              
+      133 +**Context:**                                                  
+      134 +- Clean inpatient claims land in 47,500–49,999 on their own. A
+          +bout 15% of K35.80 [P-1008, B-9002] claims do, which would mak
+          +e them clustering false positives.                            
+      135 +- A clustering amount placed on a cheap combination such as [P
+          +-1001] (mean ≈ 810, SD ≈ 120) inflates the leave-one-out SD of
+          + every other claim in that group to ≈ 3,500. Upcoded claims in
+          + the group then go undetected, and the clustering claim also f
+          +ires upcoding.                                                
+      136 +                                                              
+      137 +**Decision:**                                                 
+      138 +- The clean-claim generator resamples any amount that falls in
+          + 47,500–49,999.                                               
+      139 +- Clustering fraud is applied only to procedure-code combinati
+          +ons whose clean mean is ≥ 35,000 and clean SD is ≥ 5,000, so t
+          +hat the amount stays within 2 SD and does not also fire upcodi
+          +ng.                                                           
+      140 +- If no combination meets this condition, the generator stops 
+          +with an error. The condition is not lowered.                  
+      141 +                                                              
+      142 +**Consequence:**                                              
+      143 +- Clean claims never fire the clustering rule. This is an assu
+          +mption of the synthetic data, not a property of real claims, a
+          +nd it is listed as a limitation in the README.                
+      144 +- Cheap groups keep their normal SD, so clustering does not ma
+          +sk upcoding there.                                            
+      145 +- The condition does not guarantee the whole band stays within
+          + 2 SD. See the open item in [PLAN.md](PLAN.md).               
+      146 +                                                              
+      147 +---                                                           
+      148 +                                                              
+      149 +## 13. Rapid re-submission — how cases are injected           
+      150 +                                                              
+      151 +**Context:**                                                  
+      152 +- Shifting a copy backwards would make the clean original the 
+          +"later" claim. Decision 2 would then flag the original, giving
+          + 1 false positive and 1 false negative per pair.              
+      153 +- A copy that lands on a weekend at a weekday-only provider br
+          +eaks the weekend rule: it raises the provider's weekend share 
+          +and reveals the label, because clean claims there are never on
+          + weekends.                                                    
+      154 +- Clean claims repeated within 1–7 days would fire the rule wi
+          +thout being labeled.                                          
+      155 +                                                              
+      156 +**Decision:**                                                 
+      157 +- The fraudulent claim is always the later copy, dated origina
+          +l date + 1..7 days. The original stays clean.                 
+      158 +- Applied only to claims without surgical procedures. If the n
+          +ew date is a Saturday or Sunday, a different offset is drawn. 
+      159 +- Clean claims with the same member + provider + procedure cod
+          +es are at least 8 days apart.                                 
+      160 +- Duplicates use the same date (gap 0), so they never fire rap
+          +id re-submission (Decision 2).                                
+      161 +                                                              
+      162 +**Consequence:**                                              
+      163 +- Every injected pair is caught with its label on the right cl
+          +aim.                                                          
+      164 +- Rapid copies never change a provider's weekend share and nev
+          +er interact with the weekend rule.                            
+     … 40 more lines (ctrl+o to expand)
+
+⏺ Tiếp theo là DATA_DESIGN.md:
+
+⏺ Write(ai-challenge-10-fraud-detection/docs/DATA_DESIGN.md)
+  ⎿  Wrote 122 lines to ai-challenge-10-fraud-detection/docs/DATA_DESIGN.md
+       1 # Data Design
+       3 Design of the synthetic dataset. Amounts are in an assumed curre
+         ncy (THB). All prices are fictional. Numbered decisions refer to
+       4
+       5 Machine-readable sources: [`config/procedures.json`](../config/p
+         , [`config/dx-procedure-map.json`](../config/dx-procedure-map.js
+         on), [`config/thresholds.json`](../config/thresholds.json).
+       7 ## A. Procedures
+       8
+      10 |---|---|---|---:|
+     … +151 lines (ctrl+o to expand)
+
+⏺ Cuối cùng là PLAN.md, có danh sách việc còn mở:
+
+⏺ Write(ai-challenge-10-fraud-detection/docs/PLAN.md)
+  ⎿  Wrote 67 lines to ai-challenge-10-fraud-detection/docs/PLAN.md
+       1 # Implementation Plan
+       3 Phases run in order. Each phase ends with `npm run typecheck` an
+         d `npm test` passing. Design is in [DATA_DESIGN.md](DATA_DESIGN.
+         md); interpretation choices are in [DECISIONS.md](DECISIONS.md).
+       5 ## Phase 0 — Setup (done)
+       6
+          and tsx.
+       8 - Wrote `src/types.ts`.
+       9 - Added `config/*.json` and `src/config.ts`. The config loader r
+      10 - Wrote `src/csv.ts`, an RFC 4180 claims reader and writer.
+     … +88 lines (ctrl+o to expand)
+
+⏺ Bash(npm run typecheck; echo "exit=$?"; npm test; echo "exit=$?")  ⎿  Updated ai-challenge-10-fraud-detection/node_modules/.vite/vitest/da39
+     a3ee5e6b4b0d3255bfef95601890afd80709/results.json (+1 -1)
+      1 -{"version":"4.1.12","results":[[":tests/csv.test.ts",{"duration"
+        -:3.6624160000000074,"failed":false}],[":tests/config.test.ts",{"
+        -duration":4.490375,"failed":false}]]}                           
+      1 +{"version":"4.1.12","results":[[":tests/csv.test.ts",{"duration"
+        +:3.7253340000000037,"failed":false}],[":tests/config.test.ts",{"
+        +duration":5.501374999999996,"failed":false}],[":tests/stats.test
+        +.ts",{"duration":2.8488749999999925,"failed":false}]]}          
+
+⏺ Commit (gồm cả phần setup lần trước, vì phần đó chưa được commit):
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Đã ghi 4 quyết định mới thành mục 12–15 trong DECISIONS.md
+  (ai-challenge-10-fraud-detection/docs/DECISIONS.md), tạo DATA_DESIGN.md
+  (ai-challenge-10-fraud-detection/docs/DATA_DESIGN.md) và PLAN.md
+  (ai-challenge-10-fraud-detection/docs/PLAN.md), và đã commit c067889. Phần
+  setup bạn đã commit riêng ở bc1ba6c. Chưa viết generator.
+
+  > tsc --noEmit
+  exit=0
+
+  > vitest run
+   Test Files  3 passed (3)
+        Tests  14 passed (14)
+  exit=0
+
+  Thay đổi ngoài docs
+  - P-2005 chuyển sang medical. Không test nào bị ảnh hưởng.
+  - Key min_group_size đổi tên thành min_other_claims, để tên nói rõ là đếm các
+    claim khác. Vì vậy chuỗi lỗi mong đợi trong config.test.ts
+    (ai-challenge-10-fraud-detection/tests/config.test.ts#L60) đổi theo tên key
+    mới; logic của test không đổi.
+  - Test biên 10/9 chưa thể gắn vào rule upcoding vì chưa có rule. Tôi tách phần
+    mean/SD mẫu leave-one-out thành src/stats.ts
+    (ai-challenge-10-fraud-detection/src/stats.ts) và thêm 3 test: 10 claim khác
+    thì được chấm, 9 thì bị bỏ qua, và kiểm tra SD chia n−1. Rule upcoding sau
+    này sẽ dùng hàm này.
+
+  Hai điểm trong quyết định của bạn cần xem lại. Tôi ghi đúng như bạn đưa và đưa
+  cả hai vào mục "Open items" của PLAN.md, không tự sửa:
+
+  1. Điều kiện clustering không đảm bảo được mục tiêu của nó. Theo mô phỏng
+     (nhiễu lognormal 15%), K35.80 [P-1007, B-9002] có mean khoảng 38.100 và SD
+     khoảng 5.250, nên thỏa điều kiện. Nhưng mean + 2SD chỉ khoảng 48.600. Vì
+     vậy số tiền clustering từ 48.600 đến 49.999 vẫn bật thêm upcoding. Ba tổ
+     hợp còn lại không gặp vấn đề này. Muốn chặn thì thêm điều kiện mean + 2SD >
+     49.999, hoặc giới hạn dải số tiền cho tổ hợp này.
+  2. Chưa đủ claim phẫu thuật cho rule weekend. Chỉ 3 trên 15 chẩn đoán có phẫu
+     thuật. Nếu chẩn đoán phân bố đều thì có khoảng 380 claim phẫu thuật, chia
+     cho 30 bệnh viện là khoảng 13 claim mỗi nơi. Quyết định 3 cần ít nhất 10
+     bệnh viện × 30 = 300 claim phẫu thuật chỉ riêng ở nhóm mổ theo lịch. Phải
+     chốt tỷ trọng chẩn đoán và cách phân claim cho provider trước khi viết
+     generator.
+
+  Một lưu ý nhỏ về rapid re-submission: rule bắt theo member + chẩn đoán, còn
+  ràng buộc ≥ 8 ngày chỉ áp cho cùng member + provider + mã thủ thuật. Hai claim
+  sạch cùng member và chẩn đoán nhưng khác provider vẫn có thể cách nhau 1–7
+  ngày và bị gắn cờ. Tôi ghi đây là báo động giả còn lại, sẽ báo cáo chứ không
+  loại bỏ.
+
+  PLAN.md còn 5 việc mở khác cần chốt: claim gốc có được dùng cho nhiều kiểu cài
+  không, các upcoding che lẫn nhau, cách xử lý khi SD = 0, cách chuẩn hoá điểm,
+  và các pattern chồng nhau.
+
+❯ Trước khi viết code, lập kế hoạch cho generator trong src/generate/, theo
+  docs/BRIEF.md, docs/DATA_DESIGN.md và docs/DECISIONS.md. Sau khi tôi duyệt kế
+  hoạch, ghi 3 quyết định sau vào DECISIONS.md (mục 16–18) và cập nhật mục
+  Open items trong PLAN.md:
+
+  16. Clustering: bỏ tổ hợp K35.80 [P-1007, B-9002] khỏi danh sách nền. Nền cho
+  claim clustering là các tổ hợp có mean + 2SD ≥ 50.500, đo trên dữ liệu sinh
+  ra, để số tiền 47.500–49.999 không bật thêm upcoding.
+  17. Phẫu thuật cho rule weekend: tỷ trọng chẩn đoán phẫu thuật chiếm khoảng
+  25% claim sạch (≈450 claim). Khoảng 80% số đó dồn vào 12 bệnh viện mổ theo
+  lịch (≈30 claim mỗi nơi), các bệnh viện này không có claim sạch cuối tuần.
+  Các bệnh viện còn lại có tỷ lệ cuối tuần ≥ 8% hoặc ít hơn 20 claim phẫu
+  thuật, để không bật rule weekend.
+  18. Rapid: các claim sạch cùng member và cùng chẩn đoán phải cách nhau ≥ 8
+  ngày, bất kể provider. Đây là giả định của dữ liệu tổng hợp, ghi vào README.
+
+  Yêu cầu cho generator:
+  - RNG có seed (mulberry32 tự viết), không có Math.random ở bất kỳ đâu. Seed
+  lấy từ --seed (mặc định 42), thư mục ra lấy từ --out (mặc định data/).
+  - Sinh 1.800 claim sạch từ các phác đồ trước, rồi cài đúng 200 claim gian lận
+  theo số lượng trong đề.
+  - Trộn, sắp theo ngày, RỒI MỚI đánh claim_id. Với cặp duplicate, nhãn thuộc
+  claim_id lớn hơn.
+  - claims.csv chỉ có đúng các cột trong đề. labels.csv gồm
+  claim_id,fraud_type. Không có gì làm lộ gian lận trong claims.csv (không làm
+  tròn khác, không dải ID riêng).
+  - Mọi ngày nằm trong năm 2024, kể cả sau khi dời ngày cho rapid.
+
+  Trong kế hoạch, nêu rõ:
+  (a) thứ tự cài 8 kiểu gian lận;
+  (b) mọi xung đột giữa chúng và cách xử lý từng cái, ví dụ: dời claim cho
+  phantom tạo cặp rapid; upcoding đẩy số tiền vào dải clustering; chép
+  duplicate từ một claim đã là bản sao; claim gốc dùng cho nhiều kiểu cài;
+  (c) quyết định cho các việc mở còn lại trong PLAN.md: các upcoding che lẫn
+  nhau, nhóm có SD = 0, các pattern chồng nhau.
+
+  Sau khi tôi duyệt: viết code và test. Test gồm: cùng seed cho ra file giống
+  hệt từng byte, đúng 1.800 + 200 claim với đúng số lượng từng kiểu, header
+  claims.csv đúng cột trong đề, mọi ngày trong 2024, không claim sạch nào nằm
+  trong dải 47.500–49.999, claim sạch cùng member + chẩn đoán cách nhau ≥ 8
+  ngày, 12 bệnh viện mổ theo lịch không có claim sạch cuối tuần. Chạy npm run
+  generate, in thống kê (số claim theo kiểu, số claim phẫu thuật mỗi bệnh
+  viện), chạy typecheck và test, dán kết quả. Không sửa expected value của test
+  để cho pass. Commit "feat(generator): seeded synthetic claims with injected
+  fraud".
+
+⏺ Tôi đã có đủ ngữ cảnh từ các phiên trước, gồm toàn bộ config, src/ và tài
+  liệu, nên không cần chạy agent khám phá. Còn một chỗ mơ hồ ảnh hưởng tới cấu
+  trúc provider và test, cần bạn chốt trước khi viết kế hoạch:
+
+⏺ User answered Claude's questions:
+  ⎿  · Quyết định 17 nói 12 bệnh viện mổ theo lịch, nhưng DATA_DESIGN D có 15
+     bệnh viện thuộc nhóm này. Hiểu theo cách nào? → Giữ 15, 12 nơi mổ nhiều
+     (Recommended)
+
+⏺ Giờ tôi ghi kế hoạch.
+
+⏺ Updated plan
+  ⎿  /plan to preview
+
+⏺ User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/tr-c-khi-vi-t-code-logical-ripple.md · /plan
+     to edit
+     Kế hoạch: generator dữ liệu tổng hợp (src/generate/)
+
+     Context
+
+     Phase 1 trong PLAN.md. Cần một generator có seed, sinh 1.800 claim sạch
+     theo DATA_DESIGN.md, rồi cài đúng 200 claim gian lận theo số lượng trong
+     BRIEF.md. Generator phải đảm bảo:
+     - mỗi ca cài bật đúng rule của nó;
+     - không ca nào vô tình bật rule khác hoặc tạo báo động giả ngoài các trường
+       hợp đã biết;
+     - claims.csv không làm lộ nhãn.
+
+     Sau khi bạn duyệt: ghi quyết định 16–18 vào DECISIONS.md, cập nhật PLAN.md
+     và DATA_DESIGN.md, viết code, viết test, rồi commit.
+
+     Đã chốt: giữ 15 bệnh viện mổ theo lịch. Trong đó 12 nơi "mổ nhiều" (mỗi nơi
+     30 claim phẫu thuật sạch và nhận ca weekend cài vào), 3 nơi "mổ ít" (dưới
+     20 claim phẫu thuật).
+
+     ---
+
+     1. Cập nhật tài liệu (làm đầu tiên)
+
+     DECISIONS.md:
+     - Thêm mục 16–18 đúng nội dung bạn đưa, mỗi mục gồm Context, Decision,
+       Consequence.
+     - Mục 12: thêm "(refined by 16)".
+     - Mục 13: ghi chú rằng ràng buộc giãn cách claim sạch được thay bằng
+       mục 18. Ràng buộc mới tính theo member + chẩn đoán, bất kể provider, nên
+       báo động giả rapid giữa các claim sạch không còn.
+
+     PLAN.md, mục Open items:
+     - Việc 1 (đã giải quyết bởi mục 16), 2 (mục 17), 3, 4, 5, 7: chuyển sang
+       "Resolved", ghi kèm cách giải quyết ở mục 4 bên dưới.
+     - Việc 6 (chuẩn hoá điểm) vẫn mở cho phase 3.
+
+     DATA_DESIGN.md:
+     - D: 12 nơi mổ nhiều và 3 nơi mổ ít.
+     - E: tỷ trọng chẩn đoán.
+     - F: cách cài từng kiểu theo kế hoạch này.
+     - G: labels.csv = claim_id,fraud_type.
+
+     Code đi kèm:
+     - src/types.ts: FraudLabel thành { claim_id; fraud_type: RuleName | 'clean'
+       }.
+     - package.json: script generate trỏ sang tsx src/generate/index.ts.
+
+     2. Cấu trúc module (src/generate/)
+
+     File: rng.ts
+     Nội dung: mulberry32(seed) tự viết. Lớp Rng gồm next(), int(lo, hi),
+     pick(),
+     weighted(), normal() (Box–Muller) và shuffle() (Fisher–Yates). Đây là nguồn
+
+     ngẫu nhiên duy nhất.
+     ────────────────────────────────────────
+     File: providers.ts
+     Nội dung: 50 provider: 15 bệnh viện 24/7, 15 mổ theo lịch (12 nhiều + 3
+     ít), 15
+     phòng khám, 5 nha khoa. Mỗi provider có tên, ngày làm việc và loại claim.
+     Vài
+      tên có dấu phẩy để kiểm tra việc quote CSV.
+     ────────────────────────────────────────
+     File: amounts.ts
+     Nội dung: Với mỗi mã: price × exp(0,15·Z); cộng lại rồi làm tròn đến 10.
+     Nếu
+     rơi vào dải [47.500, 49.999] thì lấy mẫu lại. Có thêm comboKey(codes) (sắp
+     xếp rồi nối bằng +). Claim sạch và claim gian lận có số tiền "bình thường"
+     dùng chung hàm này.
+     ────────────────────────────────────────
+     File: ledger.ts
+     Nội dung: Trạng thái lúc sinh: danh sách draft claim, chỉ mục member|dx →
+     ngày,
+     provider|ngày → số claim, và tập claim đã dùng làm nền. Hàm chính:
+     isFree(member, dx, date, exceptKey?), đúng khi không claim nào cùng member
+     +
+     chẩn đoán cách < 8 ngày.
+     ────────────────────────────────────────
+     File: clean.ts
+     Nội dung: Sinh 1.800 claim sạch (mục 3).
+     ────────────────────────────────────────
+     File: inject.ts
+     Nội dung: 8 hàm cài, mỗi kiểu một hàm (mục 4).
+     ────────────────────────────────────────
+     File: finalize.ts
+     Nội dung: Trộn bằng seed, sắp ổn định theo ngày, đánh CLM-00001…, rồi gán
+     nhãn
+     duplicate cho claim_id lớn hơn.
+     ────────────────────────────────────────
+     File: verify.ts
+     Nội dung: Kiểm tra bất biến trên dataset cuối. Vi phạm thì ném lỗi, không
+     sửa
+     lặng lẽ.
+     ────────────────────────────────────────
+     File: generate.ts
+     Nội dung: generateDataset(config, seed): hàm thuần, trả về { claims,
+     labels,
+     stats }.
+     ────────────────────────────────────────
+     File: index.ts
+     Nội dung: CLI: đọc --seed (mặc định 42) và --out (mặc định data/), ghi file
+
+     bằng writeClaims và formatCsv có sẵn trong src/csv.ts, rồi in thống kê.
+
+     Thêm src/dates.ts (rule sẽ dùng lại): parseIsoDate, addDays, diffDays,
+     dayOfWeekUtc, isWeekend, allDates2024().
+
+     Tái sử dụng:
+     - loadConfig (src/config.ts);
+     - writeClaims, formatCsv (src/csv.ts);
+     - leaveOneOutStats (src/stats.ts), dùng trong verify.ts.
+
+     Nhãn: labels.csv có đủ 2.000 dòng. Giá trị fraud_type là tên rule hoặc
+     clean.
+
+     3. Sinh claim sạch (1.800)
+
+     Tỷ trọng:
+     - Phẫu thuật 25% (450 claim):
+       - K35.80: 40%, chia đều cho 2 phác đồ, mỗi phác đồ 90;
+       - K80.20: 30% (135);
+       - S52.50: 30% (135).
+     - Nha khoa 15% (270): 3 chẩn đoán, chia cho 5 phòng nha.
+     - Ngoại trú 60% (1.080): chia đều 9 chẩn đoán, khoảng 120 mỗi chẩn đoán.
+       - Phân cho provider: phòng khám khoảng 50%, phần còn lại chia cho các
+         bệnh viện.
+
+     Phân claim phẫu thuật cho provider (cố định, không ngẫu nhiên):
+     - 12 nơi mổ nhiều: mỗi nơi đúng 30 claim, tổng 360.
+     - 3 nơi mổ ít: mỗi nơi 10 claim, tổng 30.
+     - 15 bệnh viện 24/7: mỗi nơi 4 claim, tổng 60.
+
+     Ngày: chọn đều trong các ngày làm việc của provider năm 2024. Ba nhóm chỉ
+     làm ngày thường không bao giờ có ngày cuối tuần. Nha khoa làm từ thứ 2 đến
+     thứ 7.
+
+     Member: chọn đều từ 500 mã M-0001 đến M-0500.
+     - Nếu isFree sai (vi phạm mục 18), chọn lại ngày, tối đa N lần.
+     - Vẫn không được thì chọn lại member. Hết số lần thử thì ném lỗi.
+
+     Đo nền cho clustering: với mỗi tổ hợp sạch, tính mean + 2SD. Tổ hợp được
+     làm nền nếu ≥ 50.500, đồng thời loại hẳn K35.80 [P-1007, B-9002] (mục 16).
+     Nếu không còn tổ hợp nào thì ném lỗi. Theo mô phỏng, các tổ hợp đạt là
+     [P-1008, B-9002], K80.20 và S52.50.
+
+     4. (a) Thứ tự cài và (b) xung đột
+
+     Nguyên tắc chung:
+     - Mọi claim gian lận đều là dòng mới, nên 1.800 claim sạch giữ nguyên là
+       sạch.
+     - Ngày của claim cài phải nằm trong 2024 và trong ngày làm việc của
+       provider, trừ kiểu weekend.
+     - Mọi claim cài, trừ duplicate và rapid, phải thoả isFree cả hai phía (cách
+       ≥ 8 ngày với mọi claim cùng member + chẩn đoán). Như vậy chúng không tạo
+       cặp rapid và không tạo duplicate.
+     - Mỗi claim sạch chỉ được làm nền cho tối đa 1 lần cài. Claim gian lận
+       không bao giờ làm nền.
+
+     #: 1
+     Kiểu: Phantom (25)
+     Cách cài: Một phòng khám, một ngày thường D: thêm 25 claim giả, member khác
+
+     nhau, theo phác đồ ngoại trú. Dời 6 claim sạch của chính phòng khám đó từ
+     ngày khác sang D.
+     Lý do đứng ở vị trí này: Đây là kiểu duy nhất sửa claim sạch (dời ngày),
+     nên
+     làm trước để các bước sau thấy ngày cuối cùng.
+     ────────────────────────────────────────
+     #: 2
+     Kiểu: Weekend (20)
+     Cách cài: Phác đồ phẫu thuật, thứ 7 hoặc CN, tại 12 nơi mổ nhiều: 8 nơi × 2
+     ca
+     + 4 nơi × 1 ca.
+     Lý do đứng ở vị trí này: Ràng buộc chặt nhất (provider, ngày, giới hạn mỗi
+     nơi).
+     ────────────────────────────────────────
+     #: 3
+     Kiểu: Duplicate (30)
+     Cách cài: Chép nguyên một claim sạch (cùng ngày, cùng số tiền), mỗi claim
+     nguồn
+     chỉ dùng 1 lần.
+     Lý do đứng ở vị trí này: Cần tập claim sạch đã ổn định.
+     ────────────────────────────────────────
+     #: 4
+     Kiểu: Rapid (30)
+     Cách cài: Chép claim sạch không phẫu thuật, ngày = gốc + k (k từ 1 đến 7),
+     số
+     tiền sinh lại.
+     Lý do đứng ở vị trí này: Như trên.
+     ────────────────────────────────────────
+     #: 5
+     Kiểu: Unbundling (25)
+     Cách cài: Phác đồ có mã gói, thay mã gói bằng đủ các thành phần, giá tính
+     lẻ.
+     Chia đều cho 6 phác đồ có gói.
+     Lý do đứng ở vị trí này:
+     ────────────────────────────────────────
+     #: 6
+     Kiểu: Mismatch (20)
+     Cách cài: Chẩn đoán D (có trong mapping) đi với nguyên phác đồ của một chẩn
+
+     đoán khác nhóm (ngoại trú, phẫu thuật, nha khoa), có ít nhất 1 mã không hợp
+
+     lệ với D. Loại claim và provider theo phác đồ.
+     Lý do đứng ở vị trí này:
+     ────────────────────────────────────────
+     #: 7
+     Kiểu: Upcoding (30)
+     Cách cài: Số tiền = mean + z·SD của nhóm sạch, z lấy trong [3, 6], làm tròn
+     đến
+     10, tránh dải 47.500–49.999. Tối đa 2 claim mỗi tổ hợp, chỉ dùng tổ hợp có
+     ≥
+     20 claim sạch.
+     Lý do đứng ở vị trí này: Dựa trên thống kê sạch đã chốt.
+     ────────────────────────────────────────
+     #: 8
+     Kiểu: Clustering (20)
+     Cách cài: Số tiền lấy đều trong 47.500–49.999 (làm tròn đến 10), trên các
+     tổ
+     hợp nền đã đo ở mục 3.
+     Lý do đứng ở vị trí này: Làm cuối để verify kiểm tra z leave-one-out trên
+     dataset cuối.
+
+     Sau đó: finalize, rồi verify.
+
+     Xung đột và cách xử lý:
+
+     1. Dời claim cho phantom tạo cặp rapid hoặc duplicate. Claim được dời phải
+        thoả isFree tại ngày D, khi đã bỏ vị trí cũ của chính nó. 25 claim giả
+        có member khác nhau và cũng phải thoả isFree. Claim đã bị dời, cùng mọi
+        claim nằm trên provider-ngày D, không được làm nền cho kiểu khác.
+     2. Báo động giả đã biết ở phantom. Gồm 6 claim được dời cộng k claim sạch
+        vốn đã ở ngày D. stats ghi con số này để report dùng (quyết định 5).
+     3. Upcoding đẩy số tiền vào dải clustering. Với z ≥ 3 thì không tổ hợp nào
+        rơi vào dải. Vẫn kiểm tra và chọn lại z nếu cần.
+     4. Clustering bật thêm upcoding. Đã xử lý bằng mục 16. verify tính z
+        leave-one-out (leaveOneOutStats) cho từng claim clustering trên dataset
+        cuối; nếu z > 2 thì ném lỗi.
+     5. Chép duplicate từ claim đã là bản sao. Nguồn chỉ là claim sạch gốc,
+        không lấy từ claim gian lận hay claim đã làm nền.
+     6. Một claim gốc dùng cho nhiều kiểu cài. Bị cấm bằng tập usedAsBase. Ví dụ
+        tránh được: gốc của cặp rapid lại bị upcode.
+     7. Bản sao rapid làm claim sạch kế tiếp thành rapid giả. Theo mục 18, claim
+        sạch kế tiếp N cách gốc ≥ 8 ngày, nhưng có thể chỉ cách bản sao R từ 1
+        đến 7 ngày. Vì vậy chỉ nhận offset k khi:
+        - claim kế tiếp cùng member + chẩn đoán cách R ≥ 8 ngày;
+        - R rơi vào ngày thường;
+        - R vẫn ≤ 2024-12-31.
+
+        Nếu không có k nào hợp lệ thì chọn claim gốc khác.
+     8. Rapid rơi vào cuối tuần. Chọn lại k (quyết định 13). Vì vậy tỷ lệ cuối
+        tuần của nơi chỉ làm ngày thường không đổi và không lộ nhãn.
+     9. Duplicate cũng bật rapid. Không thể xảy ra: khoảng cách 0 ngày không
+        tính là rapid (quyết định 2).
+     10. Claim cài rơi vào cuối tuần ở nơi chỉ làm ngày thường. Ví dụ mismatch
+         có phẫu thuật, hay unbundling hoặc clustering tại nơi mổ theo lịch: sẽ
+         bật thêm weekend. Ngày của mọi kiểu trừ weekend lấy theo ngày làm việc
+         của provider.
+     11. Tỷ lệ cuối tuần của nơi bị cài. Mỗi nơi có 30 claim phẫu thuật sạch và
+         nhiều nhất 2 ca cài. Khi xét một ca, còn nhiều nhất 1 claim cuối tuần
+         trên ít nhất 30 claim khác, tức ≤ 3,3%, dù tính trên mọi claim hay chỉ
+         claim phẫu thuật.
+     12. Các bệnh viện còn lại. Bệnh viện 24/7 có 4 claim phẫu thuật, nơi mổ ít
+         có 10, đều < 20 (quyết định 17). verify kiểm tra mỗi nơi có tỷ lệ cuối
+         tuần ≥ 8% hoặc < 20 claim phẫu thuật.
+     13. Unbundling rơi vào dải clustering. Ví dụ [P-1008, P-2001, P-2002] có
+         giá tham khảo 47.000. Hàm số tiền chung đã lấy mẫu lại khi rơi vào dải.
+     14. Unbundling hoặc mismatch tạo tổ hợp nhỏ cho upcoding.
+         - Unbundling tạo tổ hợp mới, khoảng 4 claim mỗi tổ hợp, dưới 11 nên
+           upcoding bỏ qua và report đếm số bị bỏ qua.
+         - Mismatch dùng nguyên phác đồ có sẵn, nên số tiền bình thường so với
+           nhóm của nó.
+     15. Unbundling bật mismatch. Không xảy ra, vì danh sách hợp lệ đã gồm thành
+         phần của gói (quyết định 7).
+
+     5. (c) Các việc mở còn lại
+
+     - Upcoding che lẫn nhau. Tối đa 2 claim upcoded mỗi tổ hợp, z lấy trong [3,
+       6] theo thống kê sạch. Ví dụ hai claim cùng ở z = 4 trong nhóm 120
+       claim: SD leave-one-out tăng khoảng 6,5%, mỗi claim còn z ≈ 3,7. verify
+       yêu cầu mọi claim upcoded có z leave-one-out ≥ 2,5 trên dataset cuối,
+       không đạt thì ném lỗi.
+       - Cách này thay hệ số 1,35–2,5 của DATA_DESIGN F. Với nhóm rẻ, z từ 3 đến
+         6 tương ứng khoảng ×1,4–1,9, nên vẫn trong khoảng đó, nhưng kiểm soát
+         được.
+     - SD = 0.
+       - Rule: nếu SD leave-one-out = 0 thì claim không được chấm và được tính
+         vào số bị bỏ qua, vì z không xác định. Phần này ghi cho phase 2.
+       - Generator: verify kiểm tra mọi tổ hợp có ≥ 11 claim đều có SD > 0. Với
+         nhiễu lognormal, trường hợp SD = 0 gần như không xảy ra.
+     - Pattern chồng nhau. Mỗi claim gian lận có đúng 1 fraud_type, và được dựng
+       để chỉ bật rule của nó ở những chỗ kiểm soát được (xung đột 1–15).
+       - Còn lại một nguồn chồng không tránh: claim cài có số tiền "bình thường"
+         (rapid, phantom, weekend, mismatch) vượt 2SD tự nhiên với tỷ lệ y như
+         claim sạch (khoảng 2,5%, tức khoảng 3–4 claim).
+       - Lý do giữ lại: chặn trường hợp này nghĩa là claim gian lận không bao
+         giờ có số tiền ở đuôi phân phối, và đó lại là một kiểu lộ nhãn.
+       - Report sẽ liệt kê các claim bị nhiều rule cùng bật.
+     - Kiểm tra lộ nhãn.
+       - Không có cột nhãn trong claims.csv.
+       - ID được đánh sau khi trộn và sắp ngày.
+       - Cùng một hàm số tiền và cùng kiểu làm tròn.
+       - Cùng pool member và tên provider.
+
+     6. Test (tests/generate.test.ts)
+
+     Mỗi test gọi generateDataset(loadConfig(), 42) một lần, test byte-identical
+     ghi ra thư mục tạm.
+
+     1. Cùng seed cho ra claims.csv và labels.csv giống hệt từng byte. Seed khác
+        thì khác.
+     2. Đúng 1.800 clean và 200 gian lận: duplicate 30, rapid 30, upcoding 30,
+        unbundling 25, phantom 25, weekend 20, mismatch 20, clustering 20.
+     3. Header claims.csv đúng 10 cột trong đề, theo thứ tự đề.
+     4. Mọi claim_date là ngày hợp lệ trong 2024, và is_weekend khớp với
+        dayOfWeekUtc.
+     5. Không claim sạch nào có số tiền trong dải 47.500–49.999.
+     6. Claim sạch cùng member + chẩn đoán cách nhau ≥ 8 ngày.
+     7. Cả 15 bệnh viện mổ theo lịch không có claim sạch cuối tuần. 12 nơi mổ
+        nhiều có đủ 30 claim phẫu thuật sạch.
+     8. Không có Math.random trong src/ (quét file).
+     9. tests/dates.test.ts: kiểm tra dayOfWeekUtc và addDays qua mốc cuối năm.
+
+     7. Kiểm chứng và hoàn tất
+
+     1. Chạy npm run generate. Thống kê in ra gồm:
+        - số claim theo fraud_type;
+        - số claim phẫu thuật mỗi bệnh viện (tách sạch và cài);
+        - các tổ hợp nền clustering, kèm mean + 2SD;
+        - số báo động giả đã biết ở phantom.
+     2. Chạy npm run typecheck và npm test, dán kết quả.
+     3. Không sửa expected value của test để cho pass. Nếu test fail thì sửa
+        generator.
+     4. Commit feat(generator): seeded synthetic claims with injected fraud.
+        Commit gồm code, docs và data/claims.csv, data/labels.csv (đề yêu cầu
+        nộp kèm dataset).
+
+⏺ Kế hoạch đã được duyệt. Bắt đầu với tài liệu: thêm quyết định 16–18 và các dẫn
+  chiếu.
+
+⏺ Bash(cd /Users/nguyenphiyen/proj/papaya-test/ai-challenge-10-fraud-detection
+      && sed -i '' 's/^## 12\. Clean amounts avoid the clustering band;
+      clustering only on hig…)
+  ⎿  Updated ai-challenge-10-fraud-detection/docs/DECISIONS.md (+47 -2)
+      128  
+      129  ---
+      130  
+      131 -## 12. Clean amounts avoid the clustering band; clustering onl
+          -y on high-cost combinations                                   
+      131 +## 12. Clean amounts avoid the clustering band; clustering onl
+          +y on high-cost combinations (refined by Decision 16)          
+      132  
+      133  **Context:**
+      134  - Clean inpatient claims land in 47,500–49,999 on their own. A
+           bout 15% of K35.80 [P-1008, B-9002] claims do, which would mak
+           e them clustering false positives.
+     ...
+      156  **Decision:**
+      157  - The fraudulent claim is always the later copy, dated origina
+           l date + 1..7 days. The original stays clean.
+      158  - Applied only to claims without surgical procedures. If the n
+           ew date is a Saturday or Sunday, a different offset is drawn.
+      159 -- Clean claims with the same member + provider + procedure cod
+          -es are at least 8 days apart.                                 
+      159 +- Clean claims with the same member + provider + procedure cod
+          +es are at least 8 days apart (superseded by Decision 18, which
+          + applies per member + diagnosis regardless of provider).      
+      160  - Duplicates use the same date (gap 0), so they never fire rap
+           id re-submission (Decision 2).
+      161  
+      162  **Consequence:**
+     ...
+      202  **Consequence:**
+      203  - Sample SD is the standard estimate from a sample and is slig
+           htly more conservative for small groups.
+      204  - The minimum refers to the size of the reference set that z i
+           s computed against, with no off-by-one ambiguity.
+      205 +                                                              
+      206 +---                                                           
+      207 +                                                              
+      208 +## 16. Clustering — which combinations can carry a clustering 
+          +claim                                                         
+      209 +                                                              
+      210 +**Context:** K35.80 [P-1007, B-9002] meets Decision 12 (clean 
+          +mean ≈ 38,100, SD ≈ 5,250), but its mean + 2 SD is only ≈ 48,6
+          +00. Clustering amounts from about 48,600 to 49,999 on this com
+          +bination would also fire upcoding.                            
+      211 +                                                              
+      212 +**Decision:**                                                 
+      213 +- K35.80 [P-1007, B-9002] is removed from the list of base com
+          +binations for clustering.                                     
+      214 +- A combination can carry clustering claims only if its mean +
+          + 2 SD ≥ 50,500, measured on the generated clean data.         
+      215 +                                                              
+      216 +**Consequence:**                                              
+      217 +- Every amount in 47,500–49,999 stays within 2 SD of its group
+          +, so clustering claims do not also fire upcoding.             
+      218 +- Based on simulation, the qualifying combinations are K35.80 
+          +[P-1008, B-9002], K80.20 [B-9003] and S52.50 [P-1006, P-2004, 
+          +P-2002].                                                      
+      219 +- The generator checks the leave-one-out z of every clustering
+          + claim on the final dataset.                                  
+      220 +                                                              
+      221 +---                                                           
+      222 +                                                              
+      223 +## 17. Surgical volume for the weekend rule                   
+      224 +                                                              
+      225 +**Context:**                                                  
+     … 24 more lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Update(ai-challenge-10-fraud-detection/docs/DECISIONS.md)
+  ⎿  Added 1 line, removed 1 line
+      162  **Consequence:**
+      163  - Every injected pair is caught with its label on the right cl
+           aim.
+      164  - Rapid copies never change a provider's weekend share and nev
+           er interact with the weekend rule.
+      165 -- The rule matches on member + diagnosis, which is broader tha
+          -n the spacing constraint. Clean claims with the same member an
+          -d diagnosis but a different provider or procedure set can stil
+          -l fall within 1–7 days. Such false positives are reported, not
+          - removed.                                                     
+      165 +- The rule matches on member + diagnosis, which is broader tha
+          +n the spacing constraint. Clean claims with the same member an
+          +d diagnosis but a different provider or procedure set can stil
+          +l fall within 1–7 days. Such false positives are reported, not
+          + removed. (Decision 18 closes this gap for clean claims.)     
+      166  
+      167  ---
+      168  
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Cập nhật mục Open items trong PLAN.md:
+
+⏺ Bash(python3 - <<'EOF'
+      p='docs/PLAN.md'…)
+  ⎿  Updated ai-challenge-10-fraud-detection/docs/PLAN.md (+20 -9)
+      54  - Cover how to run the project, weight justification, results, 
+          and limitations, including Decision 12's synthetic-data assumpt
+          ion.
+      55  - Commit the dataset, scored output and report.
+      56  
+      57 -## Open items (need a decision before or during Phase 1)       
+      57 +## Open items                                                  
+      58  
+      59 -1. **Clustering vs upcoding on K35.80 [P-1007, B-9002].** This 
+         -combination meets Decision 12 (mean ≈ 38,100, SD ≈ 5,250), but 
+         -mean + 2 SD ≈ 48,600. Clustering amounts from about 48,600 to 4
+         -9,999 would therefore also fire upcoding. The condition is not 
+         -lowered; whether to tighten it is undecided.                   
+      60 -2. **Surgical volume.** Only 3 of the 15 diagnoses are surgical
+         -. With a uniform diagnosis mix, that gives ≈ 380 surgical claim
+         -s, or ≈ 13 per hospital across 30 hospitals. Decision 14 needs 
+         -≥ 30 at each injected scheduled hospital: at least 10 hospitals
+         - × 30 = 300 surgical claims there. The diagnosis mix and provid
+         -er allocation must be weighted to reach this.                  
+      59 +1. **Score normalization and priority bands.** What the score i
+         +s divided by, and the High/Medium/Low cut-offs. To decide in Ph
+         +ase 3.                                                         
+      60 +                                                               
+      61 +## Resolved items                                              
+      62 +                                                               
+      63 +1. **Clustering vs upcoding on K35.80 [P-1007, B-9002].** Resol
+         +ved by Decision 16: the combination is removed, and clustering 
+         +bases need a measured mean + 2 SD ≥ 50,500.                    
+      64 +2. **Surgical volume.** Resolved by Decision 17: about 25% surg
+         +ical claims. 12 heavy scheduled-surgery hospitals get 30 surgic
+         +al claims each; every other hospital has fewer than 20.        
+      65  3. **Base-claim reuse and row count.**
+      62 -   - Can one clean claim be the base for several injections?   
+      63 -   - Copy- and add-style patterns create new rows (30 + 30 + 25
+         - + 20 = 105), so about 1,895 base claims are needed for a total
+         - of 2,000.                                                     
+      64 -4. **Upcoding mutual masking.** Several upcoded claims in one g
+         -roup inflate each other's leave-one-out SD, and a factor near 1
+         -.35 may give z < 2. How upcoded claims are spread across groups
+         - is undecided.                                                 
+      65 -5. **SD = 0.** Behavior when every reference claim has the same
+         - amount.                                                       
+      66 -6. **Score normalization and priority bands.** What the score i
+         -s divided by, and the High/Medium/Low cut-offs.                
+      67 -7. **Overlapping patterns.** An unbundled K35.80 [P-1008, P-200
+         -1, P-2002] has a reference total of 47,000 and may land in the 
+         -clustering band. Undecided whether labels record one fraud type
+         - or several.                                                   
+      66 +   - 1,800 clean claims are generated first. All 200 fraudulent
+         + claims are new rows, so clean claims stay clean.              
+      67 +   - A clean claim is the base of at most one injection. Fraudu
+         +lent claims are never bases.                                   
+      68 +   - Phantom is the only pattern that changes clean claims: it 
+         +moves their date. Moved claims and claims on the phantom provid
+         +er-day are not used as bases.                                  
+      69 +4. **Upcoding mutual masking.**                                
+      70 +   - Upcoded amounts are set to the clean mean + z × clean SD, 
+         +with z drawn from [3, 6].                                      
+      71 +   - At most 2 upcoded claims per combination, and only on comb
+         +inations with ≥ 20 clean claims.                               
+      72 +   - The generator checks that every upcoded claim has a leave-
+         +one-out z ≥ 2.5 on the final dataset.                          
+      73 +5. **SD = 0.**                                                 
+      74 +   - Rule: a claim whose leave-one-out SD is 0 is not evaluated
+         + and is counted as skipped.                                    
+      75 +   - Generator: checks that every combination with ≥ 11 claims 
+         +has SD > 0.                                                    
+      76 +6. **Overlapping patterns.** Each fraudulent claim has exactly 
+         +one `fraud_type` and is built to fire only its own rule where t
+         +his can be controlled.                                         
+      77 +   - Injected claims with "normal" amounts use the same amount 
+         +sampler as clean claims. A few of them may naturally exceed 2 S
+         +D, at the same rate as clean claims.                           
+      78 +   - This is accepted, because suppressing it would itself reve
+         +al the label. The report lists claims fired by more than one ru
+         +le.                                                            
+
+⏺ Giờ cập nhật các mục D–G trong DATA_DESIGN.md:
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ Bash(python3 - <<'EOF'
+      p='docs/DATA_DESIGN.md'…)
+  ⎿  Updated ai-challenge-10-fraud-detection/docs/DATA_DESIGN.md (+62 -30)
+       67  
+       68  No clean protocol contains every component of a bundle without
+            the bundle code itself, so clean claims never fire unbundling
+           .
+       69  
+       70 -## D. Providers                                               
+       70 +## D. Providers and claim mix                                 
+       71  
+       72  There are 50 providers:
+       73  
+       74  | Group | Count | Operating days | Claim types |
+       75  |---|---:|---|---|
+       76  | 24/7 hospitals | 15 | every day, including weekend emergency
+            surgery | all |
+       77 -| Scheduled-surgery hospitals | 15 | Mon–Fri only; no clean we
+          -ekend claims | all |                                          
+       77 +| Scheduled-surgery hospitals | 15 (12 heavy + 3 light) | Mon–
+          +Fri only; no clean weekend claims | all |                     
+       78  | General clinics | 15 | Mon–Fri only | OUTPATIENT |
+       79  | Dental clinics | 5 | Mon–Sat | DENTAL |
+       80  
+       81 -Each scheduled-surgery hospital that receives weekend injectio
+          -ns has ≥ 30 surgical claims (Decision 14).                    
+       81 +There are 1,800 clean claims (Decision 17):                   
+       82  
+       83 -There are about 500 members, all drawn from one shared pool fo
+          -r clean and fraudulent claims.                                
+       83 +| Segment | Share | Claims | Split |                          
+       84 +|---|---:|---:|---|                                           
+       85 +| Surgical (inpatient) | 25% | 450 | K35.80 180 (90 per protoc
+          +ol), K80.20 135, S52.50 135 |                                 
+       86 +| Dental | 15% | 270 | 90 per diagnosis, dental clinics only |
+       87 +| Outpatient | 60% | 1,080 | 120 per diagnosis; about half at 
+          +general clinics, the rest at hospitals |                      
+       88 +                                                              
+       89 +Surgical claims are allocated to providers deterministically: 
+       90 +                                                              
+       91 +| Providers | Surgical claims each | Total |                  
+       92 +|---|---:|---:|                                               
+       93 +| 12 heavy scheduled-surgery hospitals | 30 | 360 |           
+       94 +| 3 light scheduled-surgery hospitals | 10 | 30 |             
+       95 +| 15 24/7 hospitals | 4 | 60 |                                
+       96 +                                                              
+       97 +- Every hospital outside the 12 heavy ones has fewer than 20 s
+          +urgical claims (Decision 17).                                 
+       98 +- Dates are drawn uniformly from the provider's operating days
+          + in 2024.                                                     
+       99 +- Members are drawn uniformly from one shared pool of 500 (M-0
+          +001 to M-0500), for both clean and fraudulent claims.         
+      100 +- Clean claims with the same member + diagnosis are ≥ 8 days a
+          +part (Decision 18).                                           
+      101  
+      102  ## E. Amounts
+     … 78 more lines (ctrl+o to expand)
+
+⏺ Tài liệu đã xong. Giờ viết code, bắt đầu với các module dùng chung: dates.ts
+  và codes.ts.
+
+⏺ Write(ai-challenge-10-fraud-detection/src/dates.ts)
+  ⎿  Wrote 57 lines to ai-challenge-10-fraud-detection/src/dates.ts
+       1 import type { IsoDate } from './types.js';
+       2
+       4 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+       5
+       6 /** Days since 1970-01-01 (UTC). Throws on a malformed or non-ex
+       7 export function dayNumber(date: IsoDate): number {
+       8   const m = ISO_DATE.exec(date);
+       9   if (!m) throw new Error(`Invalid date "${date}": expected YYYY
+      10   const [year, month, day] = [Number(m[1]), Number(m[2]), Number
+         (m[3])];
+     … +51 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/src/codes.ts)
+  ⎿  Wrote 22 lines to ai-challenge-10-fraud-detection/src/codes.ts
+       1 import type { Config } from './types.js';
+       3 /** Procedure-code combination key: codes sorted, then joined (D
+         ecision 3). */
+       4 export function comboKey(codes: readonly string[]): string {
+       6 }
+       7
+         ponents. */
+       9 export function expandBundles(codes: readonly string[], config:
+         Config): string[] {
+         s ?? [code]);
+     … +22 lines (ctrl+o to expand)
+
+⏺ Tiếp theo là RNG, các tham số và provider:
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/rng.ts)
+  ⎿  Wrote 54 lines to ai-challenge-10-fraud-detection/src/generate/rng.ts
+       1 /** mulberry32: a small, fast 32-bit seeded PRNG. Returns floats
+          in [0, 1). */
+       2 export function mulberry32(seed: number): () => number {
+       3   let state = seed >>> 0;
+       4   return () => {
+       6     let t = state;
+       7     t = Math.imul(t ^ (t >>> 15), t | 1);
+       8     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+       9     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      10   };
+     … +46 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/params.ts)
+  ⎿  Wrote 43 lines to
+     ai-challenge-10-fraud-detection/src/generate/params.ts
+       1 import type { RuleName } from '../types.js';
+       2
+       3 /** Generator parameters (see docs/DATA_DESIGN.md). Rule thresho
+       4 export const PARAMS = {
+       5   year: 2024,
+       6   memberCount: 500,
+       7   /** Per-code lognormal noise: price × exp(sigma · Z). */
+       9   /** Same member + diagnosis must be at least this many days ap
+         art (Decision 18). */
+      10   minSameDxGapDays: 8,
+     … +40 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/providers.ts)
+  ⎿  Wrote 88 lines to
+     ai-challenge-10-fraud-detection/src/generate/providers.ts
+       1 import { datesInYear, dayOfWeekUtc } from '../dates.js';
+       2 import type { ClaimType, IsoDate } from '../types.js';
+       3 import { PARAMS } from './params.js';
+       4 import type { Rng } from './rng.js';
+       5
+         | 'scheduled_light' | 'general_clinic' | 'dental_clinic';
+       7
+       8 export interface Provider {
+       9   id: string;
+      10   name: string;
+     … +103 lines (ctrl+o to expand)
+⏺ Tiếp theo là module số tiền và ledger:
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/amounts.ts)
+  ⎿  Wrote 31 lines to
+     ai-challenge-10-fraud-detection/src/generate/amounts.ts
+       1 import { referencePrice } from '../codes.js';
+       2 import type { Config } from '../types.js';
+       3 import { PARAMS } from './params.js';
+       4 import type { Rng } from './rng.js';
+       5
+       7   return Math.round(amount / 10) * 10;
+       8 }
+       9
+      10 export function inClusteringBand(amount: number, config: Config)
+         : boolean {
+     … +28 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/ledger.ts)
+  ⎿  Wrote 79 lines to
+     ai-challenge-10-fraud-detection/src/generate/ledger.ts
+       1 import { isSurgical } from '../codes.js';
+       2 import { dayNumber } from '../dates.js';
+       3 import type { ClaimType, Config, IsoDate, RuleName } from '../ty
+       4 import { PARAMS } from './params.js';
+       5
+       6 /** A claim under construction: no claim_id yet, label kept alon
+         gside. */
+       8   key: number;
+       9   member_id: string;
+      10   provider_id: string;
+     … +81 lines (ctrl+o to expand)
+
+⏺ Giờ đến context dùng chung và phần sinh claim sạch:
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/context.ts)
+  ⎿  Wrote 105 lines to
+     ai-challenge-10-fraud-detection/src/generate/context.ts
+       1 import { isSurgical } from '../codes.js';
+       2 import type { ClaimType, Config, IsoDate, RuleName } from '../ty
+         pes.js';
+       3 import type { Draft, Ledger } from './ledger.js';
+       4 import { PARAMS } from './params.js';
+       6 import type { Rng } from './rng.js';
+       7
+       8 export interface GenContext {
+       9   rng: Rng;
+      10   config: Config;
+     … +120 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/clean.ts)
+  ⎿  Wrote 61 lines to
+     ai-challenge-10-fraud-detection/src/generate/clean.ts
+       1 import { sampleAmount } from './amounts.js';
+       2 import { diagnosesOfType, evenSplit, placeNew, protocolOf, type
+       3 import { PARAMS } from './params.js';
+       4 import { isHospital, type Provider, type ProviderGroup } from '.
+         /providers.js';
+       6 /** Generates the 1,800 clean claims (DATA_DESIGN.md §D). */
+       7 export function generateClean(ctx: GenContext): void {
+       8   const { rng, config, providers } = ctx;
+         lter((p) => p.group === g);
+      10   const assignments: { slot: Slot; provider: Provider }[] = [];
+     … +67 lines (ctrl+o to expand)
+
+⏺ Giờ viết 8 hàm cài gian lận:
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/inject.ts)
+  ⎿  Wrote 278 lines to
+     ai-challenge-10-fraud-detection/src/generate/inject.ts
+       1 import { comboKey, isSurgical } from '../codes.js';
+       2 import { addDays, datesInYear, isWeekend } from '../dates.js';
+       3 import { leaveOneOutStats } from '../stats.js';
+       4 import type { ClaimType, IsoDate } from '../types.js';
+       5 import { inClusteringBand, roundTo10, sampleAmount } from './amo
+       6 import {
+       7   diagnosesOfType,
+       8   eligibleProviders,
+       9   placeNew,
+      10   protocolSlots,
+     … +330 lines (ctrl+o to expand)
+
+⏺ Hai chỗ trong file vừa viết cần sửa: phép tính SD trên cả nhóm đang dùng mẹo
+  NaN, và hàm duplicate còn một biến thừa. Tôi thêm sampleStats vào stats.ts:
+
+⏺ Update(ai-challenge-10-fraud-detection/src/stats.ts)
+  ⎿  Added 5 lines
+       6    sd: number;
+       7  }
+       8  
+       9 +/** Mean and sample SD of all values; null when fewer than 2. *
+         +/                                                              
+      10 +export function sampleStats(values: readonly number[]): Referen
+         +ceStats | null {                                               
+      11 +  return leaveOneOutStats(values, -1, 2, values.length);       
+      12 +}                                                              
+      13 +                                                               
+      14  /**
+      15   * Mean and sample SD of every value except the one at `exclude
+          Index` (Decision 15).
+      16   * Returns null when fewer than `minOthers` values remain, or f
+          ewer than 2
+
+⏺ Write(ai-challenge-10-fraud-detection/src/stats.ts)
+  ⎿  Added 9 lines, removed 4 lines
+       6    sd: number;
+       7  }
+       8  
+       9 -/** Mean and sample SD of all values; null when fewer than 2. *
+         -/                                                              
+       9 +/** Mean and sample SD of all values; null when there are fewer
+         + than 2. */                                                    
+      10  export function sampleStats(values: readonly number[]): Referen
+          ceStats | null {
+      11 -  return leaveOneOutStats(values, -1, 2, values.length);       
+      11 +  return statsExcluding(values, -1);                           
+      12  }
+      13  
+      14  /**
+     ...
+      21    excludeIndex: number,
+      22    minOthers: number,
+      23  ): ReferenceStats | null {
+      24 -  const n = values.length - 1;                                 
+      25 -  if (n < Math.max(minOthers, 2)) return null;                 
+      24 +  if (values.length - 1 < minOthers) return null;              
+      25 +  return statsExcluding(values, excludeIndex);                 
+      26 +}                                                              
+      27 +                                                               
+      28 +function statsExcluding(values: readonly number[], excludeIndex
+         +: number): ReferenceStats | null {                             
+      29 +  const n = excludeIndex >= 0 && excludeIndex < values.length ?
+         + values.length - 1 : values.length;                            
+      30 +  if (n < 2) return null;                                      
+      31    let sum = 0;
+      32    values.forEach((v, i) => {
+      33      if (i !== excludeIndex) sum += v;
+
+⏺ Bash(python3 - <<'EOF'
+      p='src/generate/inject.ts'…)
+  ⎿  Updated ai-challenge-10-fraud-detection/src/generate/inject.ts (+5 -7)
+      1  import { comboKey, isSurgical } from '../codes.js';
+      2  import { addDays, datesInYear, isWeekend } from '../dates.js';
+      3 -import { leaveOneOutStats } from '../stats.js';                 
+      3 +import { sampleStats } from '../stats.js';                      
+      4  import type { ClaimType, IsoDate } from '../types.js';
+      5  import { inClusteringBand, roundTo10, sampleAmount } from './amo
+         unts.js';
+      6  import {
+     ...
+      14  } from './context.js';
+      15  import type { Draft } from './ledger.js';
+      16  import { PARAMS } from './params.js';
+      17 -import { isHospital, type Provider } from './providers.js';    
+      17 +import type { Provider } from './providers.js';                
+      18  
+      19  /** Clean statistics of one procedure-code combination. */
+      20  export interface ComboStats {
+     ...
+      37    }
+      38    return [...groups.entries()]
+      39      .map(([key, g]) => {
+      40 -      // Sample SD over the whole clean group: leave-one-out wi
+         -th an out-of-range index excludes nothing.                     
+      41 -      const stats = leaveOneOutStats([...g.amounts, Number.NaN]
+         -, g.amounts.length, 2);                                        
+      40 +      const stats = sampleStats(g.amounts);                    
+      41        return { key, slots: [...g.slots.values()], count: g.amou
+          nts.length, mean: stats?.mean ?? 0, sd: stats?.sd ?? 0 };
+      42      })
+      43      .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0
+          ));
+     ...
+      136  
+      137  /** 3. Duplicate: exact copy of a clean claim; each base is us
+           ed once. */
+      138  export function injectDuplicates(ctx: GenContext): void {
+      140 -  const { rng, ledger, config } = ctx;                        
+      139 +  const { rng, ledger } = ctx;                                
+      140    const byId = new Map(ctx.providers.map((p) => [p.id, p]));
+      141    let placed = 0;
+      142    for (const base of rng.shuffle(availableBases(ctx))) {
+     ...
+      148      placed++;
+      149    }
+      150    if (placed < PARAMS.fraudCounts.duplicate_claim) throw new E
+           rror(`Only ${placed} duplicate bases available`);
+      152 -  void config;                                                
+      151  }
+      152  
+      153  /**
+     ...
+      254        slot,
+     … 7 more lines (ctrl+o to expand)
+
+⏺ Giờ đến finalize và verify:
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/finalize.ts)
+  ⎿  Wrote 47 lines to
+     ai-challenge-10-fraud-detection/src/generate/finalize.ts
+       1 import { isWeekend } from '../dates.js';
+       2 import type { Claim, FraudLabel, RuleName } from '../types.js';
+       3 import type { GenContext } from './context.js';
+       4
+       5 export interface Dataset {
+       6   claims: Claim[];
+       7   labels: FraudLabel[];
+       8 }
+       9
+      10 /**
+     … +42 lines (ctrl+o to expand)
+
+⏺ Update(ai-challenge-10-fraud-detection/src/types.ts)
+  ⎿  Added 2 lines, removed 3 lines
+      32  /** Ground truth for one claim. Stored separately from claims; 
+          rules never read it. */
+      33  export interface FraudLabel {
+      34    claim_id: string;
+      35 -  is_fraud: boolean;                                           
+      36 -  /** Patterns injected into this claim; empty for clean claims
+         -. */                                                           
+      37 -  fraud_types: RuleName[];                                     
+      35 +  /** The single pattern injected into this claim, or 'clean'. 
+         +*/                                                             
+      36 +  fraud_type: RuleName | 'clean';                              
+      37  }
+      38  
+      39  export interface Flag {
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/verify.ts)
+  ⎿  Wrote 130 lines to
+     ai-challenge-10-fraud-detection/src/generate/verify.ts
+      1 import { comboKey, isSurgical } from '../codes.js';
+      2 import { dayNumber, isValidIsoDate, isWeekend } from '../dates.js
+        ';
+      4 import { RULE_NAMES, type Claim, type Config, type FraudLabel } f
+        rom '../types.js';
+      5 import { inClusteringBand } from './amounts.js';
+      6 import type { Dataset } from './finalize.js';
+      8 import { PARAMS } from './params.js';
+      9 import { isHospital, isScheduled, type Provider } from './provide
+        rs.js';
+     … +172 lines (ctrl+o to expand)
+
+⏺ The rapid check should look at every earlier claim (not only clean ones) to
+  find the immediately preceding one. Fixing:
+
+⏺ Bash(python3 - <<'EOF'
+      p='src/generate/verify.ts'…)
+  ⎿  Updated ai-challenge-10-fraud-detection/src/generate/verify.ts (+2 -1)
+      106  
+      107    // Rapid re-submissions: the preceding same member + diagnos
+           is claim is 1–7 days earlier (Decision 2).
+      108    const { min_gap_days: minGap, max_gap_days: maxGap } = confi
+           g.thresholds.rapid_resubmission;
+      109 +  const allByMemberDx = groupBy(claims, (c) => `${c.member_id}
+          +|${c.diagnosis_code}`);                                       
+      110    for (const c of claims.filter((x) => typeOf(x) === 'rapid_re
+           submission')) {
+      111      const day = dayNumber(c.claim_date);
+      111 -    const earlier = (cleanByMemberDx.get(`${c.member_id}|${c.d
+          -iagnosis_code}`) ?? [])                                       
+      112 +    const earlier = (allByMemberDx.get(`${c.member_id}|${c.dia
+          +gnosis_code}`) ?? [])                                         
+      113        .map((o) => day - dayNumber(o.claim_date))
+      114        .filter((gap) => gap > 0);
+      115      const gap = Math.min(...earlier);
+
+⏺ Tôi thêm hai kiểm tra theo chiều ngược lại: không claim nào ngoài nhãn rapid
+  hoặc duplicate được vô tình khớp hai rule đó.
+
+⏺ Bash(python3 - <<'EOF'
+      p='src/generate/verify.ts'…)
+  ⎿  Updated ai-challenge-10-fraud-detection/src/generate/verify.ts (+14
+     -0)
+      116      if (!(gap >= minGap && gap <= maxGap)) fail(`${c.claim_id}
+           : rapid copy is ${gap} days after the previous claim`);
+      117    }
+      118  
+      119 +  // No unintended duplicate or rapid matches: only labeled cl
+          +aims may match those keys.                                    
+      120 +  for (const group of byDupKey.values()) {                    
+      121 +    const sorted = [...group].sort((a, b) => (a.claim_id < b.c
+          +laim_id ? -1 : 1));                                           
+      122 +    for (const c of sorted.slice(1)) if (typeOf(c) !== 'duplic
+          +ate_claim') fail(`${c.claim_id}: unintended duplicate`);      
+      123 +  }                                                           
+      124 +  for (const group of allByMemberDx.values()) {               
+      125 +    const sorted = [...group].sort((a, b) => dayNumber(a.claim
+          +_date) - dayNumber(b.claim_date));                            
+      126 +    sorted.forEach((c, i) => {                                
+      127 +      if (i === 0 || typeOf(c) === 'rapid_resubmission') retur
+          +n;                                                            
+      128 +      const gap = dayNumber(c.claim_date) - dayNumber((sorted[
+          +i - 1] as Claim).claim_date);                                 
+      129 +      if (gap >= minGap && gap <= maxGap) fail(`${c.claim_id} 
+          +(${typeOf(c)}): unintended rapid match, ${gap} days`);        
+      130 +    });                                                       
+      131 +  }                                                           
+      132 +                                                              
+      133    if (problems.length > 0) throw new Error(`Generated dataset 
+           failed verification:\n  - ${problems.join('\n  - ')}`);
+      134  }
+      135  
+
+⏺ Giờ viết generate.ts và CLI:
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/generate.ts)
+  ⎿  Wrote 119 lines to
+     ai-challenge-10-fraud-detection/src/generate/generate.ts
+       1 import { mkdirSync, writeFileSync } from 'node:fs';
+       2 import { join } from 'node:path';
+       3 import { isSurgical } from '../codes.js';
+       4 import { claimsToCsv, formatCsv } from '../csv.js';
+       5 import type { Config, FraudLabel } from '../types.js';
+       6 import { generateClean } from './clean.js';
+       7 import type { GenContext } from './context.js';
+       8 import { finalize, type Dataset } from './finalize.js';
+       9 import {
+      10   cleanComboStats,
+     … +131 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/src/generate/index.ts)
+  ⎿  Wrote 58 lines to
+     ai-challenge-10-fraud-detection/src/generate/index.ts
+       1 import { loadConfig } from '../config.js';
+       2 import { generateDataset, writeDataset, type GenerationStats } f
+         rom './generate.js';
+       3
+       4 interface CliArgs {
+       6   out: string;
+       7 }
+       8
+       9 function parseArgs(argv: readonly string[]): CliArgs {
+      10   const args: CliArgs = { seed: 42, out: 'data' };
+     … +65 lines (ctrl+o to expand)
+
+⏺ Bash(sed -i '' 's#"generate": "tsx src/generate.ts"#"generate": "tsx
+      src/generate/index.ts"#' package.json && grep generate package.json && npm
+      run typecheck 2>&1 |…)
+  ⎿  Updated ai-challenge-10-fraud-detection/package.json (+1 -1)
+       4    "private": true,
+       5    "type": "module",
+       6    "scripts": {
+       7 -    "generate": "tsx src/generate.ts",                         
+       7 +    "generate": "tsx src/generate/index.ts",                   
+       8      "inspect": "tsx src/inspect.ts",
+       9      "score": "tsx src/score.ts",
+      10      "report": "tsx src/report.ts",
+⏺ Typecheck đã sạch. Chạy thử generator:
+
+⏺ Bash(time npm run generate 2>&1 | tail -70)
+  ⎿  2 files changed (binary, mode only or too large to show)
+
+⏺ Generator chạy 0,8 giây và vượt qua mọi kiểm tra trong verify. Xem nhanh file
+  đầu ra và kiểm tra lộ nhãn qua vị trí claim_id:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Phân bố nhãn gian lận đều, tỷ lệ số tiền chia hết cho 100 tương đồng giữa hai
+  nhóm, và tên provider chứa dấu phẩy đã được bọc ngoặc kép đúng. Giờ tôi sẽ
+  viết test.
+
+⏺ Write(ai-challenge-10-fraud-detection/tests/generate.test.ts)
+  ⎿  Wrote 131 lines to
+     ai-challenge-10-fraud-detection/tests/generate.test.ts
+       1 import { mkdtempSync, readdirSync, readFileSync, statSync } from
+          'node:fs';
+       3 import { join } from 'node:path';
+       4 import { beforeAll, describe, expect, it } from 'vitest';
+       5 import { isSurgical } from '../src/codes.js';
+       7 import { parseCsv } from '../src/csv.js';
+       8 import { dayNumber, isValidIsoDate, isWeekend } from '../src/dat
+         es.js';
+         from '../src/generate/generate.js';
+      10 import { buildProviders } from '../src/generate/providers.js';
+     … +152 lines (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/tests/dates.test.ts)
+  ⎿  Wrote 30 lines to ai-challenge-10-fraud-detection/tests/dates.test.ts
+       1 import { describe, expect, it } from 'vitest';
+       2 import { addDays, datesInYear, dayOfWeekUtc, diffDays, isValidIs
+         oDate, isWeekend } from '../src/dates.js';
+       3
+       4 describe('dates', () => {
+       6     expect(dayOfWeekUtc('2024-01-01')).toBe(1); // Monday
+       7     expect(isWeekend('2024-06-15')).toBe(true); // Saturday
+       8     expect(isWeekend('2024-06-16')).toBe(true); // Sunday
+       9     expect(isWeekend('2024-06-17')).toBe(false);
+      10   });
+     … +22 lines (ctrl+o to expand)
+
+⏺ Bash(npm run typecheck; echo "exit=$?"; npm test; echo "exit=$?")
+  ⎿  Updated ai-challenge-10-fraud-detection/node_modules/.vite/vitest/da39
+     a3ee5e6b4b0d3255bfef95601890afd80709/results.json (+1 -1)
+      1 -{"version":"4.1.12","results":[[":tests/csv.test.ts",{"duration"
+        -:3.7253340000000037,"failed":false}],[":tests/config.test.ts",{"
+        -duration":5.501374999999996,"failed":false}],[":tests/stats.test
+        -.ts",{"duration":2.8488749999999925,"failed":false}]]}          
+      1 +{"version":"4.1.12","results":[[":tests/csv.test.ts",{"duration"
+        +:4.627999999999986,"failed":false}],[":tests/config.test.ts",{"d
+        +uration":5.986791000000011,"failed":false}],[":tests/stats.test.
+        +ts",{"duration":2.647750000000002,"failed":false}],[":tests/gene
+        +rate.test.ts",{"duration":203.71637499999997,"failed":false}],["
+        +:tests/dates.test.ts",{"duration":4.402458999999993,"failed":fal
+        +se}]]}                                                          
+
+⏺ Toàn bộ test đã pass. Holdout sẽ dùng seed khác, nên tôi chạy thêm 50 seed để
+  chắc generator và các kiểm tra trong verify không chỉ đúng với seed 42:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ 6/50 seed không đạt ngưỡng z ≥ 2,5 do hai claim upcoded cùng tổ hợp che lẫn
+  nhau mạnh hơn dự tính, khiến SD leave-one-out phình lên kéo z xuống. Tôi sẽ
+  sửa generator thay vì hạ ngưỡng kiểm tra, sau đó kiểm tra lại cụ thể từng
+  trường hợp.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Có 19 tổ hợp đủ ≥ 20 claim sạch, trong đó 12 tổ hợp có ≥ 85; tôi sẽ thu hẹp z
+  về [3; 4,5] và chỉ đặt claim upcoded thứ hai vào các tổ hợp ≥ 85 claim sạch.
+  Kiểm tra trường hợp xấu nhất cho thấy z leave-one-out vẫn đạt khoảng 2,66, đáp
+  ứng ngưỡng ≥ 2,5.
+
+⏺ Bash(python3 - <<'EOF'
+      p='src/generate/params.ts'…)
+  ⎿  Updated ai-challenge-10-fraud-detection/src/generate/inject.ts (+12
+     -3)
+      226    }
+      227  }
+      228  
+      229 -/** 7. Upcoding: clean mean + z × clean SD, z in [3, 6], at mo
+          -st 2 per combination. */                                      
+      229 +/**                                                           
+      230 + * 7. Upcoding: clean mean + z × clean SD, z in [3, 4.5]. One 
+          +claim per                                                     
+      231 + * combination first; a second only in large combinations, to 
+          +limit masking.                                                
+      232 + */                                                           
+      233  export function injectUpcoding(ctx: GenContext, stats: readonl
+           y ComboStats[]): void {
+      234    const { rng, config } = ctx;
+      232 -  const combos = rng.shuffle(stats.filter((s) => s.count >= PA
+          -RAMS.upcoding.minCleanClaims));                               
+      233 -  for (const combo of roundRobin(combos, PARAMS.fraudCounts.up
+          -coding, PARAMS.upcoding.maxPerCombo)) {                       
+      235 +  const { minCleanClaims, pairMinCleanClaims } = PARAMS.upcodi
+          +ng;                                                           
+      236 +  const singles = rng.shuffle(stats.filter((s) => s.count >= m
+          +inCleanClaims));                                              
+      237 +  const pairs = singles.filter((s) => s.count >= pairMinCleanC
+          +laims);                                                       
+      238 +  const targets = [...singles, ...pairs].slice(0, PARAMS.fraud
+          +Counts.upcoding);                                             
+      239 +  if (targets.length < PARAMS.fraudCounts.upcoding) {         
+      240 +    throw new Error(`Only ${targets.length} upcoding slots (${
+          +singles.length} combinations, ${pairs.length} large enough for
+          + a pair)`);                                                   
+      241 +  }                                                           
+      242 +  for (const combo of targets) {                              
+      243      const slot = rng.pick(combo.slots);
+      244      let amount = Number.NaN;
+      245      for (let attempt = 0; attempt < PARAMS.maxAttempts; attemp
+           t++) {
+  ⎿  Updated ai-challenge-10-fraud-detection/src/generate/params.ts (+5 -1)
+      36  
+      37    phantomMovedClean: 6,
+      38    maxWeekendPerHospital: 2,
+      39 -  upcoding: { zMin: 3, zMax: 6, maxPerCombo: 2, minCleanClaims:
+         - 20, verifyMinZ: 2.5 },                                        
+      39 +  /**                                                          
+      40 +   * A second upcoded claim in the same combination inflates th
+         +e first one's                                                  
+      41 +   * leave-one-out SD, so pairs only go to combinations with ≥ 
+         +pairMinCleanClaims.                                            
+      42 +   */                                                          
+      43 +  upcoding: { zMin: 3, zMax: 4.5, minCleanClaims: 20, pairMinCl
+         +eanClaims: 85, verifyMinZ: 2.5 },                              
+      44    clustering: { minUpperBound: 50_500, excludedCombos: ['B-9002
+          +P-1007'] },
+      45  
+      46    maxAttempts: 2000,
+  ⎿  (timeout 10m)
+
+⏺ Cả 200/200 seed giờ đều qua kiểm tra. Cập nhật tài liệu cho khớp với thay đổi
+  này:
+
+⏺ Bash(python3 - <<'EOF'
+      import re…)
+  ⎿  Updated ai-challenge-10-fraud-detection/data/claims.csv (+46 -46)
+      29  CLM-00028,M-0021,PRV-41,Kanchanaburi Hospital,2024-01-05,OUTPAT
+          IENT,A09,P-1001,790,false
+      30  CLM-00029,M-0092,PRV-16,Nakhon Ratchasima Hospital,2024-01-06,I
+          NPATIENT,K35.80,P-1008|B-9002,49110,true
+      31  CLM-00030,M-0022,PRV-11,Bright Teeth Dental,2024-01-06,DENTAL,K
+          08.1,P-3002|P-3004,1680,true
+      32 -CLM-00031,M-0410,PRV-17,Pattaya City Hospital,2024-01-07,INPATI
+         -ENT,S52.50,P-1006|P-2004|P-2002,94390,true                     
+      32 +CLM-00031,M-0410,PRV-17,Pattaya City Hospital,2024-01-07,INPATI
+         +ENT,S52.50,P-1006|P-2004|P-2002,91080,true                     
+      33  CLM-00032,M-0040,PRV-10,Khon Kaen Hospital,2024-01-07,OUTPATIEN
+          T,J06.9,P-1001|P-1002,1400,true
+      34  CLM-00033,M-0025,PRV-49,Pathum Thani Hospital,2024-01-08,INPATI
+          ENT,S52.50,P-1006|P-2004|P-2002,76560,false
+      35  CLM-00034,M-0177,PRV-06,Ari Medical Clinic,2024-01-08,OUTPATIEN
+          T,Z00.0,B-9005,2250,false
+     ...
+      49  CLM-00048,M-0021,PRV-21,Bang Na Medical Clinic,2024-01-09,OUTPA
+          TIENT,M54.5,P-1001|P-1011,2160,false
+      50  CLM-00049,M-0379,PRV-33,Trang Hospital,2024-01-09,OUTPATIENT,E1
+          1.9,P-1001|P-1010,1490,false
+      51  CLM-00050,M-0151,PRV-30,Hua Hin Hospital,2024-01-09,OUTPATIENT,
+          Z00.0,B-9005,2940,false
+      52 -CLM-00051,M-0351,PRV-29,Lampang Hospital,2024-01-09,INPATIENT,K
+         -35.80,P-1008|B-9002,63650,false                                
+      52 +CLM-00051,M-0351,PRV-29,Lampang Hospital,2024-01-09,INPATIENT,K
+         +35.80,P-1008|B-9002,62850,false                                
+      53  CLM-00052,M-0390,PRV-19,Surat Thani Hospital,2024-01-09,OUTPATI
+          ENT,S61.0,P-1001|P-2005,3880,false
+      54  CLM-00053,M-0315,PRV-33,Trang Hospital,2024-01-09,INPATIENT,S52
+          .50,P-1006|P-2004|P-2002,57000,false
+      55  CLM-00054,M-0268,PRV-11,Bright Teeth Dental,2024-01-10,DENTAL,K
+          02.9,P-3002|P-3001,1880,false
+     ...
+      89  CLM-00088,M-0456,PRV-28,Chonburi General Hospital,2024-01-15,IN
+          PATIENT,K80.20,B-9003,81130,false
+      90  CLM-00089,M-0238,PRV-34,Patong Medical Clinic,2024-01-16,OUTPAT
+          IENT,N39.0,P-1001|P-1005,1050,false
+      91  CLM-00090,M-0205,PRV-24,Rayong Memorial Hospital,2024-01-16,OUT
+          PATIENT,N39.0,P-1001|P-1005,1110,false
+      92 -CLM-00091,M-0304,PRV-50,Northgate Clinic,2024-01-16,OUTPATIENT,
+         -J18.9,P-1001|P-1006,2980,false                                 
+      92 +CLM-00091,M-0304,PRV-50,Northgate Clinic,2024-01-16,OUTPATIENT,
+         +J18.9,P-1001|P-1006,2820,false                                 
+      93  CLM-00092,M-0111,PRV-19,Surat Thani Hospital,2024-01-16,INPATIE
+          NT,S52.50,P-1006|P-2004|P-2002,58170,false
+      94  CLM-00093,M-0488,PRV-19,Surat Thani Hospital,2024-01-16,OUTPATI
+          ENT,A09,P-1001,930,false
+      95  CLM-00094,M-0079,PRV-12,"Pearl Dental, Co. Ltd",2024-01-16,DENT
+          AL,K08.1,P-3002|P-3004,2010,false
+     ...
+      101  CLM-00100,M-0214,PRV-21,Bang Na Medical Clinic,2024-01-17,OUTP
+           ATIENT,J06.9,P-1001,800,false
+      102  CLM-00101,M-0048,PRV-41,Kanchanaburi Hospital,2024-01-17,INPAT
+           IENT,K35.80,P-1007|B-9002,34520,false
+      103  CLM-00102,M-0295,PRV-33,Trang Hospital,2024-01-17,INPATIENT,S5
+           2.50,P-1006|P-2004|P-2002,66370,false
+      104 -CLM-00103,M-0112,PRV-42,Riverside Polyclinic,2024-01-17,OUTPAT
+          -IENT,S61.0,P-1001|P-2005,5520,false                           
+      104 +CLM-00103,M-0112,PRV-42,Riverside Polyclinic,2024-01-17,OUTPAT
+          +IENT,S61.0,P-1001|P-2005,5420,false                           
+      105  CLM-00104,M-0075,PRV-21,Bang Na Medical Clinic,2024-01-18,OUTP
+           ATIENT,I10,P-1001,840,false
+      106  CLM-00105,M-0102,PRV-43,Chanthaburi Hospital,2024-01-18,INPATI
+           ENT,S52.50,P-1006|P-2004|P-2002,63010,false
+      107  CLM-00106,M-0072,PRV-06,Ari Medical Clinic,2024-01-18,OUTPATIE
+           NT,I10,P-1001|P-1009,1600,false
+     ...
+      112  CLM-00111,M-0240,PRV-38,Saraburi Hospital,2024-01-18,OUTPATIEN
+           T,I10,P-1001,610,false
+      113  CLM-00112,M-0340,PRV-31,Krabi General Hospital,2024-01-19,OUTP
+           ATIENT,A09,P-1001,810,false
+      114  CLM-00113,M-0104,PRV-09,Phuket International Hospital,2024-01-
+           19,OUTPATIENT,N39.0,P-1001|P-1005,990,false
+      115 -CLM-00114,M-0021,PRV-28,Chonburi General Hospital,2024-01-19,O
+          -UTPATIENT,S61.0,P-1001|P-2005,5680,false                      
+      116 -CLM-00115,M-0324,PRV-45,Ratchaburi Hospital,2024-01-19,INPATIE
+          -NT,S52.50,P-1006|P-2004|P-2002,63370,false                    
+      117 -CLM-00116,M-0063,PRV-03,Sukhumvit Family Clinic,2024-01-19,OUT
+          -PATIENT,J06.9,P-1001|P-1002,1220,false                        
+      118 -CLM-00117,M-0177,PRV-25,"Nimman Clinic, Chiang Mai",2024-01-19
+          -,OUTPATIENT,Z00.0,B-9005,1480,false                           
+      119 -CLM-00118,M-0381,PRV-45,Ratchaburi Hospital,2024-01-19,OUTPATI
+          -ENT,E11.9,P-1001|P-1010,1510,false                            
+     … 222 more lines (ctrl+o to expand)
+  ⎿  Updated ai-challenge-10-fraud-detection/data/labels.csv (+9 -9)
+      112  CLM-00111,clean
+      113  CLM-00112,clean
+      114  CLM-00113,clean
+      115 -CLM-00114,upcoding                                            
+      115 +CLM-00114,clean                                               
+      116  CLM-00115,clean
+      117  CLM-00116,clean
+      118  CLM-00117,clean
+      119  CLM-00118,clean
+      120  CLM-00119,clean
+      121 -CLM-00120,clean                                               
+      122 -CLM-00121,dx_procedure_mismatch                               
+      121 +CLM-00120,dx_procedure_mismatch                               
+      122 +CLM-00121,upcoding                                            
+      123  CLM-00122,clean
+      124  CLM-00123,clean
+      125  CLM-00124,clean
+     ...
+      144  CLM-00143,clean
+      145  CLM-00144,duplicate_claim
+      146  CLM-00145,clean
+      147 -CLM-00146,dx_procedure_mismatch                               
+      148 -CLM-00147,upcoding                                            
+      149 -CLM-00148,clean                                               
+      147 +CLM-00146,upcoding                                            
+      148 +CLM-00147,dx_procedure_mismatch                               
+      149 +CLM-00148,upcoding                                            
+      150  CLM-00149,clean
+      151  CLM-00150,clean
+      152  CLM-00151,clean
+      153  CLM-00152,clean
+      154  CLM-00153,clean
+      155 -CLM-00154,amount_clustering                                   
+      156 -CLM-00155,clean                                               
+      157 -CLM-00156,upcoding                                            
+      155 +CLM-00154,clean                                               
+      156 +CLM-00155,amount_clustering                                   
+      157 +CLM-00156,clean                                               
+      158  CLM-00157,clean
+      159  CLM-00158,clean
+      160  CLM-00159,clean
+  ⎿  Updated ai-challenge-10-fraud-detection/docs/DATA_DESIGN.md (+1 -1)
+      128  | 4 | Rapid re-submission | 30 | Copy of a non-surgical clean 
+           claim dated +k days, k in 1..7, with a new amount. k must give
+            a weekday that stays in 2024. The next claim with the same me
+           mber + diagnosis must be ≥ 8 days after the copy (Decision 13)
+           . |
+      129  | 5 | Unbundling | 25 | A protocol that contains a bundle code
+           , with the bundle code replaced by all of its components, pric
+           ed item by item. Spread across the 6 protocols that contain a 
+           bundle. |
+      130  | 6 | Dx–procedure mismatch | 20 | A mapped diagnosis paired w
+           ith the full protocol of a diagnosis from another group (outpa
+           tient, surgical, dental), with ≥ 1 code not valid for it. |
+      131 -| 7 | Upcoding | 30 | Amount = clean mean + z × clean SD of th
+          -e combination, z in [3, 6]. At most 2 per combination, only on
+          - combinations with ≥ 20 clean claims. |                       
+      131 +| 7 | Upcoding | 30 | Amount = clean mean + z × clean SD of th
+          +e combination, z in [3, 4.5]. One claim per combination with ≥
+          + 20 clean claims, and a second only in combinations with ≥ 85 
+          +clean claims, because a second upcoded claim inflates the firs
+          +t one's leave-one-out SD. |                                   
+      132  | 8 | Amount clustering | 20 | Amount drawn uniformly from 47,
+           500–49,999 (rounded to 10), only on clustering-base combinatio
+           ns (Decision 16). |
+      133  
+      134  **Constraints on every injection:**
+  ⎿  Updated ai-challenge-10-fraud-detection/docs/PLAN.md (+4 -3)
+      10  - Wrote `src/csv.ts`, an RFC 4180 claims reader and writer.
+      11  - Wrote `src/stats.ts` for leave-one-out mean and sample SD (De
+          cision 15).
+      12  
+      13 -## Phase 1 — Generator and inspect                             
+      13 +## Phase 1 — Generator (done) and inspect                      
+      14  
+      15  - **`npm run generate`:** a seeded PRNG builds `data/claims.csv
+          ` and `data/labels.csv` following DATA_DESIGN.md. The seed is a
+           CLI argument and is also used for the holdout run.
+      16  - **`npm run inspect`:** sanity checks that fail loudly:
+     ...
+      67     - A clean claim is the base of at most one injection. Fraudu
+          lent claims are never bases.
+      68     - Phantom is the only pattern that changes clean claims: it 
+          moves their date. Moved claims and claims on the phantom provid
+          er-day are not used as bases.
+      69  4. **Upcoding mutual masking.**
+      70 -   - Upcoded amounts are set to the clean mean + z × clean SD, 
+         -with z drawn from [3, 6].                                      
+      71 -   - At most 2 upcoded claims per combination, and only on comb
+         -inations with ≥ 20 clean claims.                               
+      70 +   - Upcoded amounts are set to the clean mean + z × clean SD, 
+         +with z drawn from [3, 4.5].                                    
+      71 +   - One upcoded claim per combination with ≥ 20 clean claims. 
+         +A second claim goes only to combinations with ≥ 85 clean claims
+         +.                                                              
+      72 +   - The first design used z in [3, 6] with any 2 per combinati
+         +on. It failed the z ≥ 2.5 check on 6 of 50 seeds: in a group of
+         + about 45, a partner at z = 6 pulled a z = 3 claim down to abou
+         +t 2.4.                                                         
+      73     - The generator checks that every upcoded claim has a leave-
+          one-out z ≥ 2.5 on the final dataset.
+      74  5. **SD = 0.**
+      75     - Rule: a claim whose leave-one-out SD is 0 is not evaluated
+           and is counted as skipped.
+  ⎿  Updated ai-challenge-10-fraud-detection/node_modules/.vite/vitest/da39
+     a3ee5e6b4b0d3255bfef95601890afd80709/results.json (+1 -1)
+      1 -{"version":"4.1.12","results":[[":tests/csv.test.ts",{"duration"
+        -:4.627999999999986,"failed":false}],[":tests/config.test.ts",{"d
+        -uration":5.986791000000011,"failed":false}],[":tests/stats.test.
+        -ts",{"duration":2.647750000000002,"failed":false}],[":tests/gene
+        -rate.test.ts",{"duration":203.71637499999997,"failed":false}],["
+        -:tests/dates.test.ts",{"duration":4.402458999999993,"failed":fal
+        -se}]]}                                                          
+      1 +{"version":"4.1.12","results":[[":tests/csv.test.ts",{"duration"
+        +:4.211791999999974,"failed":false}],[":tests/config.test.ts",{"d
+        +uration":5.379125000000016,"failed":false}],[":tests/stats.test.
+        +ts",{"duration":3.1212919999999826,"failed":false}],[":tests/gen
+        +erate.test.ts",{"duration":202.147416,"failed":false}],[":tests/
+        +dates.test.ts",{"duration":4.356790999999987,"failed":false}]]} 
+
+⏺ Commit:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Generator đã xong và đã commit 9e29c7e. Seed 42 sinh đúng 1.800 claim sạch và
+  200 claim gian lận theo số lượng của đề. Typecheck sạch, 27 test pass.
+
+  Kết quả npm run generate (seed 42, chạy dưới 1 giây)
+  Members: 488, providers: 50
+    clean                   1800
+    upcoding                  30
+    rapid_resubmission        30
+    duplicate_claim           30
+    unbundling                25
+    phantom_billing           25
+    amount_clustering         20
+    dx_procedure_mismatch     20
+    weekend_anomaly           20
+    total                   2000
+
+  Surgical claims per hospital (clean + injected)
+    12 scheduled_heavy : 30 + 2..7 each
+    3 scheduled_light  : 10 + 1..2 each
+    15 hospital_24_7   :  4 + 0..4 each
+
+  Clustering base combinations (mean + 2 SD >= 50,500)
+    B-9002+P-1008            n= 90  mean=44,487  sd=5,855  mean+2sd=56,196
+    B-9003                   n=135  mean=66,437  sd=8,568  mean+2sd=83,573
+    P-1006+P-2002+P-2004     n=135  mean=63,922  sd=7,947  mean+2sd=79,817
+
+  Phantom day: PRV-25 on 2024-04-17, 31 claims, 6 known false positives
+  Bảng claim phẫu thuật ở trên đã được rút gọn. Đầu ra đầy đủ in từng bệnh viện
+  một dòng.
+
+  Typecheck và test
+  > tsc --noEmit
+  exit=0
+
+   Test Files  5 passed (5)
+        Tests  27 passed (27)
+  exit=0
+
+  Lệch khỏi kế hoạch đã duyệt. Tôi đã chạy generator trên 50 seed. Có 6 seed
+  không qua kiểm tra "mọi claim upcoded có z leave-one-out ≥ 2,5": claim tệ nhất
+  có z khoảng 2,35–2,47. Rule vẫn bắt được chúng (vẫn > 2), nhưng không còn
+  khoảng an toàn kế hoạch đặt ra.
+  - Nguyên nhân: hai claim upcoded trong cùng một tổ hợp che lẫn nhau mạnh hơn
+    tôi ước tính. Trong nhóm khoảng 45 claim, một claim ở z = 6 kéo claim còn
+    lại từ z = 3 xuống khoảng 2,4.
+  - Cách sửa: tôi giữ nguyên ngưỡng kiểm tra và sửa generator:
+    - z lấy trong [3; 4,5] thay vì [3; 6];
+    - mỗi tổ hợp nhận 1 claim trước, claim thứ hai chỉ đặt vào tổ hợp có ≥ 85
+      claim sạch.
+  - Kết quả: 200/200 seed qua mọi kiểm tra.
+  - Đã ghi thay đổi và lý do vào DATA_DESIGN F và PLAN.md.
+
+  Ngoài các test bạn yêu cầu
+  - verify.ts kiểm tra dataset cuối và ném lỗi nếu có vi phạm, trong đó có hai
+    kiểm tra theo chiều ngược lại: không claim nào ngoài nhãn duplicate/rapid vô
+    tình khớp hai rule đó. Seed 42 không có vi phạm nào.
+  - Thêm src/dates.ts và src/codes.ts, viết theo hướng để các rule sau này dùng
+    lại.
+  - Test thêm: claim_id được đánh theo thứ tự ngày, và không có Math.random
+    trong src/.
+  - Kiểm tra lộ nhãn nhanh: claim gian lận trải từ dòng 28 đến dòng 1.996, vị
+    trí trung bình 916 (nếu phân bố đều thì khoảng 1.000). Tỷ lệ số tiền chia
+    hết cho 100 là 9,9% ở claim sạch và 14,0% ở claim gian lận; mức chênh này
+    nằm trong mức nhiễu với 200 claim.
+
+  Cần bạn biết
+  - Kết thúc dòng trong CSV: khi commit, git báo sẽ đổi kết thúc dòng CRLF của
+    các file CSV sang LF. Vì vậy bản trong repo không còn giống từng byte với
+    file vừa sinh, dù nội dung vẫn như nhau; điều này không ảnh hưởng tới test.
+    Nếu muốn giữ đúng byte theo RFC 4180, có thể thêm .gitattributes với dòng
+    *.csv -text. Tôi chưa thêm.
+  - Rule weekend: generator an toàn dù tỷ lệ cuối tuần được tính trên mọi claim
+    hay chỉ claim phẫu thuật. Đến phase rule vẫn cần chốt một cách.
+  - Việc còn mở trong PLAN.md: chỉ còn cách chuẩn hoá điểm và các mức ưu tiên,
+    để cho phase 3.
