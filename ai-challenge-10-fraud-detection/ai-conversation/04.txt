@@ -1,0 +1,670 @@
+
+❯ Tạo src/context.ts: hàm buildContext(claims, config) dựng trong MỘT lượt
+  duyệt mọi index mà 8 rule cần:
+  - theo member + provider + ngày + chẩn đoán (cho duplicate);
+  - theo member + chẩn đoán, sắp theo ngày (cho rapid re-submission);
+  - theo provider + ngày (cho phantom);
+  - thống kê số tiền theo tổ hợp mã thủ thuật, lưu n, tổng, tổng bình phương
+  (cho upcoding);
+  - số claim và số claim cuối tuần theo provider (cho weekend).
+    Tạo thêm tests/helpers.ts với hàm makeClaim(overrides) trả về một claim
+  sạch hợp lệ (J06.9 + P-1001, ngày thường, số tiền ~800), để test tự dựng tình
+  huống nhỏ bằng tay.
+    Chưa viết rule nào.
+
+⏺ Tôi xem cấu trúc repo trước để viết khớp với code hiện có.
+
+  Ran 5 shell commands (ctrl+o to expand)
+  ⎿  Error: No such tool available: bash. Tool names are case-sensitive: call
+     Bash instead.
+
+⏺ Đã viết xong src/context.ts, tests/helpers.ts và sửa src/types.ts. Lệnh trước
+  gõ sai tên tool nên chưa chạy, tôi chạy lại để ghi test và kiểm tra. · summary
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Lệnh sed -i chưa chạy được do macOS cần đối số rỗng, và provider trong helper
+  vẫn trùng mã P-1001 với mã thủ thuật khiến test báo lỗi. Tôi sẽ dùng Edit để
+  sửa trực tiếp. · summary
+
+⏺ Update(tests/helpers.ts)
+  ⎿  Added 1 line, removed 1 line
+      13    return {
+      14      claim_id: `CLM-T${String(nextId++).padStart(5, '0')}`,
+      15      member_id: 'M-0001',
+      16 -    provider_id: 'P-1001',                                     
+      16 +    provider_id: 'PRV-01',                                     
+      17      provider_name: 'Test Clinic',
+      18      claim_date,
+      19      claim_type: 'OUTPATIENT',
+  ⎿  Loaded CLAUDE.md
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Tôi đã tạo buildContext(claims, config) và makeClaim(overrides), chưa viết
+  rule nào. npm run typecheck không báo lỗi và npm test pass 35/35, gồm 8 test
+  mới.
+
+  Output đã chạy:
+  > tsc --noEmit
+  (không có lỗi)
+
+   Test Files  6 passed (6)
+        Tests  35 passed (35)
+
+  Thay đổi:
+  - src/context.ts: buildContext duyệt claims một lượt để dựng 5 index. Sau lượt
+    đó chỉ có bước sort trong từng nhóm, vì cần thứ tự cho Decision 1 và cho
+    việc nhìn lại claim trước đó của rapid re-submission. Ba hàm duplicateKey,
+    memberDiagnosisKey, providerDayKey cũng được export để rule tra cứu bằng
+    đúng key đã dùng khi dựng.
+  - src/types.ts: RuleContext giờ có thêm 5 index và hai kiểu mới
+    AmountAggregate và WeekendTally. Trước đó RuleContext chưa được dùng ở đâu
+    nên không ảnh hưởng code cũ.
+  - tests/helpers.ts: makeClaim(overrides) trả về claim J06.9 + P-1001, thứ Tư
+    2024-03-06, số tiền 800, provider PRV-01, member M-0001. Mỗi lần gọi có
+    claim_id mới. is_weekend tự theo claim_date nếu bạn đổi ngày mà không đặt
+    nó.
+  - tests/context.test.ts: test cho makeClaim và cả 5 index, kể cả dataset rỗng.
+
+  Index được dựng:
+
+  ┌────────────────────────┬────────────────┬─────────────────┬─────────────┐
+  │         Index          │      Key       │     Giá trị     │   Thứ tự    │
+  ├────────────────────────┼────────────────┼─────────────────┼─────────────┤
+  │                        │ member,        │                 │             │
+  │ duplicateGroups        │ provider,      │ danh sách claim │ tăng theo   │
+  │                        │ ngày, chẩn     │                 │ claim_id    │
+  │                        │ đoán           │                 │             │
+  ├────────────────────────┼────────────────┼─────────────────┼─────────────┤
+  │                        │                │                 │ theo ngày,  │
+  │ memberDiagnosisHistory │ member, chẩn   │ danh sách claim │ hòa thì     │
+  │                        │ đoán           │                 │ theo        │
+  │                        │                │                 │ claim_id    │
+  ├────────────────────────┼────────────────┼─────────────────┼─────────────┤
+  │ providerDayClaims      │ provider, ngày │ danh sách claim │ thứ tự gốc  │
+  ├────────────────────────┼────────────────┼─────────────────┼─────────────┤
+  │                        │ tổ hợp mã thủ  │                 │             │
+  │ comboAmounts           │ thuật (sắp xếp │ {n, sum,        │ không áp    │
+  │                        │  bằng comboKey │ sumSquares}     │ dụng        │
+  │                        │  cũ)           │                 │             │
+  ├────────────────────────┼────────────────┼─────────────────┼─────────────┤
+  │ providerWeekend        │ provider       │ {claims,        │ không áp    │
+  │                        │                │ weekendClaims}  │ dụng        │
+  └────────────────────────┴────────────────┴─────────────────┴─────────────┘
+
+  Điểm cần lưu ý:
+  - Weekend: providerWeekend tính cuối tuần từ claim_date (UTC), không đọc cột
+    is_weekend, theo convention trong CLAUDE.md. Hai giá trị này đang khớp nhau
+    vì verify.ts kiểm tra điều đó. Số liệu này gồm cả claim đang xét, nên rule
+    weekend phải trừ claim đó ra (Decision 6).
+  - Upcoding: comboAmounts mới chỉ lưu tổng. Để tính mean và SD bỏ claim đang
+    xét (Decision 15), rule cần công thức từ n, sum, sumSquares. Tôi chưa viết
+    helper này vì bạn yêu cầu chưa làm rule, nên nó sẽ nằm ở bước viết rule
+    upcoding. Số tiền trong dữ liệu là số nguyên nên các tổng này chính xác, và
+    trường hợp SD = 0 vẫn ra đúng 0.
+  - Lỗi tự gây ra: lúc đầu tôi đặt provider_id của makeClaim là P-1001, trùng
+    với mã thủ thuật. Test provider-weekend bắt được lỗi đó và tôi đã sửa lại
+    thành PRV-01. Không test nào bị sửa để cho qua.
+
+❯ Rule amount_clustering, theo mục 8 trong docs/DECISIONS.md.
+  Trước tiên viết tests/rules/amount-clustering.test.ts với các ca: 47.499
+  không gắn cờ; 47.500 gắn cờ; 49.999 gắn cờ; 50.000 không gắn cờ; đổi ngưỡng
+  trong config thành 100.000 thì 49.000 không còn bị gắn cờ. Dùng makeClaim(),
+  không dùng dữ liệu đã sinh. Chạy và cho tôi thấy test đang fail.
+  Sau đó viết src/rules/amount-clustering.ts là hàm thuần, ngưỡng và biên % lấy
+  từ config. Evidence phải có: số tiền, phần trăm so với ngưỡng, ngưỡng, và
+  giá trung bình thường gặp của tổ hợp mã nếu có. Không đụng vào test hay rule
+  khác.
+
+  Rule duplicate_claim, theo mục 1 trong docs/DECISIONS.md.
+  Trước tiên viết tests/rules/duplicate-claim.test.ts với các ca: 2 bản trùng →
+  chỉ bản có claim_id lớn hơn bị gắn cờ; 3 bản trùng → 2 bản sau bị gắn cờ;
+  cùng member + provider + ngày nhưng khác chẩn đoán → không gắn cờ; cùng mọi
+  thứ nhưng khác provider → không gắn cờ. Chạy và cho tôi thấy test đang fail.
+  Sau đó viết src/rules/duplicate-claim.ts dùng index trong context. Evidence
+  phải có: claim_id bản gốc, member, provider, ngày, chẩn đoán, và "bản thứ
+  k/n". Lưu ý so sánh claim_id đúng thứ tự số. Không đụng vào test hay rule
+  khác.
+
+  Rule rapid_resubmission, theo mục 2 trong docs/DECISIONS.md.
+  Trước tiên viết tests/rules/rapid-resubmission.test.ts với các ca: cách 0
+  ngày → không gắn cờ (việc của duplicate); cách 1 ngày và cách 7 ngày → gắn cờ
+  claim sau; cách 8 ngày → không; khác chẩn đoán → không; claim đầu tiên trong
+  chuỗi không bao giờ bị gắn cờ; chuỗi ba claim cách nhau 3 ngày → claim 2 và
+  3 bị gắn cờ, mỗi claim so với claim liền trước; hai ngày vắt qua cuối tháng
+  (2024-01-30 và 2024-02-02) tính đúng 3 ngày. Chạy và cho tôi thấy test đang
+  fail.
+  Sau đó viết src/rules/rapid-resubmission.ts. Tính số ngày bằng phép trừ UTC,
+  không dùng giờ địa phương. Evidence phải có: claim_id trước đó, ngày của nó,
+  chẩn đoán, và số ngày cách nhau. Không đụng vào test hay rule khác.
+
+  Rule dx_procedure_mismatch, theo mục 7 trong docs/DECISIONS.md.
+  Trước tiên viết tests/rules/dx-procedure-mismatch.test.ts với các ca: J06.9 +
+  P-2001 → gắn cờ; J06.9 + P-1001 → không; chẩn đoán không có trong mapping →
+  không gắn cờ; E11.9 với các mã thành phần P-1002, P-1003, P-1004 (tức tách
+  gói B-9001) → KHÔNG bị rule này gắn cờ; claim có một mã hợp lệ và một mã lạc
+  → gắn cờ và chỉ nêu mã lạc. Chạy và cho tôi thấy test đang fail.
+  Sau đó viết src/rules/dx-procedure-mismatch.ts. Danh sách hợp lệ = hợp các
+  phác đồ + thành phần của các gói trong đó. Evidence phải có: chẩn đoán kèm
+  tên, mã lạc kèm tên, và danh sách mã hợp lệ. Không đụng vào test hay rule
+  khác.
+
+  Rule unbundling, theo mục 4 trong docs/DECISIONS.md.
+  Trước tiên viết tests/rules/unbundling.test.ts với các ca: đủ P-1002, P-1003,
+  P-1004 không có B-9001 → gắn cờ; thiếu một trong ba → không; P-1001 + P-1002
+  (khám + công thức máu, 2/4 thành phần của B-9005) → không; có mã gói B-9001
+  và không có thành phần → không; có cả B-9001 lẫn đủ ba thành phần → gắn cờ
+  với evidence nói rõ là tính hai lần. Chạy và cho tôi thấy test đang fail.
+  Sau đó viết src/rules/unbundling.ts, đọc danh sách gói từ config. Evidence
+  phải có: các mã thành phần tìm thấy, mã gói lẽ ra phải dùng, giá gói và tổng
+  giá lẻ. Không đụng vào test hay rule khác.
+
+  Rule phantom_billing, theo mục 5 trong docs/DECISIONS.md.
+  Trước tiên viết tests/rules/phantom-billing.test.ts với các ca: một provider
+  có đúng 30 claim trong một ngày → không claim nào bị gắn cờ; 31 claim → cả 31
+  bị gắn cờ; hai provider mỗi nơi 20 claim cùng ngày → không gắn cờ (không
+  cộng dồn qua provider); cùng provider 20 claim mỗi ngày trong hai ngày →
+  không. Chạy và cho tôi thấy test đang fail.
+  Sau đó viết src/rules/phantom-billing.ts, ngưỡng lấy từ config. Evidence phải
+  có: provider, ngày, số claim ngày đó, ngưỡng, và số claim trung bình mỗi
+  ngày hoạt động của provider đó. Không đụng vào test hay rule khác.
+
+  ps: mỗi rule một commit.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Tôi commit phần buildContext và helper ở bước trước thành một commit riêng, vì
+  các rule phụ thuộc vào nó. Sau đó làm từng rule theo thứ tự bạn đưa ra.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Rule 1: amount_clustering. Viết test trước.
+
+⏺ Write(tests/rules/amount-clustering.test.ts)
+  ⎿  Wrote 71 lines to tests/rules/amount-clustering.test.ts
+      1 import { join } from 'node:path';
+      2 import { describe, expect, it } from 'vitest';
+      3 import { loadConfig } from '../../src/config.js';
+      4 import { buildContext } from '../../src/context.js';
+      5 import { amountClustering } from '../../src/rules/amount-clusteri
+      6 import type { Claim, Config } from '../../src/types.js';
+      7 import { makeClaim } from '../helpers.js';
+      8
+      9 const config = loadConfig(join(import.meta.dirname, '..', '..', '
+        config'));
+     … +80 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Test đang fail vì chưa có module. Giờ viết rule, kèm một helper định dạng số
+  dùng chung cho evidence.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Rule 2: duplicate_claim. Test trước, gồm cả ca thứ tự số của claim_id (CLM-9
+  so với CLM-10).
+
+⏺ Write(tests/rules/duplicate-claim.test.ts)
+  ⎿  Wrote 69 lines to tests/rules/duplicate-claim.test.ts
+      1 import { join } from 'node:path';
+      2 import { describe, expect, it } from 'vitest';
+      3 import { loadConfig } from '../../src/config.js';
+      4 import { buildContext } from '../../src/context.js';
+      5 import { duplicateClaim } from '../../src/rules/duplicate-claim.j
+      6 import type { Claim } from '../../src/types.js';
+      7 import { makeClaim } from '../helpers.js';
+      8
+      9 const config = loadConfig(join(import.meta.dirname, '..', '..', '
+        config'));
+     … +76 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Tôi viết rule trước và chạy thử khi context.ts còn sort theo chuỗi, để thấy ca
+  thứ tự số thật sự bắt được lỗi.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Đúng như dự đoán: so sánh chuỗi coi CLM-10 là bản gốc. Sửa trong context.ts
+  bằng phép so sánh theo phần số.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Write(tests/rules/rapid-resubmission.test.ts)
+  ⎿  Wrote 92 lines to tests/rules/rapid-resubmission.test.ts
+      1 import { join } from 'node:path';
+      2 import { describe, expect, it } from 'vitest';
+      3 import { loadConfig } from '../../src/config.js';
+      4 import { buildContext } from '../../src/context.js';
+      5 import { rapidResubmission } from '../../src/rules/rapid-resubmis
+      6 import type { Claim } from '../../src/types.js';
+      7 import { makeClaim } from '../helpers.js';
+      8
+      9 const config = loadConfig(join(import.meta.dirname, '..', '..', '
+        config'));
+     … +119 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Test đang fail (thiếu module). Viết rule.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Write(tests/rules/dx-procedure-mismatch.test.ts)
+  ⎿  Wrote 66 lines to tests/rules/dx-procedure-mismatch.test.ts
+      1 import { join } from 'node:path';
+      2 import { describe, expect, it } from 'vitest';
+      3 import { loadConfig } from '../../src/config.js';
+      4 import { buildContext } from '../../src/context.js';
+      5 import { dxProcedureMismatch } from '../../src/rules/dx-procedure
+      6 import type { Claim } from '../../src/types.js';
+      7 import { makeClaim } from '../helpers.js';
+      8
+      9 const config = loadConfig(join(import.meta.dirname, '..', '..', '
+        config'));
+     … +75 lines (ctrl+o to expand)
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Test đang fail. Vì config hiện không có tên chẩn đoán (chỉ có mã và
+  claim_type), tôi sẽ ghi evidence bằng mã chẩn đoán kèm loại claim, và nêu rõ
+  điều này trong báo cáo cuối. · summary
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Write(tests/rules/unbundling.test.ts)
+  ⎿  Wrote 73 lines to tests/rules/unbundling.test.ts
+      1 import { join } from 'node:path';
+      2 import { describe, expect, it } from 'vitest';
+      3 import { loadConfig } from '../../src/config.js';
+      4 import { buildContext } from '../../src/context.js';
+      5 import { unbundling } from '../../src/rules/unbundling.js';
+      6 import type { Claim } from '../../src/types.js';
+      7 import { makeClaim } from '../helpers.js';
+      8
+      9 const config = loadConfig(join(import.meta.dirname, '..', '..', '
+        config'));
+     … +79 lines (ctrl+o to expand)
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+⏺ Write(tests/rules/phantom-billing.test.ts)
+  ⎿  Wrote 66 lines to tests/rules/phantom-billing.test.ts
+      1 import { join } from 'node:path';
+      2 import { describe, expect, it } from 'vitest';
+      3 import { loadConfig } from '../../src/config.js';
+      4 import { buildContext } from '../../src/context.js';
+      5 import { phantomBilling } from '../../src/rules/phantom-billing.j
+      6 import type { Claim, Config } from '../../src/types.js';
+      7 import { makeClaim } from '../helpers.js';
+      8
+      9 const config = loadConfig(join(import.meta.dirname, '..', '..', '
+        config'));
+     … +77 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Test đang fail. Rule cần số ngày hoạt động của provider, mà context chưa có.
+  Tôi thêm index này vào cùng lượt duyệt, không quét lại.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Cả 6 rule đã xong, mỗi rule một commit, đều làm theo thứ tự test viết trước,
+  chạy thấy fail, rồi mới viết rule. Cuối cùng npm run typecheck sạch và npm
+  test pass 92/92 (12 file).
+
+  ┌─────────┬───────────────────────┬──────────┐
+  │ Commit  │         Rule          │ Test mới │
+  ├─────────┼───────────────────────┼──────────┤
+  │ e3cf457 │ amount_clustering     │ 9        │
+  ├─────────┼───────────────────────┼──────────┤
+  │ 419b49d │ duplicate_claim       │ 9        │
+  ├─────────┼───────────────────────┼──────────┤
+  │ 9b9ef2b │ rapid_resubmission    │ 13       │
+  ├─────────┼───────────────────────┼──────────┤
+  │ 37c8648 │ dx_procedure_mismatch │ 9        │
+  ├─────────┼───────────────────────┼──────────┤
+  │ 4c22805 │ unbundling            │ 10       │
+  ├─────────┼───────────────────────┼──────────┤
+  │ b101d8b │ phantom_billing       │ 7        │
+  └─────────┴───────────────────────┴──────────┘
+
+  Tôi chỉ nghiệm thu bằng typecheck và test. Chưa chạy rule trên dữ liệu sinh
+  ra.
+
+  Lúc test fail: cả 6 lần đều fail vì chưa có module src/rules/*.js. Riêng thứ
+  tự số của claim_id thì có một lần fail có nội dung. Sau khi viết rule
+  duplicate, context.ts vẫn sort theo chuỗi nên ca CLM-9 / CLM-10 ra expected
+  ['CLM-9'] to deeply equal ['CLM-10']. Tôi thêm compareClaimIds vào context.ts
+  (so tiền tố rồi so phần số bằng BigInt) và ca đó pass.
+
+  Điểm lệch so với yêu cầu, cần bạn xem:
+  1. Tên chẩn đoán: config không có tên chẩn đoán, chỉ có mã và claim_type.
+     Evidence của dx_procedure_mismatch ghi J06.9 (OUTPATIENT), còn mã lạc và
+     danh sách hợp lệ thì có tên đầy đủ. Muốn có tên ICD-10 thì phải thêm trường
+     name vào dx-procedure-map.json và config.ts. Tôi chưa làm vì ngoài phạm
+     vi.
+  2. Đổi ngưỡng clustering: config chỉ có min_amount và max_amount tuyệt đối,
+     không có biên %, và config.ts bắt max_amount < ngưỡng. Nếu chỉ đổi ngưỡng
+     thành 100.000 thì 49.000 vẫn nằm trong 47.500–49.999 và vẫn bị gắn cờ. Test
+     của tôi đổi cả ba giá trị (100.000 / 95.000 / 99.999). Nếu bạn muốn biên
+     tự suy ra từ ngưỡng (ví dụ ngưỡng × 95%), cần thêm một khóa % vào config.
+  3. Giá "thường gặp" của clustering: là trung bình các claim khác cùng tổ hợp
+     mã, bỏ chính claim đang xét. Evidence ghi rõ dựa trên bao nhiêu claim. Nếu
+     tổ hợp chỉ có một claim thì bỏ phần này.
+
+  Thay đổi ngoài file rule:
+  - Commit riêng cho buildContext: tôi commit phần buildContext và makeClaim ở
+    bước trước (fc1787e) để lịch sử không có commit nào build hỏng. Bạn chưa yêu
+    cầu commit đó.
+  - src/format.ts mới: hàm formatNumber dùng chung cho evidence.
+  - describeCode trong src/codes.ts: hàm mới ghép mã với tên thủ thuật.
+  - Index providerActiveDays: thêm vào context.ts và types.ts cho
+    phantom_billing (b101d8b), tính trong cùng một lượt duyệt. Rule này cần số
+    ngày hoạt động của provider, mà context trước đó chưa có.
+  - Test cũ: không test nào có từ trước bị sửa.
+
+  Ghi chú nhỏ: phantom_billing lấy tổng claim của provider từ
+  providerWeekend.claims, nên tên field hơi lệch nghĩa. Nếu bạn thấy khó đọc,
+  tôi có thể đổi tên thành tổng claim theo provider.
+
+  Còn lại upcoding và weekend_anomaly. Hai rule này cần helper tính
+  leave-one-out từ n, sum, sumSquares.
+
+❯ /model opus
+  ⎿  Set model to claude-opus-5-5
+
+❯ Rule weekend_anomaly, theo mục 6 trong docs/DECISIONS.md.
+  Trước tiên viết tests/rules/weekend-anomaly.test.ts với các ca:
+  - provider có 40 claim, trong đó 2 ca mổ Chủ Nhật, còn lại ngày thường → cả 2
+  ca bị gắn cờ (tỷ lệ không tính chính claim đang xét = 1/39 ≈ 2,6%);
+  - cùng tình huống nhưng tính cả claim đang xét sẽ ra 2/40 = 5%: viết một test
+  ghi rõ vì sao phải loại claim đang xét;
+  - bệnh viện 24/7 có ~28% claim cuối tuần, ca mổ Chủ Nhật → không;
+  - khám thường (không phải phẫu thuật) vào thứ Bảy → không;
+  - provider chỉ có 15 claim → không (dưới ngưỡng lịch sử 20);
+  - claim có gói phẫu thuật B-9002 vào Chủ Nhật → được tính là phẫu thuật;
+  - 2024-03-16 là thứ Bảy và 2024-03-18 là thứ Hai dù máy chạy ở múi giờ nào.
+  Chạy và cho tôi thấy test đang fail.
+  Sau đó viết src/rules/weekend-anomaly.ts. Ngày trong tuần dùng getUTCDay().
+  Evidence phải có: mã phẫu thuật, thứ và ngày, provider, tỷ lệ cuối tuần dạng
+  phần trăm và dạng x/y, ghi rõ "không tính claim này". Không đụng vào test hay
+  rule khác.
+
+  ultrathink
+  Rule upcoding, theo mục 3 trong docs/DECISIONS.md.
+  Trước tiên viết tests/rules/upcoding.test.ts với các ca:
+  - nhóm 20 claim P-1001 có số tiền quanh 800, thêm một claim 2.000 → gắn cờ;
+  - claim 900 trong cùng nhóm → không;
+  - nhóm chỉ có 8 claim → bỏ qua, không gắn cờ, và được đếm vào số "không đủ dữ
+  liệu";
+  - nhóm mà mọi claim khác có cùng một số tiền (SD = 0) → không lỗi, không ra
+  Infinity hay NaN;
+  - claim [P-1001, P-1002] không bị so với nhóm [P-1001] (thứ tự mã khác nhau
+  vẫn ra cùng nhóm);
+  - một ca tính tay: nhóm 5 claim giá trị ghi sẵn, kiểm tra mean và SD
+  leave-one-out ra đúng số tính tay (ghi phép tính trong comment của test);
+  trong test này cho phép ngưỡng nhóm tối thiểu nhỏ hơn qua config;
+  - z đúng bằng 2 → không gắn cờ (đề nói "> 2").
+  Chạy và cho tôi thấy test đang fail.
+  Sau đó viết src/rules/upcoding.ts. Leave-one-out tính trong O(1) từ n, tổng,
+  tổng bình phương có sẵn trong context. Dùng phương sai mẫu (chia n − 2 sau
+  khi bỏ một claim) và ghi rõ trong comment. Evidence phải có: số tiền, tổ hợp
+  mã, mean, SD, số claim của nhóm (không tính claim này), và z. Không đụng vào
+  test hay rule khác.
+
+  ps: mỗi rule 1 commit
+
+⏺ Tôi đọc lại các phần sẽ dùng trước khi viết test: isSurgical, dayOfWeekUtc,
+  leaveOneOutStats.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Tôi xác nhận ngưỡng min_provider_claims = 20 của rule weekend_anomaly tính cả
+  claim đang xét, dựa trên ví dụ Decision 14 và tên khóa config. Tôi sẽ thêm
+  test ca biên 20 và 19 để chốt cách hiểu này.
+
+⏺ Write(tests/rules/weekend-anomaly.test.ts)
+  ⎿  Wrote 145 lines to tests/rules/weekend-anomaly.test.ts
+      1 import { join } from 'node:path';
+      2 import { afterEach, describe, expect, it } from 'vitest';
+      3 import { loadConfig } from '../../src/config.js';
+      4 import { buildContext } from '../../src/context.js';
+      5 import { weekendAnomaly } from '../../src/rules/weekend-anomaly.j
+      6 import type { Claim } from '../../src/types.js';
+      7 import { makeClaim } from '../helpers.js';
+      8
+      9 const config = loadConfig(join(import.meta.dirname, '..', '..', '
+        config'));
+     … +181 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Test đang fail (thiếu module). Viết rule. dayOfWeekUtc trong dates.ts đã dùng
+  getUTCDay() nên rule dùng lại hàm đó.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Tất cả bài test pass, bao gồm cả 4 múi giờ — ca kiểm chứng ở Pacific/Pago_Pago
+  xác nhận đổi TZ lúc chạy hoạt động đúng, getDay() trả về thứ Sáu theo giờ địa
+  phương. Giờ tôi sẽ commit.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Trước khi viết test cho Rule 8 (upcoding), tôi sẽ thử với số thật để kiểm tra
+  xem cách tính từ tổng bình phương có tạo phần dư khác 0 khi các số tiền bằng
+  nhau nhưng không nguyên, vì nếu có thì SD giả sẽ cho z khổng lồ.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Tôi xác nhận có 9.704 tổ hợp cho phần dư dương, với sai lệch lớn nhất chỉ cỡ
+  4,2·10⁻⁸ × mean, nên rule sẽ coi SD nhỏ hơn 10⁻⁶ × mean là 0 để tránh z-score
+  ảo lên tới hàng nghìn. Tôi sẽ đưa đúng tình huống này vào test.
+
+⏺ Write(tests/rules/upcoding.test.ts)
+  ⎿  Wrote 172 lines to tests/rules/upcoding.test.ts
+       1 import { join } from 'node:path';
+       2 import { describe, expect, it } from 'vitest';
+       3 import { loadConfig } from '../../src/config.js';
+       5 import { assessUpcoding, countUpcodingSkips, upcoding } from '..
+         /../src/rules/upcoding.js';
+       6 import { leaveOneOutStats } from '../../src/stats.js';
+       7 import type { Claim, Config } from '../../src/types.js';
+       9
+      10 const config = loadConfig(join(import.meta.dirname, '..', '..',
+         'config'));
+     … +223 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Test đang fail (thiếu module). Viết rule. Để chắc ca phần dư dấu phẩy động
+  thật sự có ý nghĩa, tôi chạy thử với dung sai = 0 trước.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Khi dung sai = 0, đúng ca đó fail (claim bị chấm điểm thay vì bị bỏ qua), nên
+  dung sai là cần thiết. Đã đặt lại 1e-6. Chạy toàn bộ:
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Đã viết xong weekend_anomaly và upcoding, mỗi rule một commit. Cả 8 rule giờ
+  đã có. Kết quả cuối: npm run typecheck sạch và npm test pass 119/119 trong 14
+  file.
+
+  > tsc --noEmit
+   Test Files  14 passed (14)
+        Tests  119 passed (119)
+
+  ┌─────────┬─────────────────┬──────────┐
+  │ Commit  │      Rule       │ Test mới │
+  ├─────────┼─────────────────┼──────────┤
+  │ 53a0d00 │ weekend_anomaly │ 15       │
+  ├─────────┼─────────────────┼──────────┤
+  │ 9a0f8b8 │ upcoding        │ 12       │
+  └─────────┴─────────────────┴──────────┘
+
+  Cả hai rule đều làm theo trình tự: viết test trước, chạy thấy fail vì chưa có
+  module, rồi mới viết rule. Tôi chưa chạy 8 rule trên dữ liệu đã sinh; việc đó
+  thuộc phần score.
+
+  weekend_anomaly
+  - Loại claim đang xét: test ghi rõ lý do. Nếu tính cả claim thì tỷ lệ là 2/40
+    = 5%, không nhỏ hơn 5%, nên hai ca mổ tự che lẫn nhau và rule bỏ sót cả hai.
+    Loại claim ra thì còn 1/39 ≈ 2,6%, cả hai đều bị gắn cờ.
+  - Múi giờ: test chạy ở 4 múi giờ (UTC, Asia/Ho_Chi_Minh, Pacific/Kiritimati
+    +14, Pacific/Pago_Pago −11). Có thêm một ca chứng minh việc đổi TZ có tác
+    dụng thật: ở Pago Pago, cách tính theo giờ địa phương ra thứ Sáu cho ngày
+    2024-03-16. Nhờ vậy, nếu rule lỡ dùng giờ địa phương thì test sẽ bắt được.
+  - getUTCDay(): rule dùng dayOfWeekUtc có sẵn trong dates.ts, hàm này đã gọi
+    getUTCDay().
+  - Evidence: viết bằng tiếng Anh theo CLAUDE.md, nên "không tính claim này"
+    thành "excluding this claim". Ví dụ: Surgical procedure P-2001
+    (Appendectomy); P-2002 (Anesthesia) on Sunday 2024-03-17 at provider PRV-01,
+    whose weekend share is 0.0% (0/39 claims, excluding this claim), below the
+    5% limit.
+
+  Cần bạn xác nhận: tôi hiểu ngưỡng 20 claim của weekend là tổng số claim của
+  provider, kể cả claim đang xét. Lý do là ví dụ ở Decision 14 ("a provider with
+  20 claims … 1/19") và tên khóa min_provider_claims; upcoding thì khác, có
+  khóa riêng min_other_claims. Tôi thêm ca biên để chốt cách hiểu này: 20 claim
+  thì được xét, 19 thì không. Nếu bạn muốn đếm "20 claim khác" thì chỉ cần sửa
+  ca biên đó và một dòng trong rule.
+
+  upcoding
+  - Tính leave-one-out: dùng n, tổng và tổng bình phương trong context, độ phức
+    tạp O(1). Comment trong file ghi rõ dùng phương sai mẫu, chia cho n − 2.
+  - Ngoài ca tính tay: có thêm một test so với hàm hai lượt leaveOneOutStats có
+    sẵn trên 15 claim. Kết quả khớp tới 9 chữ số thập phân.
+  - SD = 0: không lỗi, không ra Infinity hay NaN. Claim đó bị bỏ qua và được đếm
+    riêng, như Resolved item 5 trong PLAN.
+  - Dung sai SD: tôi phát hiện khi mọi số tiền bằng nhau nhưng không nguyên,
+    cách tính bằng tổng bình phương vẫn để lại SD giả. Tôi đo được tối đa khoảng
+    4·10⁻⁸ × mean, đủ làm z lên hàng trăm nghìn. Rule coi SD nhỏ hơn 10⁻⁶ ×
+    mean là 0. Tôi đã kiểm chứng: đặt dung sai = 0 thì ca test tương ứng fail.
+    Với số tiền nguyên như dữ liệu hiện tại thì phép tính chính xác, không bị
+    ảnh hưởng.
+  - Hàm export thêm: assessUpcoding trả về insufficient_data, zero_sd hoặc
+    scored kèm mean, SD, z. countUpcodingSkips(ctx) đếm số claim bị bỏ qua theo
+    từng lý do. Rule cần hai hàm này cho yêu cầu "đếm vào số không đủ dữ liệu",
+    và báo cáo Phase 4 sẽ dùng chúng.
+  - Ngưỡng hiệu lực: ít nhất 2 claim khác, dù config đặt thấp hơn, vì SD mẫu cần
+    ít nhất 2 giá trị.
+
+  Không test hay rule nào có từ trước bị sửa.
+
+❯ /model sonnet
+  ⎿  Set model to claude-sonnet-5-5
+
+❯ Mẫu số trong rule weekend_anomaly là các claim phẫu thuật của provider hay
+  tất cả claim của provider? Trả lời ngắn. Nếu chưa phải "claim phẫu thuật của
+  provider, bỏ chính claim đang xét", sửa rule và test cho đúng như vậy, rồi
+  ghi cách tính vào docs/DECISIONS.md. Chạy typecheck và test, commit.
+
+⏺ Trả lời ngắn: hiện mẫu số là tất cả claim của provider, chưa đúng. Tôi sẽ sửa
+  thành claim phẫu thuật của provider, bỏ claim đang xét. Test viết lại trước,
+  sau đó sửa rule.
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Ba test phân biệt hai cách tính đang fail như mong đợi. Giờ sửa context và
+  rule.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Kiểm nhanh trên dữ liệu đã sinh (không commit): số claim bị gắn cờ so với số
+  ca weekend được tiêm vào.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+❯ Tạo src/rules/index.ts xuất 8 rule trong một mảng, và src/engine.ts với hàm
+  runRules(claims, config) trả về danh sách cờ của từng claim.
+  Thêm một test tích hợp trên khoảng 12 claim dựng tay, trong đó tôi biết chính
+  xác rule nào bật trên claim nào, gồm ít nhất: một cặp duplicate (kiểm tra
+  rapid KHÔNG bật trên cặp này), một claim dính cùng lúc upcoding và
+  clustering, và một claim sạch không dính rule nào.
+  Chạy typecheck và toàn bộ test, dán kết quả kèm tổng số test.
+
+⏺ Script kiểm tra đang gọi sai tên hàm, đúng ra phải là claimsFromCsv. Tôi sẽ
+  sửa lại, chạy lại script, rồi tiếp tục hoàn thiện docs và commit cho sửa lỗi
+  weekend_anomaly, sau đó chuyển sang yêu cầu mới của bạn. · summary
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Trên dữ liệu sinh ra, rule gắn cờ đúng 20 claim, cả 20 đều là ca weekend được
+  tiêm vào, không có false positive. Giờ ghi cách tính vào DECISIONS.md.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Việc sửa weekend_anomaly đã commit (eb6738c). Sang yêu cầu mới: Rule type,
+  rules/index.ts, engine.ts và test tích hợp.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Pass ngay lần đầu. Tôi sửa hai chỗ nhỏ trong test: một comment sai và một tên
+  test nói quá những gì nó kiểm tra.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ runRules đã chạy được: npm run typecheck sạch và npm test pass 129/129 (15
+  file), gồm 8 test mới.
+
+  > tsc --noEmit
+   Test Files  15 passed (15)
+        Tests  129 passed (129)
+
+  Tôi chưa commit phần này vì bạn không yêu cầu. Các file mới là src/engine.ts,
+  src/rules/index.ts và tests/engine.test.ts; src/types.ts có thêm kiểu Rule.
+
+  Việc trước đó: tôi đã sửa weekend_anomaly, mẫu số giờ là claim phẫu thuật của
+  provider, bỏ claim đang xét. Việc này commit riêng (eb6738c) và có ghi
+  Decision 19 vào docs/DECISIONS.md. Trên dữ liệu sinh ra, rule gắn cờ đúng 20
+  claim, cả 20 là ca weekend được tiêm vào, không có false positive.
+
+  Các file mới:
+  - Rule trong src/types.ts: kiểu chung (claim, ctx) => Flag | null.
+  - src/rules/index.ts: mảng RULES gồm 8 rule. Mảng được dựng từ một
+    Record<RuleName, Rule>, nên thiếu hoặc thừa một rule thì compiler báo lỗi.
+    Thứ tự theo RULE_NAMES.
+  - src/engine.ts: runRules(claims, config) dựng context một lần rồi trả về
+    {claim_id, flags}[], đúng thứ tự đầu vào. Claim không dính rule nào vẫn có
+    mặt với flags: [].
+
+  Test tích hợp (tests/engine.test.ts): 13 claim dựng tay, kết quả được so với
+  bảng mong đợi cho từng claim.
+
+  ┌──────────────────────────────────┬──────────────────────────────────────┐
+  │              Claim               │               Rule bật               │
+  ├──────────────────────────────────┼──────────────────────────────────────┤
+  │ CLM-04 (2.000 giữa nhóm khoảng   │ upcoding                             │
+  │ 800)                             │                                      │
+  ├──────────────────────────────────┼──────────────────────────────────────┤
+  │ CLM-05 (cùng member và chẩn đoán │ rapid_resubmission                   │
+  │  với CLM-01, sau 2 ngày)         │                                      │
+  ├──────────────────────────────────┼──────────────────────────────────────┤
+  │                                  │ CLM-07: duplicate_claim. CLM-06:     │
+  │ CLM-06 / CLM-07 (cặp trùng)      │ không có cờ. Rapid không bật trên cả │
+  │                                  │  hai.                                │
+  ├──────────────────────────────────┼──────────────────────────────────────┤
+  │ CLM-10 (48.000)                  │ upcoding và amount_clustering, theo  │
+  │                                  │ đúng thứ tự RULE_NAMES               │
+  ├──────────────────────────────────┼──────────────────────────────────────┤
+  │ CLM-11 (mổ Chủ Nhật)             │ weekend_anomaly                      │
+  ├──────────────────────────────────┼──────────────────────────────────────┤
+  │ CLM-12 (tách gói B-9001)         │ unbundling                           │
+  ├──────────────────────────────────┼──────────────────────────────────────┤
+  │ CLM-13 (khám + nhổ răng)         │ dx_procedure_mismatch                │
+  ├──────────────────────────────────┼──────────────────────────────────────┤
+  │ 6 claim còn lại                  │ không có cờ nào                      │
+  │ (CLM-01/02/03/06/08/09)          │                                      │
+  └──────────────────────────────────┴──────────────────────────────────────┘
+
+  Hai điều cần biết:
+  - Config trong test: upcoding đặt min_other_claims = 2 và weekend đặt
+    min_provider_claims = 4, vì với giá trị thật (10 và 20) thì cần hàng chục
+    claim. Các ngưỡng khác giữ nguyên, và comment trong test có ghi rõ. Với nhóm
+    chỉ 3 claim, z kém ý nghĩa thống kê; test này kiểm tra các rule ghép đúng
+    với nhau, không kiểm tra độ nhạy.
+  - Phantom billing: không có trong test tích hợp. Nó cần hơn 30 claim trong một
+    ngày, hoặc hạ ngưỡng xuống và thêm vài claim, khiến cặp trùng cũng dính
+    phantom. Rule này đã được test riêng ở mức đơn vị. Nếu bạn muốn đủ 8 rule
+    trong test tích hợp, tôi thêm một ngày 3 claim với ngưỡng hạ xuống 2, nhưng
+    test sẽ lên khoảng 16 claim.

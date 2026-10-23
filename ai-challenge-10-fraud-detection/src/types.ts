@@ -123,3 +123,6 @@ export interface RuleContext {
   /** provider → surgical-claim and weekend-surgical-claim counts (weekend anomaly, Decision 19). */
   providerSurgical: ReadonlyMap<string, WeekendTally>;
 }
+
+/** A detection rule: a pure function of one claim and the dataset-wide context. */
+export type Rule = (claim: Claim, ctx: RuleContext) => Flag | null;
