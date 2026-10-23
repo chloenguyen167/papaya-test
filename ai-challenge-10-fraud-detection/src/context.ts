@@ -50,13 +50,18 @@ export function buildContext(claims: readonly Claim[], config: Config): RuleCont
   const duplicateGroups = new Map<string, Claim[]>();
   const memberDiagnosisHistory = new Map<string, Claim[]>();
   const providerDayClaims = new Map<string, Claim[]>();
+  const providerActiveDays = new Map<string, number>();
   const comboAmounts = new Map<string, AmountAggregate>();
   const providerWeekend = new Map<string, WeekendTally>();
 
   for (const claim of claims) {
     push(duplicateGroups, duplicateKey(claim), claim);
     push(memberDiagnosisHistory, memberDiagnosisKey(claim), claim);
-    push(providerDayClaims, providerDayKey(claim), claim);
+    const dayKey = providerDayKey(claim);
+    if (!providerDayClaims.has(dayKey)) {
+      providerActiveDays.set(claim.provider_id, (providerActiveDays.get(claim.provider_id) ?? 0) + 1);
+    }
+    push(providerDayClaims, dayKey, claim);
 
     const combo = comboKey(claim.procedure_codes);
     const aggregate = comboAmounts.get(combo);
@@ -81,5 +86,14 @@ export function buildContext(claims: readonly Claim[], config: Config): RuleCont
     history.sort((a, b) => compareText(a.claim_date, b.claim_date) || compareClaimIds(a.claim_id, b.claim_id));
   }
 
-  return { claims, config, duplicateGroups, memberDiagnosisHistory, providerDayClaims, comboAmounts, providerWeekend };
+  return {
+    claims,
+    config,
+    duplicateGroups,
+    memberDiagnosisHistory,
+    providerDayClaims,
+    providerActiveDays,
+    comboAmounts,
+    providerWeekend,
+  };
 }

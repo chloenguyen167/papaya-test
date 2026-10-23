@@ -114,6 +114,8 @@ export interface RuleContext {
   memberDiagnosisHistory: ReadonlyMap<string, readonly Claim[]>;
   /** provider + date → claims (phantom billing). */
   providerDayClaims: ReadonlyMap<string, readonly Claim[]>;
+  /** provider → number of distinct dates with at least one claim (phantom billing). */
+  providerActiveDays: ReadonlyMap<string, number>;
   /** procedure-code combination → amount aggregate (upcoding). */
   comboAmounts: ReadonlyMap<string, AmountAggregate>;
   /** provider → claim and weekend-claim counts (weekend anomaly). */
