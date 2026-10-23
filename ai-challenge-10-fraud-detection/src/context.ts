@@ -18,6 +18,23 @@ function compareText(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
+const TRAILING_NUMBER = /^(.*?)(\d+)$/;
+
+/**
+ * Orders claim_ids by prefix, then by the trailing number as a number, so
+ * 'CLM-9' < 'CLM-10' even without zero padding. Falls back to text order.
+ */
+export function compareClaimIds(a: string, b: string): number {
+  const ma = TRAILING_NUMBER.exec(a);
+  const mb = TRAILING_NUMBER.exec(b);
+  if (ma && mb && ma[1] === mb[1]) {
+    const na = BigInt(ma[2] as string);
+    const nb = BigInt(mb[2] as string);
+    if (na !== nb) return na < nb ? -1 : 1;
+  }
+  return compareText(a, b);
+}
+
 function push<K, V>(map: Map<K, V[]>, key: K, value: V): void {
   const list = map.get(key);
   if (list) list.push(value);
@@ -58,10 +75,10 @@ export function buildContext(claims: readonly Claim[], config: Config): RuleCont
   }
 
   for (const group of duplicateGroups.values()) {
-    group.sort((a, b) => compareText(a.claim_id, b.claim_id));
+    group.sort((a, b) => compareClaimIds(a.claim_id, b.claim_id));
   }
   for (const history of memberDiagnosisHistory.values()) {
-    history.sort((a, b) => compareText(a.claim_date, b.claim_date) || compareText(a.claim_id, b.claim_id));
+    history.sort((a, b) => compareText(a.claim_date, b.claim_date) || compareClaimIds(a.claim_id, b.claim_id));
   }
 
   return { claims, config, duplicateGroups, memberDiagnosisHistory, providerDayClaims, comboAmounts, providerWeekend };
