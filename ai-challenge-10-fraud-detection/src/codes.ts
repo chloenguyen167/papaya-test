@@ -20,3 +20,9 @@ export function referencePrice(code: string, config: Config): number {
   if (price === undefined) throw new Error(`Unknown procedure or bundle code ${code}`);
   return price;
 }
+
+/** 'P-1001 (Consultation)': a procedure or bundle code with its name; the bare code if unknown. */
+export function describeCode(code: string, config: Config): string {
+  const name = config.procedures[code]?.name ?? config.bundles[code]?.name;
+  return name ? `${code} (${name})` : code;
+}
