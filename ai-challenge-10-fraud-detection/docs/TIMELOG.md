@@ -8,8 +8,8 @@ Claude Code logs show the real timeline).
 
 | Phase | Scope | Estimate | Actual | Notes |
 |---|---|---|---|---|
-| 0 | Repo setup, brief, this estimate | 0.25 h | | |
-| 1 | Understand the brief, decisions, data design, plan | 0.75 h | | |
+| 0 | Repo setup, brief, this estimate | 0.25 h | 0.25 h | |
+| 1 | Understand the brief, decisions, data design, plan | 0.75 h | 75 h | |
 | 2–3 | Skeleton, types, config, seeded data generator | 1.0 h | | |
 | 4 | 8 rules, test-first | 1.5 h | | |
 | 5 | Scoring, metrics, threshold sweep, holdout | 0.75 h | | |

@@ -1,0 +1,779 @@
+
+❯ <ide_opened_file>The user opened the file /Users/nguyenphiyen/proj/papaya-tes
+  t/ai-challenge-10-fraud-detection/docs/BRIEF.md in the IDE. This may or may
+  not be related to the current task.</ide_opened_file>
+
+❯ Đọc @docs/BRIEF.md. Chưa viết code.
+  1. Với mỗi rule trong 8 rule: tóm tắt bằng một câu, cho một ví dụ claim phải
+  bị gắn cờ và một ví dụ claim "sát nút" nhưng không được gắn cờ.
+  2. Liệt kê mọi chỗ mơ hồ hoặc tự mâu thuẫn trong đề, kể cả phần mô tả dataset
+  và phần mục tiêu metric. Với mỗi chỗ, nói vì sao nó ảnh hưởng tới kết quả.
+     Trả lời bằng tiếng Việt.
+
+  Read 1 file, listed 1 directory (ctrl+o to expand)
+
+⏺ Updated plan
+  ⎿  /plan to preview
+
+⏺ Mình đã đọc BRIEF.md (ai-challenge-10-fraud-detection/docs/BRIEF.md), chưa
+  viết code và chưa sửa file nào trong repo. Bản đầy đủ có cả ví dụ chi tiết nằm
+  ở file plan ~/.claude/plans/c-docs-brief-md-ch-a-vi-t-temporal-bee.md.
+
+  1. Tám rule
+
+  #: 1
+  Rule: Duplicate
+  Tóm tắt 1 câu: Hai claim trùng cả member, provider, ngày và diagnosis.
+  Phải gắn cờ: M-001 / PRV-03 / 2024-03-05 / J20.9, xuất hiện 2 lần
+  Sát nút nhưng KHÔNG gắn cờ: Cùng M-001 / PRV-03 / ngày đó nhưng diagnosis
+  J06.9
+  ────────────────────────────────────────
+  #: 2
+  Rule: Rapid re-submission
+  Tóm tắt 1 câu: Cùng member nộp lại cùng diagnosis trong vòng 7 ngày.
+  Phải gắn cờ: J20.9 ngày 03-01 và 03-07 (cách 6 ngày)
+  Sát nút nhưng KHÔNG gắn cờ: J20.9 ngày 03-01 và 03-09 (cách 8 ngày)
+  ────────────────────────────────────────
+  #: 3
+  Rule: Upcoding
+  Tóm tắt 1 câu: Số tiền lớn hơn mean + 2σ của procedure đó.
+  Phải gắn cờ: P-1234 có mean 32k, σ 19k; claim 85k (z ≈ 2,8)
+  Sát nút nhưng KHÔNG gắn cờ: Claim 69,5k (z ≈ 1,97)
+  ────────────────────────────────────────
+  #: 4
+  Rule: Unbundling
+  Tóm tắt 1 câu: Tính tiền từng thành phần trong khi đã có mã gộp.
+  Phải gắn cờ: [82465, 83718, 84478] thay vì 80061 (lipid panel)
+  Sát nút nhưng KHÔNG gắn cờ: Claim tính đúng [80061]
+  ────────────────────────────────────────
+  #: 5
+  Rule: Phantom billing
+  Tóm tắt 1 câu: Một provider có hơn 30 claim trong một ngày.
+  Phải gắn cờ: PRV-07 có 31 claim ngày 2024-05-20
+  Sát nút nhưng KHÔNG gắn cờ: Đúng 30 claim
+  ────────────────────────────────────────
+  #: 6
+  Rule: Weekend anomaly
+  Tóm tắt 1 câu: Ca phẫu thuật cuối tuần tại provider có dưới 5% claim rơi vào
+  cuối tuần.
+  Phải gắn cờ: Thứ Bảy 2024-06-15, mã 47562, provider có 2% claim cuối tuần
+  Sát nút nhưng KHÔNG gắn cờ: Cùng ca đó nhưng provider có 6%; hoặc mã 99213
+  (khám thường, không phải phẫu thuật)
+  ────────────────────────────────────────
+  #: 7
+  Rule: Dx–procedure mismatch
+  Tóm tắt 1 câu: Procedure không hợp lệ về lâm sàng với diagnosis.
+  Phải gắn cờ: J20.9 (viêm phế quản) + 44950 (cắt ruột thừa)
+  Sát nút nhưng KHÔNG gắn cờ: J20.9 + 71046 (X-quang ngực)
+  ────────────────────────────────────────
+  #: 8
+  Rule: Amount clustering
+  Tóm tắt 1 câu: Số tiền trong khoảng 47.500–49.999.
+  Phải gắn cờ: 49.500
+  Sát nút nhưng KHÔNG gắn cờ: 47.499 hoặc 50.000
+
+  2. Chỗ mơ hồ và mâu thuẫn
+
+  Mâu thuẫn trực tiếp
+
+  1. Phantom billing: đề yêu cầu nhúng 25 claim, nhưng rule chỉ bắt khi một
+     provider có hơn 30 claim/ngày, tức cần ít nhất 31 claim. Vì vậy phải chọn:
+     hoặc nhãn lệch khỏi con số 25, hoặc rule chỉ cờ phần vượt, hoặc chấp nhận
+     vài claim bị tính là FP. Lựa chọn nào cũng làm thay đổi precision và
+     recall.
+  2. Weekend anomaly:
+     - Phần dataset nói provider "never operate on weekends", phần rule lại nói
+       "< 5%".
+     - Nhúng ca mổ cuối tuần sẽ làm tăng chính tỷ lệ cuối tuần của provider. Ví
+       dụ provider có 40 claim, thêm 3 ca cuối tuần là đã 7,5%, vượt ngưỡng.
+     - Nếu ngày phân bố ngẫu nhiên thì tỷ lệ cuối tuần tự nhiên khoảng 28,6%,
+       nên provider dưới 5% chỉ có nếu cố tình tạo ra.
+     - Kết quả: recall của rule này có thể là 0% hoặc 100%, tùy cách định nghĩa
+       "historical".
+  3. Ví dụ output tự mâu thuẫn: cùng một claim vừa có amount 85.000 (flag
+     upcoding) vừa có amount 49.500 (flag clustering). Một claim chỉ có một số
+     tiền, nên không dùng ví dụ này làm test được.
+  4. risk_score 78 không khớp: hai flag có severity 4 + 2 = 6. Nếu chuẩn hoá
+     theo tổng trọng số của 8 rule thì điểm chỉ khoảng 20–30. Đề không nói cách
+     chuẩn hoá, nên toàn bộ phân bố điểm phụ thuộc vào lựa chọn này.
+
+  Phần metric
+
+  5. "False positive rate" có hai nghĩa:
+     - Nếu là FP / (FP + TN) thì cho phép tới khoảng 360 FP, rất lỏng.
+     - Nếu hiểu là 1 − precision thì precision phải ≥ 80%, chặt hơn nhiều.
+     - Cùng một kết quả có thể "đạt" theo nghĩa này và "trượt" theo nghĩa kia,
+       nên mình đề xuất báo cáo cả hai.
+  6. Không có ngưỡng phân loại: điểm từ 0–100 cần một ngưỡng để thành "gian lận
+     / không gian lận" (ví dụ: có ít nhất 1 flag, hoặc score ≥ X). Ngưỡng này
+     điều khiển trực tiếp đánh đổi giữa recall và FPR.
+  7. Đánh giá vòng tròn: chính ta tạo data và nhãn, nên metric dễ đạt. Độ khó
+     phụ thuộc vào việc generator có tạo các ca sát nút hay không.
+  8. Claim sạch vô tình khớp rule: ví dụ khoảng 2,3% claim sạch tự nhiên vượt 2σ
+     (khoảng 40 claim), hoặc claim sạch có amount trong dải 47,5k–50k. Giữ nhãn
+     "sạch" thì chúng thành FP; lọc bỏ thì metric bị thổi phồng.
+  9. Nhãn cho cặp duplicate / rapid re-submission: "30 claim" là 30 bản sao hay
+     15 cặp? Claim gốc có bị tính là gian lận không? Nếu rule cờ cả hai claim mà
+     claim gốc mang nhãn sạch thì có thể thêm khoảng 60 FP.
+  10. Pattern chồng nhau: mọi duplicate cũng thoả rapid re-submission (cách 0
+      ngày). Một claim cũng có thể vừa upcoding vừa clustering. Vậy tổng 200 chỉ
+      đúng khi không có chồng lặp, và mẫu số của recall bị ảnh hưởng.
+
+  Phần dataset và định nghĩa rule
+
+  11. Amount tính trên cả claim nhưng claim có nhiều procedure: upcoding nói
+      "mean của procedure đó" nhưng không rõ claim nhiều mã thì gom theo mã nào.
+      Mỗi cách cho mean/σ khác nhau.
+  12. Mean/σ bị chính các outlier làm nhiễu: σ phình ra và che bớt claim gian
+      lận. Procedure ít mẫu thì σ không ổn định, và đề không nói dùng σ mẫu hay
+      σ tổng thể.
+  13. Không định nghĩa "surgical": cần tự lập danh sách mã phẫu thuật cho
+      rule 6.
+  14. "5%" là 5% của claim nào? Tính trên mọi claim hay chỉ claim phẫu thuật? Có
+      loại claim đang xét ra không? Có cần số claim tối thiểu không (provider
+      có 3 claim, 0 cuối tuần, là 0%)?
+  15. Mapping dx–procedure chỉ cần ít nhất 10 cặp: nếu coi mọi cặp ngoài mapping
+      là sai thì FP sẽ rất lớn. Cũng không rõ diagnosis không có trong mapping
+      thì xử lý sao. Đây có thể là nguồn FP lớn nhất.
+  16. Unbundling: cần đủ mọi thành phần hay chỉ từ 2 trở lên? Có xét trường hợp
+      tách ra nhiều claim không?
+  17. Biên của các khoảng: "within 7 days" là ≤ 7 hay < 7; số lẻ như 49.999,50
+      có tính không; "> 2σ" và "> 30" là bất đẳng thức chặt. Unit test phải chốt
+      đúng một cách hiểu.
+  18. Không rõ đơn vị tiền và phân phối amount: nếu claim sạch phần lớn nằm
+      quanh 30–60k thì rule 8 sẽ có rất nhiều FP; nếu phần lớn dưới 10k thì rule
+      8 gần như hoàn hảo.
+  19. Các con số xấp xỉ (~500 member, ~50 provider, ~10%): ảnh hưởng tới số lần
+      trùng tình cờ ở rule 1, 2 và 5.
+  20. "severity" trong flag và trọng số cấu hình: có phải là một không? Severity
+      cố định theo rule hay thay đổi theo mức độ (ví dụ z = 4 nặng hơn z =
+      2,1)? Trọng số có buộc là số nguyên không?
+  21. Điểm bị cộng hai lần: duplicate luôn kích hoạt thêm rule 2, nên bị đẩy lên
+      đầu bảng xếp hạng.
+  22. Chạy batch hay streaming: "historical" là cả năm hay chỉ dữ liệu trước
+      ngày claim? Điều này ảnh hưởng rule 2, 3 và 6, cũng như các claim ở đầu
+      năm.
+  23. Điểm nhỏ: cuối tuần mặc định là Thứ Bảy/Chủ Nhật; không rõ dùng mã CPT
+      thật hay mã giả "P-xxxx"; giới hạn "< 30 giây" có tính cả thời gian sinh
+      dữ liệu không.
+
+  Bước tiếp theo đề xuất: viết một file ASSUMPTIONS.md chốt cách hiểu cho các
+  điểm 1, 2, 5, 6, 9, 11, 15 và 22, vì đây là những điểm ảnh hưởng metric nhiều
+  nhất, rồi mới thiết kế generator, rule và test. Bạn có muốn mình làm bước này
+  không?
+
+❯ ultrathink
+  Đối chiếu danh sách của bạn với 6 điểm dưới đây. Điểm nào bạn đã nêu thì chỉ
+  cần ghi "đã nêu". Điểm nào chưa thì phân tích, có tính toán cụ thể:
+  1. Phantom billing: 2.000 claim / 50 provider / 366 ngày ≈ 0,1 claim mỗi
+  provider mỗi ngày. 25 claim phantom tự nó không thể vượt 30 claim/ngày.
+  Generator phải làm gì, và điều đó gây ra báo động giả nào?
+  2. Weekend anomaly: nếu tỷ lệ cuối tuần "lịch sử" của provider tính cả các ca
+  mổ cuối tuần đã cài, tỷ lệ tăng lên và rule bỏ lọt chính ca đã cài. Tính với
+  một provider ~40 claim có 2 ca cài.
+  3. Claim duplicate cũng thỏa "cùng member + cùng chẩn đoán trong 7 ngày" nếu
+  tính cả khoảng cách 0 ngày.
+  4. Rò rỉ nhãn: nếu claim gian lận có claim_id liền nhau, số tiền tròn hơn,
+  hay cột nhãn nằm trong claims.csv, dữ liệu đã tự khai đáp án.
+  5. Mục tiêu FPR ≤ 20% cho phép tới 360 báo động giả trên 1.800 claim sạch.
+  Nếu recall đúng 70% thì precision thấp nhất có thể là bao nhiêu, và điều đó
+  có nghĩa gì với đội thẩm định?
+  6. Ta vừa sinh dữ liệu vừa viết rule vừa chỉnh ngưỡng trên cùng một bộ dữ
+  liệu. Kết quả đo có đáng tin không, giảm rủi ro bằng cách nào?
+  Với mỗi điểm, đưa 2 phương án kèm đánh đổi. Đừng quyết định thay tôi.
+
+⏺ Đối chiếu với danh sách trước
+
+  ┌───────────────────────────┬─────────────────────────────────────────────┐
+  │           Điểm            │                 Trạng thái                  │
+  ├───────────────────────────┼─────────────────────────────────────────────┤
+  │                           │ Đã nêu một phần. Mình đã nêu mâu thuẫn 25   │
+  │ 1. Phantom billing        │ vs ≥ 31 và mật độ ≈ 0,11. Chưa phân tích    │
+  │                           │ generator phải làm gì và báo động giả phát  │
+  │                           │ sinh ở đâu.                                 │
+  ├───────────────────────────┼─────────────────────────────────────────────┤
+  │ 2. Weekend tự tham chiếu  │ Đã nêu (mục 2 và 14).                       │
+  ├───────────────────────────┼─────────────────────────────────────────────┤
+  │ 3. Duplicate cũng là      │ Đã nêu (mục 10 và 21).                      │
+  │ rapid re-submission       │                                             │
+  ├───────────────────────────┼─────────────────────────────────────────────┤
+  │ 4. Rò rỉ nhãn             │ Chưa nêu.                                   │
+  ├───────────────────────────┼─────────────────────────────────────────────┤
+  │                           │ Đã nêu một phần. Có con số 360 FP, chưa     │
+  │ 5. FPR 20% → precision    │ tính precision và chưa nói hệ quả cho đội   │
+  │                           │ thẩm định.                                  │
+  ├───────────────────────────┼─────────────────────────────────────────────┤
+  │ 6. Sinh dữ liệu, viết     │ Đã nêu một phần. Có nêu tính vòng tròn,     │
+  │ rule và chỉnh ngưỡng trên │ chưa nói rủi ro overfit ngưỡng và cách      │
+  │  cùng một bộ              │ giảm.                                       │
+  └───────────────────────────┴─────────────────────────────────────────────┘
+
+  ---
+
+  1. Phantom billing
+
+  Tính toán:
+  - Trung bình mỗi provider mỗi ngày có 2.000 / (50 × 366) ≈ 0,109 claim.
+  - Với phân phối Poisson λ = 0,109, xác suất một provider-ngày tự nhiên có ≥ 31
+    claim gần như bằng 0. Vậy mọi lần rule 5 kích hoạt đều do generator cố ý
+    tạo ra.
+  - Nếu generator rải 25 claim phantom theo cách bình thường, rule 5 bắt được 0
+    claim. Recall tổng mất 25/200 = 12,5 điểm %, trần recall còn 87,5% trước khi
+    tính các rule khác.
+
+  Generator bắt buộc phải dồn ít nhất 31 claim vào cùng một cặp (provider,
+  ngày).
+
+  Báo động giả phát sinh từ việc này:
+  - Trên chính ngày đó: nếu chỉ 25 claim mang nhãn gian lận thì ≥ 6 claim còn
+    lại bị cờ thành FP. Precision của rule tối đa là 25/31 = 80,6%. Ngoài ra còn
+    ~0,1 claim thật của provider rơi đúng ngày đó.
+  - Rule 6 bị pha loãng mẫu số:
+    - Ví dụ provider có 40 claim, 2 claim cuối tuần, tức 2/40 = 5,0%, chưa thoả
+      "< 5%".
+    - Thêm 31 claim phantom vào một ngày thường thì tỷ lệ còn 2/71 = 2,8%.
+    - Nếu 2 claim cuối tuần đó là ca mổ thật, chúng bị cờ weekend anomaly thành
+      2 FP.
+    - Ngược lại, nếu ngày phantom rơi vào cuối tuần, tỷ lệ cuối tuần của
+      provider vọt lên khoảng 50%.
+  - Rule 1 và 2: nếu 31 claim được nhân bản từ một claim mẫu (cùng member hoặc
+    cùng diagnosis), chúng sẽ kích hoạt duplicate hoặc rapid re-submission ngoài
+    ý muốn.
+  - Rule 3: 31 claim cùng procedure đi vào phép tính mean/σ của procedure đó và
+    làm lệch ngưỡng upcoding.
+
+  Phương án A: một provider-ngày gồm 31 claim, gắn nhãn gian lận cả 31.
+  - Được: nhãn khớp hoàn toàn với rule, không có FP cài sẵn.
+  - Mất:
+    - Lệch con số "25" của đề (tổng thành 206), phải ghi rõ trong phần giả định.
+    - Cả pattern chỉ là một sự kiện, nên recall của pattern là "tất cả hoặc
+      không".
+
+  Phương án B: giữ 25 claim gắn nhãn gian lận, thêm ≥ 6 claim gắn nhãn sạch vào
+  cùng ngày.
+  - Được:
+    - Đúng con số trong đề.
+    - Giống thực tế: một ngày gian lận thường lẫn claim thật, và rule không phân
+      biệt được claim nào trong ngày là giả.
+  - Mất:
+    - ≥ 6 FP có sẵn từ thiết kế.
+    - Việc gắn nhãn "sạch" cho claim trong một ngày gian lận là điều gây tranh
+      cãi.
+
+  Chung cho cả hai: nên chọn ngày thường, chọn provider mà sau khi bị pha loãng
+  vẫn có tỷ lệ cuối tuần ≥ 5%, và chọn member/diagnosis sao cho không vô tình
+  kích hoạt rule 1 và 2. Nếu không làm được thì phải chấp nhận và ghi lại các FP
+  phụ.
+
+  ---
+
+  2. Weekend tự tham chiếu
+
+  Đã nêu. Bổ sung một dòng số với ví dụ của bạn:
+  - Nếu 40 claim là tổng (38 sạch, không ca nào cuối tuần, cộng 2 ca cài) thì tỷ
+    lệ là 2/40 = 5,0%, không thoả "< 5%", nên bỏ lọt cả 2 ca.
+  - Nếu 40 claim sạch cộng 2 ca cài thì tỷ lệ là 2/42 = 4,76%, bắt được nhưng
+    chỉ sát biên.
+  - Ví dụ của bạn rơi đúng vào lưỡi dao.
+
+  Phương án A: sửa cách tính trong rule, loại chính claim đang xét khỏi mẫu
+  (leave-one-out) hoặc chỉ dùng claim trước ngày đó.
+  - Được: leave-one-out cho 1/39 = 2,6%, bắt được cả 2 ca. Generator không cần
+    biết rule tính thế nào.
+  - Mất:
+    - Lệch khỏi cách đọc nguyên văn "historical".
+    - Nếu chỉ dùng claim trước ngày đó thì claim đầu năm không có lịch sử, phải
+      đặt số claim tối thiểu. Kết quả là ca cài vào tháng 1 có thể bị bỏ lọt.
+
+  Phương án B: giữ rule nguyên văn, ràng buộc generator.
+  - Ràng buộc: provider nhận k ca cài cần n claim sạch với 0 claim cuối tuần,
+    sao cho k/(n + k) < 5%, tức n > 19k.
+  - 20 ca, mỗi provider 1 ca, thì cần 20 provider có ≥ 20 claim sạch và không có
+    claim cuối tuần nào.
+  - Nếu ngày phân bố ngẫu nhiên, xác suất 20 claim liên tiếp đều là ngày thường
+    là (262/366)^20 ≈ 0,13%, nên phải ép generator.
+  - Được: rule đúng nguyên văn đề.
+  - Mất:
+    - 40% số provider "không bao giờ làm cuối tuần" là phi thực tế.
+    - Dữ liệu được may đo theo rule, làm tăng vấn đề vòng tròn ở điểm 6.
+
+  ---
+
+  3. Duplicate cũng thoả rapid re-submission
+
+  Đã nêu.
+
+  Phương án A: rule 2 loại các cặp đã khớp đủ khoá duplicate (hoặc yêu cầu cách
+  nhau từ 1 đến 7 ngày).
+  - Được:
+    - Mỗi hành vi chỉ ra một flag, evidence rõ ràng.
+    - Metric từng rule sạch.
+    - Không cộng điểm hai lần (ví dụ trọng số 5 + 3 = 8 so với 5).
+  - Mất:
+    - Nếu chọn cách "từ 1 đến 7 ngày", trường hợp cùng member, cùng diagnosis,
+      cùng ngày nhưng khác provider (đi nhiều nơi trong một ngày) sẽ lọt khỏi cả
+      hai rule.
+    - Loại theo khoá duplicate thì tránh được lỗ hổng này nhưng code phức tạp
+      hơn một chút.
+
+  Phương án B: giữ rule nguyên văn (0–7 ngày), xử lý trùng ở tầng chấm điểm (ví
+  dụ nhóm rule chồng nhau chỉ lấy trọng số lớn nhất).
+  - Được: đúng nguyên văn, không có lỗ hổng phát hiện, evidence vẫn liệt kê đủ.
+  - Mất:
+    - Logic chấm điểm phức tạp hơn và cần giải thích.
+    - Recall/precision theo rule 2 bị thổi phồng bởi 30 duplicate.
+    - Cần nhãn đa pattern để đo đúng.
+
+  ---
+
+  4. Rò rỉ nhãn
+
+  Chưa nêu. Phân tích:
+
+  Các cách generator để lộ đáp án:
+  - claim_id liền nhau: nếu generator sinh 1.800 claim sạch rồi nối 200 claim
+    gian lận vào cuối (CLM-01801…CLM-02000), chỉ cần "luật" id > 1800 là đạt
+    precision = recall = 100% mà không cần hiểu gì về gian lận.
+  - Số tiền tròn: nếu claim sạch có số lẻ (32.417,53) còn claim gian lận là bội
+    số của 500 (85.000; 49.500), thì amount % 500 == 0 gần như phân loại hoàn
+    hảo. Xác suất một số tiền ngẫu nhiên có số lẻ chia hết cho 500 xấp xỉ 0.
+  - Cột nhãn nằm trong claims.csv: engine hoặc AI tool đọc file sẽ thấy đáp án.
+    Người chấm mở file cũng thấy ngay.
+  - Các dấu vết khác:
+    - Member gian lận nằm ngoài pool chung (M-0501+).
+    - Claim gian lận nằm cuối file.
+    - Format provider_name khác.
+    - Tập procedure chỉ xuất hiện ở claim gian lận.
+
+  Vì sao ảnh hưởng kết quả: rule không đọc claim_id, nên metric của engine không
+  bị thổi phồng trực tiếp. Nhưng:
+  - Logic nào phụ thuộc thứ tự dòng (ví dụ "claim đầu tiên là bản gốc") sẽ vô
+    tình khai thác thứ tự này.
+  - Mọi lần chỉnh ngưỡng khi đang nhìn thấy nhãn đều bị nhiễm (liên quan
+    điểm 6).
+  - Người chấm sẽ đánh giá dataset kém thực tế.
+
+  Phương án A: tách nhãn và xoá dấu vết trong generator.
+  - Cách làm:
+    - Nhãn để ở labels.csv (claim_id, is_fraud, fraud_types).
+    - Trộn ngẫu nhiên rồi mới đánh claim_id.
+    - Claim sạch và claim gian lận dùng chung hàm sinh số tiền (cùng kiểu làm
+      tròn) và chung pool member.
+    - Thêm test kiểm tra rò rỉ, ví dụ AUC của claim_id hoặc của "độ tròn" so với
+      nhãn phải xấp xỉ 0,5.
+  - Được: dataset sạch, chứng minh được là không rò rỉ.
+  - Mất:
+    - Generator phức tạp hơn.
+    - Debug khó hơn vì phải join file nhãn mới biết claim nào gian lận.
+    - Ép số tiền gian lận "không tròn" làm ví dụ evidence kém trực quan.
+
+  Phương án B: giữ nhãn trong claims.csv cho tiện, nhưng engine chỉ đọc danh
+  sách cột cho phép và claim_id được xáo trộn.
+  - Được: đơn giản, debug nhanh.
+  - Mất:
+    - File nộp vẫn "khai đáp án", người chấm có thể đánh giá thấp.
+    - Không chặn được rò rỉ qua số tiền tròn hoặc pool member.
+    - Mọi người (và AI) đọc file vẫn thấy nhãn khi chỉnh ngưỡng.
+
+  ---
+
+  5. FPR ≤ 20% và precision
+
+  Đã nêu một phần. Phần tính toán còn thiếu:
+  - Claim gian lận ≈ 200. Recall 70% nghĩa là TP = 140.
+  - FP tối đa = 20% × 1.800 = 360.
+  - Precision thấp nhất = 140 / (140 + 360) = 140/500 = 28%.
+
+  Ý nghĩa với đội thẩm định:
+  - 500 cảnh báo, tức 25% tổng số claim bị giữ lại để xem xét.
+  - Cứ khoảng 2,6 ca oan thì mới có 1 ca thật.
+  - 360 hội viên trung thực bị chậm chi trả.
+  - Ở quy mô này, đội thẩm định sẽ sớm bỏ qua cảnh báo (alert fatigue), và hệ
+    thống mất tác dụng dù vẫn "đạt target".
+
+  Để so sánh, với cùng recall 70%:
+
+  ┌─────┬───────┬───────────────┐
+  │ FPR │ Số FP │   Precision   │
+  ├─────┼───────┼───────────────┤
+  │ 5%  │ 90    │ 140/230 ≈ 61% │
+  ├─────┼───────┼───────────────┤
+  │ 1%  │ 18    │ 140/158 ≈ 89% │
+  └─────┴───────┴───────────────┘
+
+  Phương án A: lấy đúng target của đề (recall ≥ 70%, FPR ≤ 20%) làm tiêu chí
+  đạt, nhưng báo cáo precision, số cảnh báo và tỷ lệ FP:TP ngay cạnh.
+  - Được: đúng tiêu chí chấm, minh bạch về chi phí vận hành.
+  - Mất: có thể "đạt" với precision 28% và trông yếu nếu người chấm nhìn theo
+    góc vận hành. Ngưỡng chọn theo target của đề không tối ưu cho người dùng
+    thật.
+
+  Phương án B: đặt thêm mục tiêu nội bộ chặt hơn (ví dụ FPR ≤ 5% hoặc precision
+  ≥ 60%), kèm bảng nhiều ngưỡng hoặc đường precision–recall.
+  - Được: thể hiện hiểu bài toán vận hành. Người đọc tự chọn điểm hoạt động.
+  - Mất:
+    - Có thể không giữ được recall ≥ 70% nếu rule nhiễu.
+    - Tốn thêm thời gian.
+    - Phải giải thích vì sao lệch khỏi target của đề.
+
+  ---
+
+  6. Cùng một bộ dữ liệu cho sinh, viết rule và chỉnh ngưỡng
+
+  Đã nêu một phần (tính vòng tròn). Phần thiếu:
+  - Có ba bậc tự do (generator, rule, ngưỡng/trọng số) do cùng một người chỉnh
+    trong khi nhìn cả ba.
+  - Ngưỡng trong rule trùng nguyên văn với định nghĩa trong generator, nên
+    recall trên các ca cài gần như 100% do thiết kế. Phần sai lệch chỉ đến từ
+    tương tác giữa các rule (nhiễm mean/σ, chồng pattern, pha loãng ở điểm 1–2).
+  - Con số đo được là độ nhất quán nội bộ, không phải khả năng phát hiện gian
+    lận.
+  - Nhiễu theo seed:
+    - Nếu số tiền theo phân phối chuẩn, khoảng 2,3% × 1.800 ≈ 41 claim sạch tự
+      nhiên vượt 2σ.
+    - Độ lệch chuẩn giữa các seed khoảng √41 ≈ ±6 FP.
+    - Một ngưỡng chỉnh vừa khít trên một seed có thể trượt target ở seed khác.
+
+  Phương án A: đóng băng rồi đánh giá trên seed giữ lại.
+  - Cách làm:
+    - Chỉnh rule, trọng số và ngưỡng trên một seed dev.
+    - Đóng băng cấu hình.
+    - Báo cáo metric trên 5–10 seed chưa từng nhìn, dạng trung bình ± độ lệch
+      chuẩn.
+  - Được: rẻ (chạy dưới 30 giây mỗi seed), chặn được overfit theo seed, có
+    khoảng tin cậy.
+  - Mất: vẫn chung một generator, nên không phát hiện được sai lệch do giả định
+    của generator. Metric vẫn đẹp một cách giả tạo.
+
+  Phương án B: bộ test "khó" được sinh độc lập.
+  - Cách làm:
+    - Một generator biến thể, lý tưởng là do một phiên AI hoặc người không xem
+      code rule viết.
+    - Thêm ca sạch sát nút: cách 8 ngày, đúng 30 claim/ngày, 47.499, ca mổ cuối
+      tuần ở provider có 6%.
+    - Thêm ca gian lận hơi lệch spec: z = 2,1, duplicate có provider_name viết
+      khác, phantom chia qua 2 ngày.
+    - Báo cáo riêng "đúng spec" và "khó".
+  - Được: đo được độ bền thật, lộ ra các điểm mù.
+  - Mất:
+    - Tốn khoảng 1 giờ trên ngân sách 4–6 giờ.
+    - Metric trên tập khó có thể trượt target và cần giải thích.
+    - Vẫn là dữ liệu tổng hợp.
+
+  ---
+
+  Mình chưa chọn phương án nào và chưa sửa file nào. Khi bạn chốt lựa chọn cho
+  từng điểm, mình sẽ ghi vào ASSUMPTIONS.md trước khi thiết kế code.
+
+❯ <ide_opened_file>The user opened the file /Users/nguyenphiyen/proj/papaya-tes
+  t/ai-challenge-10-fraud-detection/docs/BRIEF.md in the IDE. This may or may
+  not be related to the current task.</ide_opened_file>
+
+❯ Tôi chốt các quyết định sau:
+  1. Duplicate: trong một nhóm trùng, claim có claim_id nhỏ nhất là bản gốc;
+  chỉ gắn cờ các bản sau. Gắn cờ cả bản gốc sẽ sinh 30 báo động giả.
+  2. Rapid re-submission: khoảng cách 1–7 ngày so với claim liền trước cùng
+  member + chẩn đoán. Cùng ngày là việc của rule duplicate.
+  3. Upcoding: nhóm theo tổ hợp mã thủ thuật (sắp xếp rồi nối), vì mỗi claim
+  chỉ có một số tiền cho nhiều mã. Mean/SD tính leave-one-out (bỏ chính claim
+  đang xét). Nhóm dưới 10 claim thì bỏ qua và báo cáo số lượng bị bỏ qua.
+  4. Unbundling: chỉ gắn cờ khi có ĐỦ mọi thành phần của một gói mà không có mã
+  gói. Ngưỡng "≥ 2 thành phần" sẽ gắn cờ mọi lần khám + xét nghiệm máu bình
+  thường.
+  5. Phantom billing: gắn cờ mọi claim của một provider-ngày có > 30 claim.
+  Chấp nhận ~6 claim sạch cùng ngày đó là báo động giả đã biết, và báo cáo
+  thẳng.
+  6. Weekend anomaly: tỷ lệ cuối tuần của provider không tính chính claim đang
+  xét; provider phải có ≥ 20 claim. Nhóm provider "chỉ mổ ngày thường" không có
+  claim sạch nào vào cuối tuần, và mỗi nơi cài tối đa 2 ca.
+  7. Dx–procedure mismatch: chẩn đoán không có trong mapping thì không gắn cờ
+  (thiếu thông tin không phải bằng chứng). Danh sách thủ thuật hợp lệ gồm cả
+  thành phần của các gói.
+  8. Amount clustering: 47.500 ≤ số tiền ≤ 49.999, ngưỡng lấy từ config.
+  9. Claim "bị gắn cờ" khi điểm > 0 (ít nhất một rule bật); mức ưu tiên
+  Cao/Trung bình/Thấp là chuyện riêng. Nếu chỉ gắn cờ từ 50 điểm, các kiểu chỉ
+  có rule severity 2 (70/200 claim) bị loại và recall tối đa chỉ còn 65%.
+  10. claim_id được đánh SAU khi trộn và sắp theo ngày, để claim gian lận không
+  dồn thành dãy ID.
+  11. Báo cáo thêm precision và precision@K, và chạy thêm một bộ holdout với
+  seed khác mà không chỉnh gì.
+      Ghi vào docs/DECISIONS.md bằng tiếng Anh, mỗi quyết định một mục ngắn
+  gồm: Context, Decision, Consequence. Giữ đúng lý do của tôi, không thêm quyết
+  định mới.
+
+⏺ Write(ai-challenge-10-fraud-detection/docs/DECISIONS.md)
+  ⎿  Wrote 127 lines to ai-challenge-10-fraud-detection/docs/DECISIONS.md
+      1 # Decisions
+      2
+      3 Interpretation decisions for ambiguous or conflicting parts of [B
+      4
+      5 ---
+      6
+      7 ## 1. Duplicate claim — which claim is flagged
+      9 **Context:** The brief defines a duplicate as same member + provi
+        der + date + diagnosis, but does not say which claims in a duplic
+        ate group are flagged.
+     … +161 lines (ctrl+o to expand)
+
+⏺ Mình đã ghi 11 quyết định vào docs/DECISIONS.md
+  (ai-challenge-10-fraud-detection/docs/DECISIONS.md) bằng tiếng Anh, mỗi mục
+  gồm Context, Decision, Consequence. Lý do giữ đúng như bạn đưa, không thêm
+  quyết định mới. Chưa commit.
+
+  Khi đối chiếu, mình thấy một chỗ có số không khớp nhau. Mình chưa sửa vào
+  file:
+
+  - Quyết định 6 có thể bỏ lọt chính ca cài. Giả sử một provider "chỉ mổ ngày
+    thường" có đúng 20 claim, trong đó 2 ca cài. Khi xét ca A, bỏ A ra thì còn
+    19 claim, trong đó ca cài B là claim cuối tuần duy nhất. Tỷ lệ là 1/19 ≈
+    5,26%, không thoả "< 5%", nên A bị bỏ lọt. Tương tự B cũng bị bỏ lọt.
+    - Với 21 claim thì tỷ lệ là 1/20 = 5,0%, vẫn trượt.
+    - Phải từ 22 claim trở lên (1/21 ≈ 4,76%) thì 2 ca cài mới chắc chắn bị bắt.
+    - Hai hướng sửa: nâng mức tối thiểu cho các provider này lên 22 claim, hoặc
+      mỗi nơi chỉ cài 1 ca. Bạn chọn hướng nào thì mình cập nhật mục 6.
+
+❯ <ide_opened_file>The user opened the file /Users/nguyenphiyen/proj/papaya-tes
+  t/ai-challenge-10-fraud-detection/docs/DECISIONS.md in the IDE. This may or
+  may not be related to the current task.</ide_opened_file>
+
+❯ Viết docs/DATA_DESIGN.md (tiếng Anh) theo thiết kế của tôi dưới đây. Trước
+  khi ghi file, hãy phản biện: chỗ nào trong thiết kế này khiến một rule khó
+  test, hoặc sinh báo động giả ngoài ý muốn? Đợi tôi trả lời rồi mới ghi.
+
+  A) Danh mục thủ thuật (giá tham khảo, đơn vị giả định THB, số liệu giả lập):
+  P-1001 Khám bệnh 800 | P-1002 Công thức máu 400 | P-1003 Đường huyết 200 |
+  P-1004 Chức năng gan 600 | P-1005 Tổng phân tích nước tiểu 300 | P-1006
+  X-quang 1.200 | P-1007 Siêu âm bụng 2.000 | P-1008 CT bụng 9.000 | P-1009
+  Điện tâm đồ 700 | P-1010 HbA1c 600 | P-1011 Vật lý trị liệu 900
+  Phẫu thuật: P-2001 Cắt ruột thừa 30.000 | P-2002 Gây mê 8.000 | P-2003 Cắt
+  túi mật nội soi 60.000 | P-2004 Kết hợp xương cẳng tay 55.000 | P-2005 Khâu
+  vết thương 3.000
+  Nha khoa: P-3001 Trám răng 1.500 | P-3002 X-quang răng 500 | P-3003 Điều trị
+  tủy 6.000 | P-3004 Nhổ răng 1.200
+
+  B) Gói (rẻ hơn cộng lẻ):
+  B-9001 Xét nghiệm máu cơ bản = P-1002+P-1003+P-1004, giá 1.000
+  B-9002 Gói mổ ruột thừa = P-2001+P-2002, giá 36.000
+  B-9003 Gói cắt túi mật = P-2003+P-2002+P-1007, giá 65.000
+  B-9004 Gói điều trị tủy = P-3003+P-3002+P-3001, giá 7.000
+  B-9005 Khám sức khỏe tổng quát = P-1001+P-1002+P-1005+P-1006, giá 2.200
+
+  C) Chẩn đoán → loại claim → phác đồ cố định (claim sạch chỉ được chọn từ đây,
+  để tổ hợp mã lặp lại đủ nhiều cho thống kê):
+  J06.9 OUTPATIENT [P-1001] | [P-1001,P-1002]
+  J18.9 OUTPATIENT [P-1001,P-1006] | [P-1001,P-1002,P-1006]
+  A09 OUTPATIENT [P-1001] | [P-1001,P-1002]
+  N39.0 OUTPATIENT [P-1001,P-1005]
+  E11.9 OUTPATIENT [P-1001,P-1010] | [P-1001,B-9001]
+  I10 OUTPATIENT [P-1001] | [P-1001,P-1009]
+  M54.5 OUTPATIENT [P-1001,P-1011] | [P-1001,P-1006]
+  Z00.0 OUTPATIENT [B-9005]
+  S61.0 OUTPATIENT [P-1001,P-2005]
+  K35.80 INPATIENT [P-1007,B-9002] | [P-1008,B-9002]
+  K80.20 INPATIENT [B-9003]
+  S52.50 INPATIENT [P-1006,P-2004,P-2002]
+  K02.9 DENTAL [P-3001] | [P-3002,P-3001]
+  K04.0 DENTAL [B-9004]
+  K08.1 DENTAL [P-3002,P-3004]
+  Danh sách thủ thuật hợp lệ của mỗi chẩn đoán = hợp các phác đồ + thành phần
+  của các gói trong đó.
+
+  D) 50 provider:
+  15 bệnh viện 24/7 (mọi ngày, mọi loại claim, kể cả mổ cấp cứu cuối tuần)
+  15 bệnh viện mổ theo lịch (chỉ thứ 2–6, không có claim sạch nào cuối tuần)
+  15 phòng khám đa khoa (chỉ thứ 2–6, chỉ ngoại trú)
+  5 nha khoa (thứ 2–7, chỉ nha khoa)
+
+  E) Số tiền claim sạch: cộng giá từng mã, mỗi mã dao động ngẫu nhiên lệch phải
+  (lognormal) khoảng 15% quanh giá tham khảo, làm tròn đến 10. Claim gian lận
+  làm tròn y hệt.
+
+  F) Cách cài 200 claim gian lận:
+  Duplicate 30: chép nguyên claim sạch, đổi claim_id; nhãn thuộc về claim_id
+  lớn hơn.
+  Rapid 30: chép claim sạch, dời 1–7 ngày (vẫn trong năm 2024), giữ member +
+  chẩn đoán, số tiền sinh lại.
+  Upcoding 30: nhân số tiền claim sạch với hệ số ngẫu nhiên 1,35–2,5, không để
+  rơi vào 47.500–49.999.
+  Unbundling 25: claim có mã gói → thay bằng đủ mã thành phần, số tiền theo giá
+  lẻ.
+  Phantom 25: một phòng khám + một ngày thường, thêm 25 claim giả, dời ít nhất
+  6 claim sạch của nơi đó sang ngày này để tổng ≥ 31.
+  Weekend 20: ca mổ thứ Bảy/Chủ Nhật tại nhóm "mổ theo lịch", tối đa 2 ca mỗi
+  nơi.
+  Mismatch 20: chẩn đoán có trong mapping + thủ thuật không liên quan (ví dụ
+  J06.9 + P-2001).
+  Clustering 20: số tiền ngẫu nhiên 47.500–49.999 cho claim mà giá thường thấp
+  hơn.
+
+⏺ Mình chưa ghi file. Dưới đây là các điểm yếu, xếp từ nặng đến nhẹ. Các con số
+  tính với giả định 15 chẩn đoán chia đều (khoảng 120 claim mỗi chẩn đoán) và
+  nhiễu lognormal σ ≈ 0,15 cho từng mã.
+
+  Nặng: làm hỏng rule hoặc sinh nhiều báo động giả
+
+  1. Claim clustering làm upcoding mất tác dụng trong cả nhóm.
+  - Nhóm [P-1001] (gồm J06.9, A09, I10) có khoảng 180 claim, mean ≈ 810, SD
+    ≈ 120.
+  - Chỉ cần cài 1 claim clustering 48.000 vào nhóm này:
+    - Mọi claim khác trong nhóm, khi tính leave-one-out, đều thấy claim 48.000
+      đó. SD thành khoảng 3.500, ngưỡng mean + 2SD ≈ 8.000.
+    - Claim upcoded của nhóm này chỉ cao tối đa khoảng 800 × 2,5 × 1,15 ≈ 2.300,
+      nên bị bỏ lọt toàn bộ.
+  - Ngay cả claim upcoded cũng che lẫn nhau. Hai claim upcoded khoảng 2.000
+    trong cùng nhóm đẩy SD từ 120 lên khoảng 175. Khi đó claim upcoded với hệ số
+    1,35 chỉ đạt z ≈ 1,6, bị bỏ lọt.
+  - Thêm nữa, clustering trên claim rẻ cũng luôn kích hoạt upcoding (z vài
+    trăm), nên số đếm theo từng rule bị lẫn.
+  - Hướng xử lý có thể:
+    - (a) Clustering chỉ áp lên các nhóm vốn đắt gần mức 50.000, như K35.80 có
+      CT (45.000). Đây cũng là kịch bản thực tế hơn: đẩy claim lên sát ngưỡng tự
+      động duyệt.
+    - (b) Dùng median/MAD thay cho mean/SD. Nhưng cách này lệch khỏi chữ
+      "standard deviations" trong đề và làm quyết định 3 phải sửa.
+    - (c) Generator giới hạn mỗi nhóm tối đa 1 claim ngoại lai. Nhưng như vậy là
+      may đo dữ liệu theo rule.
+
+  2. Claim sạch nội trú tự rơi vào dải 47.500–49.999.
+
+  ┌─────────────────────────┬───────────────┬──────────────────────────────┐
+  │         Phác đồ         │ Giá tham khảo │ Tỷ lệ claim sạch rơi vào dải │
+  ├─────────────────────────┼───────────────┼──────────────────────────────┤
+  │ K35.80 [P-1008, B-9002] │ 45.000        │ ~15%                         │
+  ├─────────────────────────┼───────────────┼──────────────────────────────┤
+  │ K35.80 [P-1007, B-9002] │ 38.000        │ ~3%                          │
+  ├─────────────────────────┼───────────────┼──────────────────────────────┤
+  │ K80.20 [B-9003]         │ 65.000        │ ~1–2%                        │
+  ├─────────────────────────┼───────────────┼──────────────────────────────┤
+  │ S52.50                  │ 64.200        │ ~1%                          │
+  └─────────────────────────┴───────────────┴──────────────────────────────┘
+
+  - Tổng cộng khoảng 10–15 FP clustering, so với 20 TP. Precision của rule này
+    còn khoảng 60%.
+  - Thêm vào đó, unbundling K35.80 có CT thành [P-1008, P-2001, P-2002] có giá
+    gốc 47.000, nên thường kích hoạt luôn clustering (chồng flag, không phải
+    FP).
+
+  3. Nhiễu lognormal tự sinh FP cho upcoding.
+  - Với σ = 0,15, khoảng 3,4% claim của nhóm một mã vượt mean + 2SD. Nhóm nhiều
+    mã có phân phối gần chuẩn hơn, khoảng 2,5%.
+  - Tính ra khoảng 45–60 FP trên 1.800 claim sạch, so với 30 TP.
+  - Ngược lại, hệ số 1,35 trên nhóm một mã chỉ cho z ≈ 2,3 nếu claim gốc đúng
+    bằng mean. Nếu claim gốc thấp hơn mean thì bị bỏ lọt. Ước tính mất khoảng
+    1–2 trên 30 ca.
+
+  4. Bản sao rapid dời ngày có thể làm hỏng weekend anomaly và lộ nhãn.
+  - Dời 1–7 ngày mà giữ nguyên provider thì bản sao có thể rơi vào thứ Bảy/Chủ
+    Nhật tại bệnh viện mổ theo lịch hoặc phòng khám, hoặc Chủ Nhật tại nha khoa.
+    Đây là ngày mà dữ liệu sạch không bao giờ có, nên:
+    - Lộ nhãn: mọi claim cuối tuần ở phòng khám đều là gian lận.
+    - Bỏ lọt weekend: ví dụ bệnh viện có 25 claim, 2 ca cài, thêm 1 bản sao
+      rapid rơi vào cuối tuần. Khi xét ca cài A, tỷ lệ là 2/26 ≈ 7,7%, nên cả 2
+      ca cài bị bỏ lọt.
+  - Chưa nói hướng dời. Nếu dời lùi thì claim sạch gốc thành "claim sau" và bị
+    cờ: 1 FP + 1 FN mỗi cặp.
+  - Claim gốc sau ngày 24/12 không thể dời tới 7 ngày mà vẫn ở trong năm 2024.
+
+  5. Weekend anomaly chưa đủ điều kiện để bắt được.
+  - Vấn đề lần trước vẫn còn: với tối đa 2 ca mỗi nơi, provider cần ≥ 22 claim
+    chứ không phải 20.
+  - Phải có ít nhất 10 bệnh viện mổ theo lịch nhận ca cài, mỗi nơi ≥ 20 claim
+    sạch. Thiết kế chưa nói claim được phân bổ thế nào giữa các provider. Nếu
+    bệnh viện chủ yếu nhận claim nội trú (chỉ 3 trên 15 chẩn đoán) thì số claim
+    mỗi nơi có thể thấp hơn 20, và rule bỏ qua cả provider.
+  - Chưa định nghĩa danh sách mã phẫu thuật:
+    - Nếu chỉ gồm P-20xx thì ca K35.80 [P-1007, B-9002] và K80.20 [B-9003] (mã
+      gói) không bị tính là phẫu thuật, nên bỏ lọt.
+    - P-2005 (khâu vết thương, ngoại trú) và P-3004 (nhổ răng) có tính là phẫu
+      thuật không? Hiện chưa gây lỗi, nhưng phải chốt.
+
+  Trung bình
+
+  6. Thứ tự gán nhãn duplicate. Quyết định 10 đánh claim_id sau khi sắp theo
+  ngày. Bản gốc và bản sao cùng ngày, nên thứ tự giữa chúng là ngẫu nhiên. Nhãn
+  "thuộc về claim_id lớn hơn" chỉ đúng nếu gán sau khi đã đánh ID. Nếu gán
+  trước, khoảng 50% bị sai: khoảng 15 FP + 15 FN.
+
+  7. Rapid tự nhiên trong dữ liệu sạch.
+  - Mỗi member có khoảng 3,6 claim, tức khoảng 3.240 cặp claim trên toàn bộ 500
+    member.
+  - Xác suất cùng chẩn đoán là 1/15, xác suất cách nhau 1–7 ngày khoảng 14/366.
+  - Tính ra khoảng 8 FP. Con số này tăng nếu tần suất chẩn đoán lệch nhiều, hoặc
+    nếu member gắn với bệnh mạn tính (E11.9, I10).
+
+  8. Một claim sạch có thể bị dùng làm gốc cho nhiều kiểu cài.
+  - Upcoding, unbundling, clustering, mismatch sửa trực tiếp claim sạch.
+    Duplicate và rapid chép claim sạch. Phantom dời claim sạch sang ngày khác.
+  - Nếu không cấm dùng lại, có thể xảy ra: claim gốc của một cặp rapid bị
+    phantom dời ngày (cặp rapid bị phá), hoặc claim gốc của duplicate bị upcode.
+  - Tổng số dòng cũng chưa khớp. Kiểu chép hoặc thêm mới (30 + 30 + 25 + 20 =
+    105 claim) tạo dòng mới, còn kiểu sửa (95 claim) dùng lại dòng có sẵn. Muốn
+    có đúng 1.800 sạch + 200 gian lận = 2.000 thì phải sinh 1.895 claim gốc.
+
+  Khó test (logic rule)
+
+  9. Mức "< 10 claim" tính trước hay sau khi bỏ chính claim đang xét? Nhóm 10
+  claim chỉ còn 9 claim tham chiếu, nên test biên sẽ cho kết quả khác nhau tùy
+  cách hiểu.
+
+  10. Dùng SD mẫu hay SD tổng thể? Hai cách cho z khác nhau ở biên, nên giá trị
+  kỳ vọng trong test phụ thuộc vào lựa chọn này.
+
+  11. SD = 0 (mọi claim tham chiếu bằng nhau, rất hay gặp trong fixture viết
+  tay) dẫn tới chia cho 0. Cần định nghĩa hành vi cho trường hợp này.
+
+  12. Rule 3, 5, 6 phụ thuộc thống kê toàn bộ dataset. Fixture test cần ≥ 11
+  claim cho upcoding, 31 claim cho phantom, 22 claim cho weekend. Nếu rule nhận
+  thống kê đã tính sẵn (theo provider hoặc theo nhóm) làm đầu vào thì mới test
+  riêng từng rule được.
+
+  Không có vấn đề
+
+  - Không có phác đồ sạch nào chứa đủ thành phần của một gói, nên unbundling
+    không có FP tự nhiên.
+  - Mọi chẩn đoán đều có trong mapping, nên quyết định 7 không phát sinh trường
+    hợp chẩn đoán lạ.
+  - Duplicate tự nhiên gần như bằng 0 (ước tính khoảng 0,02).
+
+  Bạn chốt các điểm 1, 2, 4, 5, 8 (và 9–11 nếu muốn) thì mình sẽ ghi
+  DATA_DESIGN.md theo đúng lựa chọn đó.
+
+❯ Tạo CLAUDE.md cho dự án, dưới 40 dòng, gồm:
+  - Dự án là gì (một đoạn).
+  - Các lệnh: install, generate, inspect, score, report, all, test, typecheck.
+  - Quy ước: TypeScript strict, không any; ngày là chuỗi 'YYYY-MM-DD', tính
+  ngày trong tuần bằng UTC; rule là hàm thuần; ngưỡng và trọng số lấy từ
+  config; chuỗi evidence phải chứa con số thật; rule không bao giờ được đọc
+  nhãn; không sửa test để cho test pass.
+  - Ngôn ngữ: code, comment, evidence, file docs viết tiếng Anh; trả lời tôi
+  trong chat bằng tiếng Việt.
+  - Trước khi báo xong một việc: chạy typecheck và test, dán kết quả.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Write(ai-challenge-10-fraud-detection/CLAUDE.md)
+  ⎿  Wrote 33 lines to ai-challenge-10-fraud-detection/CLAUDE.md
+       1 # Fraud Detection Scoring Engine
+       3 Rule-based fraud scoring engine for insurance claims (AI Challen
+         ge 10, see `docs/BRIEF.md`). It generates a synthetic dataset of
+         ules, assigns each claim a 0–100 risk score with itemized eviden
+         ce, and reports precision/recall/FPR against the known labels. I
+       4
+       5 ## Commands
+       7 - `npm install` — install dependencies
+       8 - `npm run generate` — generate the synthetic dataset and labels
+      10 - `npm run score` — run rules and write scored output
+     … +31 lines (ctrl+o to expand)
+
+⏺ Mình đã tạo CLAUDE.md (ai-challenge-10-fraud-detection/CLAUDE.md), khoảng 35
+  dòng, gồm đủ các mục bạn yêu cầu.
+
+  - Các lệnh chưa chạy được. Dự án chưa có package.json, nên 8 lệnh (npm run
+    generate, inspect, score, report, all, test, typecheck, npm install) chỉ là
+    tên mình đặt trước. Chúng phải được tạo đúng tên đó khi dựng khung dự án.
+  - Vị trí file. File nằm trong thư mục ai-challenge-10-fraud-detection/, không
+    nằm ở gốc repo papaya-test. Nếu mở Claude Code ở gốc repo thì file này không
+    được nạp ngay từ đầu phiên, chỉ được nạp khi mình đọc file trong thư mục
+    đó. Để quy ước luôn có hiệu lực, nên mở phiên ngay trong
+    ai-challenge-10-fraud-detection/.
+  - Typecheck và test chưa chạy vì chưa có code nào để chạy.
