@@ -87,11 +87,35 @@ export interface Config {
   thresholds: Thresholds;
 }
 
+/** Count, sum and sum of squares of the amounts billed under one procedure-code combination. */
+export interface AmountAggregate {
+  n: number;
+  sum: number;
+  sumSquares: number;
+}
+
+/** Claim count and weekend-claim count of one provider. */
+export interface WeekendTally {
+  claims: number;
+  weekendClaims: number;
+}
+
 /**
- * Dataset-wide view handed to every rule. Rules must be pure functions of
- * (claim, context) and must not receive fraud labels.
+ * Dataset-wide view handed to every rule, built once by `buildContext`.
+ * Rules must be pure functions of (claim, context) and must not receive fraud
+ * labels. Keys are made by the `*Key` functions in `context.ts`.
  */
 export interface RuleContext {
   claims: readonly Claim[];
   config: Config;
+  /** member + provider + date + diagnosis → claims, ascending by claim_id (duplicate). */
+  duplicateGroups: ReadonlyMap<string, readonly Claim[]>;
+  /** member + diagnosis → claims, ascending by date then claim_id (rapid re-submission). */
+  memberDiagnosisHistory: ReadonlyMap<string, readonly Claim[]>;
+  /** provider + date → claims (phantom billing). */
+  providerDayClaims: ReadonlyMap<string, readonly Claim[]>;
+  /** procedure-code combination → amount aggregate (upcoding). */
+  comboAmounts: ReadonlyMap<string, AmountAggregate>;
+  /** provider → claim and weekend-claim counts (weekend anomaly). */
+  providerWeekend: ReadonlyMap<string, WeekendTally>;
 }
