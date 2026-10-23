@@ -94,7 +94,7 @@ export interface AmountAggregate {
   sumSquares: number;
 }
 
-/** Claim count and weekend-claim count of one provider. */
+/** Number of claims and how many of them fall on a weekend, over some set of one provider's claims. */
 export interface WeekendTally {
   claims: number;
   weekendClaims: number;
@@ -120,4 +120,6 @@ export interface RuleContext {
   comboAmounts: ReadonlyMap<string, AmountAggregate>;
   /** provider → claim and weekend-claim counts (weekend anomaly). */
   providerWeekend: ReadonlyMap<string, WeekendTally>;
+  /** provider → surgical-claim and weekend-surgical-claim counts (weekend anomaly, Decision 19). */
+  providerSurgical: ReadonlyMap<string, WeekendTally>;
 }

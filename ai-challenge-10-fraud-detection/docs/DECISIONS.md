@@ -60,13 +60,13 @@ Interpretation decisions for ambiguous or conflicting parts of [BRIEF.md](BRIEF.
 
 ---
 
-## 6. Weekend anomaly — historical weekend share
+## 6. Weekend anomaly — historical weekend share (refined by Decision 19)
 
 **Context:** If the provider's weekend share includes the injected weekend surgeries, the share rises and the rule misses the very cases that were injected.
 
 **Decision:**
 - The provider's weekend share excludes the claim being evaluated.
-- The provider must have ≥ 20 claims.
+- The provider must have ≥ 20 surgical claims (Decision 19).
 - In the generator, "weekday-only" providers have no clean weekend claims.
 - At most 2 cases are injected per provider (generator constraints refined by Decision 14).
 
@@ -247,3 +247,21 @@ Both choices change the result at the boundary, so a test cannot pin the behavio
 **Consequence:**
 - Clean claims never fire rapid re-submission against each other.
 - This is an assumption of the synthetic data (real members do revisit within a week), and it is listed as a limitation in the README.
+
+---
+
+## 19. Weekend anomaly — the share is over surgical claims
+
+**Context:** Decision 6 says "the provider's weekend share" without saying over which claims. The first implementation used all of the provider's claims. Decisions 14 and 17 already reason in surgical claims (≥ 30 surgical claims, 1/29 ≈ 3.4%, "fewer than 20 surgical claims"), and weekend consultations or suturing at a hospital say nothing about whether it operates on weekends.
+
+**Decision:**
+- Share = weekend surgical claims / surgical claims of the provider, with the evaluated claim removed from both counts. It is a weekend surgical claim itself, so it is subtracted from the numerator and the denominator.
+- Example: a provider with 40 surgical claims, 2 of them on Sundays: each of the two is evaluated against 1/39 ≈ 2.6%.
+- `min_provider_claims` counts the provider's surgical claims, the evaluated one included. 20 surgical claims are evaluated (against 19 others); 19 are not.
+- A claim is surgical as defined in Decision 14 (bundle components count).
+- Non-surgical claims, weekend or not, are in neither count.
+
+**Consequence:**
+- Weekend consultations at a provider do not mask weekend surgery. A provider with 100 routine claims but 5 surgeries is not evaluated.
+- The brief's "historical weekend volume" is read as weekend surgical volume.
+- On the generated data the rule flags exactly the 20 injected weekend cases and nothing else.

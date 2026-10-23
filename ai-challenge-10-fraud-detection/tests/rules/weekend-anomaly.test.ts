@@ -25,10 +25,17 @@ function surgery(overrides: Partial<Claim> = {}): Claim {
   });
 }
 
-/** `count` routine weekday consultations at one provider. */
+/** `count` surgical claims on weekdays at one provider. */
 function weekdayClaims(count: number, provider_id = 'PRV-01'): Claim[] {
   return Array.from({ length: count }, (_, i) =>
-    makeClaim({ provider_id, member_id: `M-${i}`, claim_date: WEEKDAYS[i % WEEKDAYS.length] as string }),
+    surgery({ provider_id, member_id: `M-${i}`, claim_date: WEEKDAYS[i % WEEKDAYS.length] as string }),
+  );
+}
+
+/** `count` routine (non-surgical) consultations at one provider on the given dates, cycling. */
+function consultations(count: number, dates: readonly string[], provider_id = 'PRV-01'): Claim[] {
+  return Array.from({ length: count }, (_, i) =>
+    makeClaim({ provider_id, member_id: `C-${provider_id}-${i}`, claim_date: dates[i % dates.length] as string }),
   );
 }
 
@@ -37,7 +44,7 @@ function evaluate(claim: Claim, others: Claim[]) {
 }
 
 describe('weekendAnomaly', () => {
-  it('flags both Sunday surgeries at a provider with 40 claims and no other weekend activity (1/39 ≈ 2.6%)', () => {
+  it('flags both Sunday surgeries at a provider with 40 surgical claims and no other weekend surgery (1/39 ≈ 2.6%)', () => {
     const first = surgery({ claim_date: SUNDAY });
     const second = surgery({ claim_date: NEXT_SUNDAY });
     const ctx = buildContext([...weekdayClaims(38), first, second], config);
@@ -70,10 +77,10 @@ describe('weekendAnomaly', () => {
     expect(evidence).toContain('excluding this claim');
   });
 
-  it('does not flag Sunday surgery at a 24/7 hospital with ~28% weekend claims', () => {
-    // 36 weekday + 13 weekend consultations + this Sunday surgery = 14/50 = 28% weekend;
+  it('does not flag Sunday surgery at a 24/7 hospital with ~28% weekend surgical claims', () => {
+    // 36 weekday + 13 weekend surgeries + this Sunday surgery = 14/50 = 28% weekend;
     // without this claim 13/49 ≈ 26.5%, far above 5%.
-    const weekend = Array.from({ length: 13 }, (_, i) => makeClaim({ member_id: `W-${i}`, claim_date: i % 2 ? SATURDAY : NEXT_SUNDAY }));
+    const weekend = Array.from({ length: 13 }, (_, i) => surgery({ member_id: `W-${i}`, claim_date: i % 2 ? SATURDAY : NEXT_SUNDAY }));
     expect(evaluate(surgery(), [...weekdayClaims(36), ...weekend])).toBeNull();
   });
 
@@ -88,13 +95,13 @@ describe('weekendAnomaly', () => {
     expect(evaluate(surgery({ claim_date: '2024-03-18' }), weekdayClaims(39))).toBeNull();
   });
 
-  it('does not flag a provider with only 15 claims (below the history minimum of 20)', () => {
+  it('does not flag a provider with only 15 surgical claims (below the history minimum of 20)', () => {
     expect(evaluate(surgery(), weekdayClaims(14))).toBeNull();
   });
 
-  it('counts min_provider_claims over all the provider’s claims: 20 is evaluated, 19 is not', () => {
-    // Decision 6 / 14: "the provider must have ≥ 20 claims" — a provider with 20 claims
-    // is evaluated against the 19 others.
+  it('counts min_provider_claims over the provider’s surgical claims: 20 is evaluated, 19 is not', () => {
+    // Decision 19: a provider with 20 surgical claims, this one included, is evaluated
+    // against the 19 others.
     expect(evaluate(surgery(), weekdayClaims(19))?.evidence).toContain('0/19');
     expect(evaluate(surgery(), weekdayClaims(18))).toBeNull();
   });
@@ -106,14 +113,28 @@ describe('weekendAnomaly', () => {
     expect(evidence).toContain('P-2001');
   });
 
+  it('uses surgical claims only as the denominator: 100 weekday consultations do not make up for 5 surgeries', () => {
+    // 5 surgeries are below the 20-claim minimum, however many routine claims the provider has.
+    const history = [...weekdayClaims(4), ...consultations(100, WEEKDAYS)];
+    expect(evaluate(surgery(), history)).toBeNull();
+  });
+
+  it('does not let weekend consultations mask weekend surgery (Decision 19)', () => {
+    // 39 weekday surgeries plus 40 Saturday/Sunday consultations: the all-claims share of the
+    // other 79 claims would be 40/79 ≈ 51%, but none of the 39 other surgical claims is on a weekend.
+    const history = [...weekdayClaims(39), ...consultations(40, [SATURDAY, NEXT_SUNDAY])];
+    const evidence = evaluate(surgery(), history)?.evidence ?? '';
+    expect(evidence).toContain('0/39');
+  });
+
   it('does not count other providers’ weekend claims in the share', () => {
-    const elsewhere = Array.from({ length: 30 }, (_, i) => makeClaim({ provider_id: 'PRV-02', member_id: `X-${i}`, claim_date: SATURDAY }));
+    const elsewhere = Array.from({ length: 30 }, (_, i) => surgery({ provider_id: 'PRV-02', member_id: `X-${i}`, claim_date: SATURDAY }));
     expect(evaluate(surgery(), [...weekdayClaims(39), ...elsewhere])).not.toBeNull();
   });
 
   it('puts the surgical codes, weekday and date, provider, share as % and x/y, and the exclusion in the evidence', () => {
     const evidence = evaluate(surgery(), weekdayClaims(39))?.evidence ?? '';
-    for (const part of ['P-2001 (Appendectomy)', 'P-2002 (Anesthesia)', `Sunday ${SUNDAY}`, 'PRV-01', '0.0%', '0/39', 'excluding this claim', '5%']) {
+    for (const part of ['P-2001 (Appendectomy)', 'P-2002 (Anesthesia)', `Sunday ${SUNDAY}`, 'PRV-01', '0.0%', '0/39 surgical claims', 'excluding this claim', '5%']) {
       expect(evidence).toContain(part);
     }
   });

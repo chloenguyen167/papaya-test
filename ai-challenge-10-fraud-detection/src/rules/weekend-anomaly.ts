@@ -18,23 +18,24 @@ function surgicalCodes(codes: readonly string[], config: Config): string[] {
 
 /**
  * Surgery on a Saturday or Sunday (day of week in UTC) at a provider whose
- * weekend share, excluding this claim, is below `max_weekend_share` (Decision 6).
- * The provider needs at least `min_provider_claims` claims in total, this one
- * included. Surgical includes bundle components (Decision 14).
+ * weekend share of surgical claims, excluding this claim, is below
+ * `max_weekend_share` (Decisions 6, 19). The provider needs at least
+ * `min_provider_claims` surgical claims, this one included. Surgical includes
+ * bundle components (Decision 14).
  */
 export function weekendAnomaly(claim: Claim, ctx: RuleContext): Flag | null {
   const { config } = ctx;
   if (!isWeekend(claim.claim_date) || !isSurgical(claim.procedure_codes, config)) return null;
 
   const { max_weekend_share, min_provider_claims } = config.thresholds.weekend_anomaly;
-  const tally = ctx.providerWeekend.get(claim.provider_id);
+  const tally = ctx.providerSurgical.get(claim.provider_id);
   if (!tally || tally.claims < min_provider_claims) return null;
 
-  // This claim is itself a weekend claim; leave it out so it cannot raise its own baseline.
-  const otherClaims = tally.claims - 1;
+  // This claim is itself a weekend surgical claim; leave it out so it cannot raise its own baseline.
+  const otherSurgical = tally.claims - 1;
   const otherWeekend = tally.weekendClaims - 1;
-  if (otherClaims <= 0) return null;
-  const share = otherWeekend / otherClaims;
+  if (otherSurgical <= 0) return null;
+  const share = otherWeekend / otherSurgical;
   if (share >= max_weekend_share) return null;
 
   const day = DAY_NAMES[dayOfWeekUtc(claim.claim_date)];
@@ -43,7 +44,7 @@ export function weekendAnomaly(claim: Claim, ctx: RuleContext): Flag | null {
     severity: config.weights.weekend_anomaly,
     evidence:
       `Surgical procedure ${surgicalCodes(claim.procedure_codes, config).join('; ')} on ${day} ${claim.claim_date} ` +
-      `at provider ${claim.provider_id}, whose weekend share is ${(share * 100).toFixed(1)}% ` +
-      `(${otherWeekend}/${otherClaims} claims, excluding this claim), below the ${formatNumber(max_weekend_share * 100)}% limit`,
+      `at provider ${claim.provider_id}, whose weekend share of surgical claims is ${(share * 100).toFixed(1)}% ` +
+      `(${otherWeekend}/${otherSurgical} surgical claims, excluding this claim), below the ${formatNumber(max_weekend_share * 100)}% limit`,
   };
 }

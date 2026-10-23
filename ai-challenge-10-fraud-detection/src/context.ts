@@ -1,4 +1,4 @@
-import { comboKey } from './codes.js';
+import { comboKey, isSurgical } from './codes.js';
 import { isWeekend } from './dates.js';
 import type { AmountAggregate, Claim, Config, RuleContext, WeekendTally } from './types.js';
 
@@ -53,6 +53,7 @@ export function buildContext(claims: readonly Claim[], config: Config): RuleCont
   const providerActiveDays = new Map<string, number>();
   const comboAmounts = new Map<string, AmountAggregate>();
   const providerWeekend = new Map<string, WeekendTally>();
+  const providerSurgical = new Map<string, WeekendTally>();
 
   for (const claim of claims) {
     push(duplicateGroups, duplicateKey(claim), claim);
@@ -75,8 +76,16 @@ export function buildContext(claims: readonly Claim[], config: Config): RuleCont
 
     const tally = providerWeekend.get(claim.provider_id) ?? { claims: 0, weekendClaims: 0 };
     tally.claims += 1;
-    if (isWeekend(claim.claim_date)) tally.weekendClaims += 1;
+    const weekend = isWeekend(claim.claim_date);
+    if (weekend) tally.weekendClaims += 1;
     providerWeekend.set(claim.provider_id, tally);
+
+    if (isSurgical(claim.procedure_codes, config)) {
+      const surgical = providerSurgical.get(claim.provider_id) ?? { claims: 0, weekendClaims: 0 };
+      surgical.claims += 1;
+      if (weekend) surgical.weekendClaims += 1;
+      providerSurgical.set(claim.provider_id, surgical);
+    }
   }
 
   for (const group of duplicateGroups.values()) {
@@ -95,5 +104,6 @@ export function buildContext(claims: readonly Claim[], config: Config): RuleCont
     providerActiveDays,
     comboAmounts,
     providerWeekend,
+    providerSurgical,
   };
 }
