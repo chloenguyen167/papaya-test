@@ -57,7 +57,7 @@ describe('config', () => {
         'thresholds.json weights.amount_clustering: weight must be an integer from 1 to 5, got 7',
         'thresholds.json rules.upcoding: missing',
         'thresholds.json rules.upcoding.z_threshold: missing',
-        'thresholds.json rules.upcoding.min_group_size: missing',
+        'thresholds.json rules.upcoding.min_other_claims: missing',
       ]);
     }
   });

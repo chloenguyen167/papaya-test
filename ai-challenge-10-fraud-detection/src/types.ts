@@ -71,7 +71,8 @@ export interface DiagnosisProtocols {
 
 export interface Thresholds {
   rapid_resubmission: { min_gap_days: number; max_gap_days: number };
-  upcoding: { z_threshold: number; min_group_size: number };
+  /** min_other_claims counts the group's claims excluding the claim being evaluated (Decision 15). */
+  upcoding: { z_threshold: number; min_other_claims: number };
   phantom_billing: { max_claims_per_provider_day: number };
   weekend_anomaly: { max_weekend_share: number; min_provider_claims: number };
   amount_clustering: { auto_approval_threshold: number; min_amount: number; max_amount: number };

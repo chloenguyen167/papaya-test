@@ -14,7 +14,7 @@
   "P-2002": { "name": "Anesthesia", "category": "surgical", "reference_price": 8000 },
   "P-2003": { "name": "Laparoscopic cholecystectomy", "category": "surgical", "reference_price": 60000 },
   "P-2004": { "name": "Forearm fracture fixation", "category": "surgical", "reference_price": 55000 },
-  "P-2005": { "name": "Wound suturing", "category": "surgical", "reference_price": 3000 },
+  "P-2005": { "name": "Wound suturing", "category": "medical", "reference_price": 3000 },
   "P-3001": { "name": "Dental filling", "category": "dental", "reference_price": 1500 },
   "P-3002": { "name": "Dental X-ray", "category": "dental", "reference_price": 500 },
   "P-3003": { "name": "Root canal treatment", "category": "dental", "reference_price": 6000 },

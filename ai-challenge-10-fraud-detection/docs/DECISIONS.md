@@ -31,7 +31,7 @@ Interpretation decisions for ambiguous or conflicting parts of [BRIEF.md](BRIEF.
 **Decision:**
 - Group claims by procedure-code combination (codes sorted, then joined).
 - Compute mean and SD leave-one-out, excluding the claim being evaluated.
-- Skip groups with fewer than 10 claims.
+- Skip groups with fewer than 10 claims (refined by Decision 15).
 
 **Consequence:**
 - Each claim is compared against claims that bill the same set of procedures.
@@ -68,7 +68,7 @@ Interpretation decisions for ambiguous or conflicting parts of [BRIEF.md](BRIEF.
 - The provider's weekend share excludes the claim being evaluated.
 - The provider must have ≥ 20 claims.
 - In the generator, "weekday-only" providers have no clean weekend claims.
-- At most 2 cases are injected per provider.
+- At most 2 cases are injected per provider (generator constraints refined by Decision 14).
 
 **Consequence:** Injected cases do not dilute their own detection. Providers with too few claims are not evaluated.
 
@@ -125,3 +125,80 @@ Interpretation decisions for ambiguous or conflicting parts of [BRIEF.md](BRIEF.
 - Run an additional holdout dataset generated with a different seed, without any tuning.
 
 **Consequence:** The report shows the reviewer workload behind the alerts. The holdout run shows whether the results hold on data that was not used for tuning.
+
+---
+
+## 12. Clean amounts avoid the clustering band; clustering only on high-cost combinations
+
+**Context:**
+- Clean inpatient claims land in 47,500–49,999 on their own. About 15% of K35.80 [P-1008, B-9002] claims do, which would make them clustering false positives.
+- A clustering amount placed on a cheap combination such as [P-1001] (mean ≈ 810, SD ≈ 120) inflates the leave-one-out SD of every other claim in that group to ≈ 3,500. Upcoded claims in the group then go undetected, and the clustering claim also fires upcoding.
+
+**Decision:**
+- The clean-claim generator resamples any amount that falls in 47,500–49,999.
+- Clustering fraud is applied only to procedure-code combinations whose clean mean is ≥ 35,000 and clean SD is ≥ 5,000, so that the amount stays within 2 SD and does not also fire upcoding.
+- If no combination meets this condition, the generator stops with an error. The condition is not lowered.
+
+**Consequence:**
+- Clean claims never fire the clustering rule. This is an assumption of the synthetic data, not a property of real claims, and it is listed as a limitation in the README.
+- Cheap groups keep their normal SD, so clustering does not mask upcoding there.
+- The condition does not guarantee the whole band stays within 2 SD. See the open item in [PLAN.md](PLAN.md).
+
+---
+
+## 13. Rapid re-submission — how cases are injected
+
+**Context:**
+- Shifting a copy backwards would make the clean original the "later" claim. Decision 2 would then flag the original, giving 1 false positive and 1 false negative per pair.
+- A copy that lands on a weekend at a weekday-only provider breaks the weekend rule: it raises the provider's weekend share and reveals the label, because clean claims there are never on weekends.
+- Clean claims repeated within 1–7 days would fire the rule without being labeled.
+
+**Decision:**
+- The fraudulent claim is always the later copy, dated original date + 1..7 days. The original stays clean.
+- Applied only to claims without surgical procedures. If the new date is a Saturday or Sunday, a different offset is drawn.
+- Clean claims with the same member + provider + procedure codes are at least 8 days apart.
+- Duplicates use the same date (gap 0), so they never fire rapid re-submission (Decision 2).
+
+**Consequence:**
+- Every injected pair is caught with its label on the right claim.
+- Rapid copies never change a provider's weekend share and never interact with the weekend rule.
+- The rule matches on member + diagnosis, which is broader than the spacing constraint. Clean claims with the same member and diagnosis but a different provider or procedure set can still fall within 1–7 days. Such false positives are reported, not removed.
+
+---
+
+## 14. Weekend anomaly — provider volume and surgical definition
+
+**Context:**
+- With Decision 6, a provider with 20 claims and 2 injected weekend cases gives 1/19 ≈ 5.26% when one case is evaluated, so both cases are missed.
+- Bundles B-9002 and B-9003 contain surgery, but the bundle codes themselves are not in the surgical category.
+- Wound suturing (P-2005) is a normal weekend procedure in emergency care.
+
+**Decision:**
+- Each weekday-only surgical provider has ≥ 30 surgical claims and receives at most 2 injected weekend claims.
+- Clean claims at these providers never fall on a weekend.
+- A claim is surgical if at least one of its codes has category `surgical`, including components of any bundle on the claim.
+- P-2005 is moved from `surgical` to `medical`.
+
+**Consequence:**
+- With the evaluated claim excluded, at most 1 other weekend claim remains among ≥ 29 claims: 1/29 ≈ 3.4% < 5%. Both injected cases are always caught.
+- Bundled appendectomy and cholecystectomy claims count as surgery.
+- Weekend suturing claims at 24/7 hospitals are not treated as anomalies.
+
+---
+
+## 15. Upcoding — statistics
+
+**Context:** Decision 3 left two choices open:
+- whether the 10-claim minimum is counted before or after excluding the evaluated claim;
+- whether to use sample or population SD.
+
+Both choices change the result at the boundary, so a test cannot pin the behavior until they are fixed.
+
+**Decision:**
+- Use sample SD (divide by n − 1).
+- The minimum of 10 claims counts the claims other than the one being evaluated, so a group needs ≥ 11 claims in total. The config key is `min_other_claims`.
+- Boundary tests: 10 other claims are evaluated; 9 are skipped.
+
+**Consequence:**
+- Sample SD is the standard estimate from a sample and is slightly more conservative for small groups.
+- The minimum refers to the size of the reference set that z is computed against, with no off-by-one ambiguity.

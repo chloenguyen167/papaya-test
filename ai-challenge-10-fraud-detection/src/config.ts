@@ -192,7 +192,7 @@ function parseThresholds(v: Validator, root: Record<string, unknown>, file: stri
     },
     upcoding: {
       z_threshold: v.number(upcoding, 'z_threshold', `${base}.upcoding`),
-      min_group_size: v.number(upcoding, 'min_group_size', `${base}.upcoding`),
+      min_other_claims: v.number(upcoding, 'min_other_claims', `${base}.upcoding`),
     },
     phantom_billing: {
       max_claims_per_provider_day: v.number(phantom, 'max_claims_per_provider_day', `${base}.phantom_billing`),
