@@ -128,7 +128,7 @@ Interpretation decisions for ambiguous or conflicting parts of [BRIEF.md](BRIEF.
 
 ---
 
-## 12. Clean amounts avoid the clustering band; clustering only on high-cost combinations
+## 12. Clean amounts avoid the clustering band; clustering only on high-cost combinations (refined by Decision 16)
 
 **Context:**
 - Clean inpatient claims land in 47,500–49,999 on their own. About 15% of K35.80 [P-1008, B-9002] claims do, which would make them clustering false positives.
@@ -156,13 +156,13 @@ Interpretation decisions for ambiguous or conflicting parts of [BRIEF.md](BRIEF.
 **Decision:**
 - The fraudulent claim is always the later copy, dated original date + 1..7 days. The original stays clean.
 - Applied only to claims without surgical procedures. If the new date is a Saturday or Sunday, a different offset is drawn.
-- Clean claims with the same member + provider + procedure codes are at least 8 days apart.
+- Clean claims with the same member + provider + procedure codes are at least 8 days apart (superseded by Decision 18, which applies per member + diagnosis regardless of provider).
 - Duplicates use the same date (gap 0), so they never fire rapid re-submission (Decision 2).
 
 **Consequence:**
 - Every injected pair is caught with its label on the right claim.
 - Rapid copies never change a provider's weekend share and never interact with the weekend rule.
-- The rule matches on member + diagnosis, which is broader than the spacing constraint. Clean claims with the same member and diagnosis but a different provider or procedure set can still fall within 1–7 days. Such false positives are reported, not removed.
+- The rule matches on member + diagnosis, which is broader than the spacing constraint. Clean claims with the same member and diagnosis but a different provider or procedure set can still fall within 1–7 days. Such false positives are reported, not removed. (Decision 18 closes this gap for clean claims.)
 
 ---
 
@@ -202,3 +202,48 @@ Both choices change the result at the boundary, so a test cannot pin the behavio
 **Consequence:**
 - Sample SD is the standard estimate from a sample and is slightly more conservative for small groups.
 - The minimum refers to the size of the reference set that z is computed against, with no off-by-one ambiguity.
+
+---
+
+## 16. Clustering — which combinations can carry a clustering claim
+
+**Context:** K35.80 [P-1007, B-9002] meets Decision 12 (clean mean ≈ 38,100, SD ≈ 5,250), but its mean + 2 SD is only ≈ 48,600. Clustering amounts from about 48,600 to 49,999 on this combination would also fire upcoding.
+
+**Decision:**
+- K35.80 [P-1007, B-9002] is removed from the list of base combinations for clustering.
+- A combination can carry clustering claims only if its mean + 2 SD ≥ 50,500, measured on the generated clean data.
+
+**Consequence:**
+- Every amount in 47,500–49,999 stays within 2 SD of its group, so clustering claims do not also fire upcoding.
+- Based on simulation, the qualifying combinations are K35.80 [P-1008, B-9002], K80.20 [B-9003] and S52.50 [P-1006, P-2004, P-2002].
+- The generator checks the leave-one-out z of every clustering claim on the final dataset.
+
+---
+
+## 17. Surgical volume for the weekend rule
+
+**Context:**
+- Only 3 of the 15 diagnoses are surgical. With a uniform diagnosis mix, a hospital gets ≈ 13 surgical claims.
+- Decision 14 needs ≥ 30 surgical claims at every hospital that receives weekend injections.
+
+**Decision:**
+- Surgical diagnoses make up about 25% of clean claims (≈ 450 claims).
+- About 80% of these go to 12 scheduled-surgery hospitals, ≈ 30 claims each. These hospitals have no clean weekend claims.
+- Every other hospital has a weekend share ≥ 8% or fewer than 20 surgical claims, so it does not fire the weekend rule.
+
+**Consequence:**
+- Injected weekend cases are always caught (Decision 14).
+- Clean weekend surgery at the other hospitals does not produce false positives.
+- The diagnosis mix is weighted toward inpatient surgery more than a real portfolio would be. This is an assumption of the synthetic data.
+
+---
+
+## 18. Rapid re-submission — spacing of clean claims
+
+**Context:** Decision 13 spaced clean claims by member + provider + procedure codes. The rule itself matches on member + diagnosis, so clean claims at different providers could still fall within 1–7 days and fire the rule.
+
+**Decision:** Clean claims with the same member and the same diagnosis are at least 8 days apart, regardless of provider.
+
+**Consequence:**
+- Clean claims never fire rapid re-submission against each other.
+- This is an assumption of the synthetic data (real members do revisit within a week), and it is listed as a limitation in the README.

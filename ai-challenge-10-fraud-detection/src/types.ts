@@ -32,9 +32,8 @@ export type RuleName = (typeof RULE_NAMES)[number];
 /** Ground truth for one claim. Stored separately from claims; rules never read it. */
 export interface FraudLabel {
   claim_id: string;
-  is_fraud: boolean;
-  /** Patterns injected into this claim; empty for clean claims. */
-  fraud_types: RuleName[];
+  /** The single pattern injected into this claim, or 'clean'. */
+  fraud_type: RuleName | 'clean';
 }
 
 export interface Flag {

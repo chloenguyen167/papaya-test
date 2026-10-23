@@ -10,7 +10,7 @@ Phases run in order. Each phase ends with `npm run typecheck` and `npm test` pas
 - Wrote `src/csv.ts`, an RFC 4180 claims reader and writer.
 - Wrote `src/stats.ts` for leave-one-out mean and sample SD (Decision 15).
 
-## Phase 1 — Generator and inspect
+## Phase 1 — Generator (done) and inspect
 
 - **`npm run generate`:** a seeded PRNG builds `data/claims.csv` and `data/labels.csv` following DATA_DESIGN.md. The seed is a CLI argument and is also used for the holdout run.
 - **`npm run inspect`:** sanity checks that fail loudly:
@@ -54,14 +54,26 @@ Phases run in order. Each phase ends with `npm run typecheck` and `npm test` pas
 - Cover how to run the project, weight justification, results, and limitations, including Decision 12's synthetic-data assumption.
 - Commit the dataset, scored output and report.
 
-## Open items (need a decision before or during Phase 1)
+## Open items
 
-1. **Clustering vs upcoding on K35.80 [P-1007, B-9002].** This combination meets Decision 12 (mean ≈ 38,100, SD ≈ 5,250), but mean + 2 SD ≈ 48,600. Clustering amounts from about 48,600 to 49,999 would therefore also fire upcoding. The condition is not lowered; whether to tighten it is undecided.
-2. **Surgical volume.** Only 3 of the 15 diagnoses are surgical. With a uniform diagnosis mix, that gives ≈ 380 surgical claims, or ≈ 13 per hospital across 30 hospitals. Decision 14 needs ≥ 30 at each injected scheduled hospital: at least 10 hospitals × 30 = 300 surgical claims there. The diagnosis mix and provider allocation must be weighted to reach this.
+1. **Score normalization and priority bands.** What the score is divided by, and the High/Medium/Low cut-offs. To decide in Phase 3.
+
+## Resolved items
+
+1. **Clustering vs upcoding on K35.80 [P-1007, B-9002].** Resolved by Decision 16: the combination is removed, and clustering bases need a measured mean + 2 SD ≥ 50,500.
+2. **Surgical volume.** Resolved by Decision 17: about 25% surgical claims. 12 heavy scheduled-surgery hospitals get 30 surgical claims each; every other hospital has fewer than 20.
 3. **Base-claim reuse and row count.**
-   - Can one clean claim be the base for several injections?
-   - Copy- and add-style patterns create new rows (30 + 30 + 25 + 20 = 105), so about 1,895 base claims are needed for a total of 2,000.
-4. **Upcoding mutual masking.** Several upcoded claims in one group inflate each other's leave-one-out SD, and a factor near 1.35 may give z < 2. How upcoded claims are spread across groups is undecided.
-5. **SD = 0.** Behavior when every reference claim has the same amount.
-6. **Score normalization and priority bands.** What the score is divided by, and the High/Medium/Low cut-offs.
-7. **Overlapping patterns.** An unbundled K35.80 [P-1008, P-2001, P-2002] has a reference total of 47,000 and may land in the clustering band. Undecided whether labels record one fraud type or several.
+   - 1,800 clean claims are generated first. All 200 fraudulent claims are new rows, so clean claims stay clean.
+   - A clean claim is the base of at most one injection. Fraudulent claims are never bases.
+   - Phantom is the only pattern that changes clean claims: it moves their date. Moved claims and claims on the phantom provider-day are not used as bases.
+4. **Upcoding mutual masking.**
+   - Upcoded amounts are set to the clean mean + z × clean SD, with z drawn from [3, 4.5].
+   - One upcoded claim per combination with ≥ 20 clean claims. A second claim goes only to combinations with ≥ 85 clean claims.
+   - The first design used z in [3, 6] with any 2 per combination. It failed the z ≥ 2.5 check on 6 of 50 seeds: in a group of about 45, a partner at z = 6 pulled a z = 3 claim down to about 2.4.
+   - The generator checks that every upcoded claim has a leave-one-out z ≥ 2.5 on the final dataset.
+5. **SD = 0.**
+   - Rule: a claim whose leave-one-out SD is 0 is not evaluated and is counted as skipped.
+   - Generator: checks that every combination with ≥ 11 claims has SD > 0.
+6. **Overlapping patterns.** Each fraudulent claim has exactly one `fraud_type` and is built to fire only its own rule where this can be controlled.
+   - Injected claims with "normal" amounts use the same amount sampler as clean claims. A few of them may naturally exceed 2 SD, at the same rate as clean claims.
+   - This is accepted, because suppressing it would itself reveal the label. The report lists claims fired by more than one rule.
