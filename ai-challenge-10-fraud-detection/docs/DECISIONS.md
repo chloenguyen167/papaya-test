@@ -44,9 +44,16 @@ Interpretation decisions for ambiguous or conflicting parts of [BRIEF.md](BRIEF.
 
 **Context:** The brief does not say how many components of a bundle must be present.
 
-**Decision:** Flag only when ALL components of a bundle are present on the claim and the bundle code is absent.
+**Decision:**
+- Flag only when ALL components of a bundle are present on the claim.
+- If the bundle code is absent, the components are billed separately instead of the bundle (split billing).
+- If the bundle code is present as well, the same services are billed twice. This is also flagged, and the evidence says so.
+- The bundle code alone, without all its components, is not flagged.
 
-**Consequence:** A "≥ 2 components" threshold would flag every normal visit + blood test. Requiring the full set avoids that.
+**Consequence:**
+- A "≥ 2 components" threshold would flag every normal visit + blood test. Requiring the full set avoids that.
+- Bundle + components is the more serious case, and no other rule catches it: the components are valid procedures for the diagnosis (Decision 7) and the claim is not a duplicate. Leaving it unflagged would make it a silent gap.
+- The generator only injects split billing (bundle code absent), so this case does not affect the metrics.
 
 ---
 
