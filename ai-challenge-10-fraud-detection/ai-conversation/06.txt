@@ -1,0 +1,1050 @@
+
+❯ Bạn là reviewer từ đội FWA của một công ty bảo hiểm, không phải người viết
+  code này.
+  1. Đi qua docs/BRIEF.md từng yêu cầu một và lập bảng: yêu cầu | được đáp ứng
+  ở đâu (file:dòng hoặc file output) | trạng thái (đạt / một phần / thiếu).
+  2. Liệt kê 5 điểm rủi ro nhất trong code: logic nghiệp vụ sai, giả định ngầm,
+  chỗ một rule có thể âm thầm không làm gì.
+  3. Kiểm tra riêng: có nơi nào ngoài src/metrics.ts đọc labels không; số test
+  có ≥ 15 không; mọi evidence có chứa con số không.
+     Không sửa gì. Trả lời bằng tiếng Việt.
+
+⏺ Tôi sẽ đọc BRIEF và cấu trúc repo trước.
+
+  Read 1 file, ran 4 shell commands (ctrl+o to expand)
+
+⏺ Đã đọc xong rules. Giờ kiểm tra nơi đọc labels, metrics, config loader và
+  outputs.
+
+  Searched for 2 patterns, read 3 files, listed 1 directory, ran 1 shell command (ctrl+o to expand)
+  ⎿  Loaded CLAUDE.md
+
+⏺ Tiếp theo: chạy test/typecheck, kiểm tra evidence trong output và thống kê
+  dataset.
+
+  Listed 1 directory, ran 2 shell commands (ctrl+o to expand)
+
+⏺ Test: 183 (86 riêng cho rule). Giờ kiểm tra evidence trong output và các thông
+  số dataset.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Parser tự viết của tôi bị lệch do provider_name có dấu phẩy trong ngoặc kép —
+  dùng lại parser của dự án:
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Tôi sẽ chạy thử vài kịch bản rủi ro bằng script tạm ở /tmp (không đụng vào
+  repo) để xác nhận thay vì chỉ suy luận.
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+⏺ Review từ góc nhìn đội FWA: Fraud Detection Scoring Engine
+
+  Tóm lại: Engine chạy đúng trên dữ liệu tổng hợp: recall 100%, FPR 2,9%, 183
+  test pass, typecheck sạch. Nhưng có 3 điểm còn thiếu so với brief, và có 5 chỗ
+  trong logic mà gian lận thật sẽ lọt qua mà không bị gắn cờ. Tôi không sửa gì
+  trong repo. Hai script thử nghiệm tạm đặt ở /tmp đã được xoá.
+
+  Đường dẫn bên dưới tính từ ai-challenge-10-fraud-detection/.
+
+  1. Đối chiếu BRIEF.md
+
+  #: D1
+  Yêu cầu: 2.000 claims
+  Được đáp ứng ở đâu: data/claims.csv
+  (ai-challenge-10-fraud-detection/data/claims.csv), 2.000 dòng
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: D2
+  Yêu cầu: Đủ 10 cột
+  Được đáp ứng ở đâu: csv.ts:4-15
+  (ai-challenge-10-fraud-detection/src/csv.ts#L4-L15), types.ts:7-18
+  (ai-challenge-10-fraud-detection/src/types.ts#L7-L18)
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: D3
+  Yêu cầu: claim_id duy nhất
+  Được đáp ứng ở đâu: 2.000/2.000 id khác nhau. Lúc đọc vào thì không kiểm tra
+  trùng (csv.ts:150-156 (ai-challenge-10-fraud-detection/src/csv.ts#L150-L156))
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: D4
+  Yêu cầu: ~500 member, ~50 provider, có provider_name
+  Được đáp ứng ở đâu: 488 member, 50 provider, 50 tên (seed 7: 492 member). Chỉ
+  in ra, không ép
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: D5
+  Yêu cầu: Ngày từ 2024-01-01 đến 2024-12-31
+  Được đáp ứng ở đâu: Đúng khoảng; kiểm tra ở verify.ts:39
+  (ai-challenge-10-fraud-detection/src/generate/verify.ts#L39)
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: D6
+  Yêu cầu: claim_type thuộc OUTPATIENT, INPATIENT, DENTAL
+  Được đáp ứng ở đâu: 1.173 / 524 / 303
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: D7
+  Yêu cầu: diagnosis_code ICD-10, procedure_codes là danh sách, submitted_amount
+
+  thay đổi theo procedure
+  Được đáp ứng ở đâu: dx-procedure-map.json
+  (ai-challenge-10-fraud-detection/config/dx-procedure-map.json) có 15 mã;
+  procedures.json (ai-challenge-10-fraud-detection/config/procedures.json) có
+  reference_price; danh sách mã nối bằng | trong CSV
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: D8
+  Yêu cầu: is_weekend suy ra từ ngày
+  Được đáp ứng ở đâu: verify.ts:40
+  (ai-challenge-10-fraud-detection/src/generate/verify.ts#L40); có 0 dòng sai
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: D9
+  Yêu cầu: ~200 claim gian lận, đúng số theo 8 pattern
+  Được đáp ứng ở đâu: labels.csv đúng 30/30/30/25/25/20/20/20; ép ở
+  verify.ts:32-35
+  (ai-challenge-10-fraud-detection/src/generate/verify.ts#L32-L35). Phantom có
+  thêm 6 claim sạch trong cùng ngày (Decision 5)
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: R1
+  Yêu cầu: Duplicate
+  Được đáp ứng ở đâu: duplicate-claim.ts
+  (ai-challenge-10-fraud-detection/src/rules/duplicate-claim.ts)
+  Trạng thái: Đạt (xem rủi ro 3)
+  ────────────────────────────────────────
+  #: R2
+  Yêu cầu: Rapid re-submission trong 7 ngày
+  Được đáp ứng ở đâu: rapid-resubmission.ts
+  (ai-challenge-10-fraud-detection/src/rules/rapid-resubmission.ts), khoảng 1–7
+   ngày (Decision 2)
+  Trạng thái: Đạt (xem rủi ro 3)
+  ────────────────────────────────────────
+  #: R3
+  Yêu cầu: Upcoding: trên mean + 2 SD theo từng procedure code
+  Được đáp ứng ở đâu: upcoding.ts
+  (ai-challenge-10-fraud-detection/src/rules/upcoding.ts) lại nhóm theo tổ hợp
+  mã (Decision 3)
+  Trạng thái: Một phần: diễn giải khác brief (xem rủi ro 1)
+  ────────────────────────────────────────
+  #: R4
+  Yêu cầu: Unbundling, ít nhất 5 bundle
+  Được đáp ứng ở đâu: unbundling.ts
+  (ai-challenge-10-fraud-detection/src/rules/unbundling.ts), bundles.json
+  (ai-challenge-10-fraud-detection/config/bundles.json) có đúng 5. Decision 4
+  ghi "bundle code is absent", nhưng code vẫn gắn cờ khi có cả bundle code
+  (unbundling.ts:24
+  (ai-challenge-10-fraud-detection/src/rules/unbundling.ts#L24)) nên tài liệu
+  lệch với code
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: R5
+  Yêu cầu: Phantom: hơn 30 claim/ngày
+  Được đáp ứng ở đâu: phantom-billing.ts:13
+  (ai-challenge-10-fraud-detection/src/rules/phantom-billing.ts#L13)
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: R6
+  Yêu cầu: Weekend: provider có dưới 5% khối lượng cuối tuần trong lịch sử
+  Được đáp ứng ở đâu: weekend-anomaly.ts
+  (ai-challenge-10-fraud-detection/src/rules/weekend-anomaly.ts); tỉ lệ tính
+  trên claim phẫu thuật (Decision 19)
+  Trạng thái: Đạt, có diễn giải (xem rủi ro 2)
+  ────────────────────────────────────────
+  #: R7
+  Yêu cầu: Dx-procedure mismatch, ít nhất 10 cặp hợp lệ
+  Được đáp ứng ở đâu: dx-procedure-mismatch.ts
+  (ai-challenge-10-fraud-detection/src/rules/dx-procedure-mismatch.ts); 15 mã
+  chẩn đoán, khoảng 40 cặp
+  Trạng thái: Đạt (xem rủi ro 4)
+  ────────────────────────────────────────
+  #: R8
+  Yêu cầu: Clustering trong khoảng 47.500–49.999
+  Được đáp ứng ở đâu: amount-clustering.ts:9
+  (ai-challenge-10-fraud-detection/src/rules/amount-clustering.ts#L9)
+  Trạng thái: Đạt (xem rủi ro 5)
+  ────────────────────────────────────────
+  #: O1
+  Yêu cầu: Output mỗi claim gồm claim_id, risk_score, flags{rule, severity,
+  evidence}
+  Được đáp ứng ở đâu: output/scored.json
+  (ai-challenge-10-fraud-detection/output/scored.json), chỉ chứa 252 claim bị
+  gắn cờ; claim điểm 0 nằm trong ranked.csv
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: S1
+  Yêu cầu: Mỗi rule có trọng số 1–5 cấu hình được
+  Được đáp ứng ở đâu: thresholds.json:2-11
+  (ai-challenge-10-fraud-detection/config/thresholds.json#L2-L11), kiểm tra ở
+  config.ts:166 (ai-challenge-10-fraud-detection/src/config.ts#L166)
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: S2
+  Yêu cầu: Tổng có trọng số, chuẩn hoá về 0–100
+  Được đáp ứng ở đâu: score.ts:43-46
+  (ai-challenge-10-fraud-detection/src/score.ts#L43-L46): đường bão hoà mũ,
+  không chia tuyến tính (Decision 20)
+  Trạng thái: Đạt, có diễn giải
+  ────────────────────────────────────────
+  #: S3
+  Yêu cầu: Danh sách xếp hạng
+  Được đáp ứng ở đâu: output/ranked.csv
+  (ai-challenge-10-fraud-detection/output/ranked.csv), score.ts:55
+  (ai-challenge-10-fraud-detection/src/score.ts#L55)
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: M1
+  Yêu cầu: Báo cáo precision và recall
+  Được đáp ứng ở đâu: output/metrics.md
+  (ai-challenge-10-fraud-detection/output/metrics.md), có thêm holdout seed 7
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: M2
+  Yêu cầu: Recall ≥ 70%, FPR ≤ 20%
+  Được đáp ứng ở đâu: 100% / 2,9% khi coi "gắn cờ" là score > 0. Nếu chỉ tính từ
+
+  Medium trở lên (≥ 50) thì recall còn 65%, không đạt
+  Trạng thái: Đạt, có điều kiện
+  ────────────────────────────────────────
+  #: E1
+  Yêu cầu: Cả 8 rule đúng
+  Được đáp ứng ở đâu: Đúng trên dữ liệu tổng hợp; xem mục 2
+  Trạng thái: Một phần
+  ────────────────────────────────────────
+  #: E2
+  Yêu cầu: Evidence cụ thể, hành động được
+  Được đáp ứng ở đâu: 7/8 rule tốt; dx_mismatch không có con số định lượng (xem
+  mục 3)
+  Trạng thái: Một phần
+  ────────────────────────────────────────
+  #: E3
+  Yêu cầu: Giải thích vì sao rule này nặng hơn rule kia
+  Được đáp ứng ở đâu: Không có ở đâu cả. Decision 20 chỉ nói cách chuẩn hoá.
+  DECISIONS.md nhắc tới "README" 3 lần nhưng README không tồn tại
+  Trạng thái: Thiếu
+  ────────────────────────────────────────
+  #: E4
+  Yêu cầu: Ít nhất 15 unit test
+  Được đáp ứng ở đâu: 183 test
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: E5
+  Yêu cầu: Dưới 30 giây cho 2.000 claim
+  Được đáp ứng ở đâu: 30,9 ms (score-stats.json
+  (ai-challenge-10-fraud-detection/output/score-stats.json)); không có test tự
+  động cho hiệu năng
+  Trạng thái: Đạt
+  ────────────────────────────────────────
+  #: N1
+  Yêu cầu: Ước lượng và timeline
+  Được đáp ứng ở đâu: TIMELOG.md
+  (ai-challenge-10-fraud-detection/docs/TIMELOG.md): Phase 1 ghi "75 h" (có lẽ
+  là 0,75 h); các phase sau chưa điền thời gian thực
+  Trạng thái: Một phần
+  ────────────────────────────────────────
+  #: Sub
+  Yêu cầu: Push lên GitHub, kèm dataset, output, metrics
+  Được đáp ứng ở đâu: Đủ file. Nhánh main đang đi trước origin 3 commit, chưa
+  push
+  Trạng thái: Một phần
+
+  2. Năm điểm rủi ro nhất
+
+  Mỗi điểm tôi đã chạy thử bằng một kịch bản nhỏ trên engine thật để xác nhận.
+
+  1. Upcoding: kẻ gian né được dễ dàng, và rule này tạo nhiều báo động giả nhất.
+  - Rule nhóm claim theo tổ hợp mã (codes.ts:4-6
+    (ai-challenge-10-fraud-detection/src/codes.ts#L4-L6)). Nhóm nào có dưới 11
+    claim thì bị bỏ qua mà không báo gì (upcoding.ts:34
+    (ai-challenge-10-fraud-detection/src/rules/upcoding.ts#L34)).
+  - Thử nghiệm: claim 5.000 với mã [P-1001] bị gắn cờ. Cùng số tiền đó nhưng
+    thêm một mã rẻ P-1009 (vẫn là protocol hợp lệ của I10) thì không rule nào
+    bắt.
+  - Trên dữ liệu hiện tại đã có 25 claim bị bỏ qua.
+  - Rule này có precision chỉ 41,8%: 46 claim sạch bị gắn cờ, mỗi claim được 63
+    điểm (Medium).
+  - Leave-one-out chỉ loại claim đang xét. Nếu hai claim bị đội giá nằm cùng một
+    nhóm nhỏ, chúng làm SD phình ra và che cho nhau.
+
+  2. Weekend anomaly: provider gian lận có hệ thống tự che được mình.
+  - Rule chỉ loại claim đang xét khỏi tỉ lệ (weekend-anomaly.ts:35-39
+    (ai-challenge-10-fraud-detection/src/rules/weekend-anomaly.ts#L35-L39)).
+  - Thử nghiệm với một provider có 27 ca phẫu thuật ngày thường: thêm 2 ca thứ
+    Bảy thì 2 ca bị gắn cờ; thêm 3 ca thứ Bảy thì cả 3 đều lọt, vì mỗi ca thấy
+    2/29 = 6,9%, trên ngưỡng 5%.
+  - Generator cố ý chỉ chèn tối đa 2 ca cho mỗi provider (Decision 6/14), nên dữ
+    liệu test không bao giờ chạm tới điểm yếu này.
+  - Provider có dưới 20 claim phẫu thuật thì không bao giờ được đánh giá (dòng
+    32 (ai-challenge-10-fraud-detection/src/rules/weekend-anomaly.ts#L32)). Như
+    vậy provider mới, nhóm rủi ro cao, lại nằm ngoài tầm của rule.
+
+  3. Duplicate và rapid re-submission vừa có khe hở, vừa gắn cờ quá rộng.
+  - Khe hở: cùng member, cùng chẩn đoán, cùng ngày nhưng khác provider thì không
+    rule nào bắt. Duplicate đòi phải cùng provider, còn rapid lại loại khoảng
+    cách 0 ngày (rapid-resubmission.ts:20
+    (ai-challenge-10-fraud-detection/src/rules/rapid-resubmission.ts#L20)). Đây
+    chính là kiểu "doctor shopping" hoặc nộp một hồ sơ cho hai nơi.
+  - Quá rộng: khoá duplicate không có procedure_codes hay số tiền
+    (context.ts:5-7 (ai-challenge-10-fraud-detection/src/context.ts#L5-L7)). Thử
+    nghiệm: một lần tái khám hợp lệ trong cùng ngày, khác thủ thuật, vẫn bị gắn
+    duplicate với trọng số 5, tức 71 điểm, mức High.
+  - Bệnh nhân mạn tính tái khám đúng 7 ngày một lần (ví dụ vật lý trị liệu cho
+    M54.5) sẽ bị gắn cờ rapid ở mọi lần sau lần đầu.
+
+  4. Dx-procedure mismatch không làm gì khi mã chẩn đoán lạ.
+  - Mã chẩn đoán không có trong bảng map thì rule trả về null
+    (dx-procedure-mismatch.ts:11-12 (ai-challenge-10-fraud-detection/src/rules/d
+    x-procedure-mismatch.ts#L11-L12)), và so khớp phải giống hệt từng ký tự.
+  - Thử nghiệm: J069 hoặc j06.9 đi kèm phẫu thuật ruột thừa (P-2001) không bị
+    gắn cờ. Với J06.9 thì có.
+  - Bảng map chỉ có 15 mã. Trên dữ liệu thật với hàng nghìn mã ICD-10, rule này
+    gần như tắt.
+  - Báo cáo có thống kê số claim upcoding bị bỏ qua, nhưng không có con số tương
+    tự cho rule này, nên người đọc sẽ không thấy nó bị tắt.
+
+  5. Clustering lọt các số tiền có phần lẻ, và phantom gắn cờ cả claim hợp lệ ở
+  mức High.
+  - Điều kiện amount > max_amount (49.999) bỏ sót khoảng 49.999,01–49.999,99.
+    Thử nghiệm: 49.999,50 không bị gắn cờ. Code ngầm giả định số tiền là số
+    nguyên; dữ liệu tổng hợp có 0 claim lẻ nên không test nào phát hiện.
+  - Phantom dùng ngưỡng tuyệt đối 30 claim/ngày, không so với quy mô của
+    provider, và gắn cờ mọi claim trong ngày đó với trọng số 5, tức 71 điểm, mức
+    High (phantom-billing.ts:13
+    (ai-challenge-10-fraud-detection/src/rules/phantom-billing.ts#L13)). 6 claim
+    sạch đang ở mức High chỉ vì lý do này. Với một bệnh viện lớn thật, rule sẽ
+    báo động hằng ngày.
+  - Evidence của phantom có tính trung bình claim mỗi ngày của provider, nhưng
+    con số đó không được dùng để quyết định gắn cờ.
+
+  Lưu ý chung: recall 100% là do cách tạo dữ liệu. Clean data được dựng sao cho
+  không rơi vào vùng clustering và không có hai lần khám cách nhau 1–7 ngày
+  (Decision 12, 18, 21). Tác giả đã tự ghi nhận điều này. Vì vậy FPR 2,9% là ước
+  lượng lạc quan.
+
+  3. Kiểm tra riêng
+
+  Có nơi nào ngoài src/metrics.ts đọc labels không? Có, một chỗ.
+  - inspect.ts:146 (ai-challenge-10-fraud-detection/src/inspect.ts#L146) đọc
+    labels.csv. Đây là công cụ chẩn đoán (Decision 21); kết quả chỉ in ra, không
+    đi vào rule hay điểm.
+  - Bộ sinh dữ liệu dùng labels nó tự tạo trong bộ nhớ (verify.ts:25
+    (ai-challenge-10-fraud-detection/src/generate/verify.ts#L25), generate.ts:80
+    (ai-challenge-10-fraud-detection/src/generate/generate.ts#L80)) và ghi ra
+    file (generate.ts:117
+    (ai-challenge-10-fraud-detection/src/generate/generate.ts#L117)), nhưng
+    không đọc lại.
+  - rules/, engine.ts, context.ts và score.ts không chạm tới labels. Có test
+    canh việc này (metrics.test.ts:290-307
+    (ai-challenge-10-fraud-detection/tests/metrics.test.ts#L290-L307)), nhưng
+    test chỉ tìm chuỗi labels.csv, fraud_type, FraudLabel. Đọc file qua một
+    đường dẫn được ghép lại thì test không phát hiện.
+  - Kết luận: không có rò rỉ vào phần chấm điểm. Tuy vậy câu "chỉ metrics.ts đọc
+    labels" ở metrics.ts:4 (ai-challenge-10-fraud-detection/src/metrics.ts#L4)
+    không còn đúng hẳn.
+
+  Số test có ≥ 15 không? Có, 183 test, tất cả pass, typecheck sạch.
+  - 86 test cho riêng các rule, gồm cả các biên đã chốt trong DECISIONS: 30/31
+    claim, khoảng cách 0/1/7/8 ngày, 47.499/47.500/49.999/50.000, 9/10 claim
+    khác, 19/20 claim phẫu thuật, bundle thiếu thành phần, mã chẩn đoán không có
+    trong map, và test múi giờ UTC.
+  - Chưa có test cho ba lỗ hổng ở rủi ro 2, 3 và 5.
+
+  Mọi evidence có chứa con số không? Chưa hẳn.
+  - Có 255 flag trên seed 42 và 250 flag trên seed 7. Flag nào cũng có chữ số.
+  - Nhưng toàn bộ 20/20 flag dx_procedure_mismatch (seed 7: 19/19, chưa tính các
+    claim seed 7 có cùng mẫu) chỉ có chữ số nằm trong mã (K80.20, P-3002…).
+    Không có số tiền, số đếm hay ngưỡng, trái với CLAUDE.md ("amounts, counts,
+    z-scores, thresholds").
+  - 7 rule còn lại có số liệu đầy đủ, ví dụ upcoding: "Amount 88,310 … z = 2.21
+    (> 2): mean 66,304.41, SD 9,946.53 over 152 other claims".
+
+  Nếu chỉ sửa ba việc trước khi nộp:
+  1. Viết README có phần giải thích trọng số; đây là tiêu chí E3 đang thiếu.
+  2. Push 3 commit còn lại lên GitHub.
+  3. Ghi rõ trong báo cáo rằng mục tiêu recall chỉ đạt khi tính cả claim mức
+     Low.
+
+❯ Làm 4 việc nhỏ, mỗi việc test trước rồi code, không sửa expected value của
+  test cũ:
+  1. dx_procedure_mismatch: bổ sung vào evidence số liệu cụ thể: số tiền claim,
+  số thủ tục hợp lệ của chẩn đoán đó, và các thủ tục bị coi là không phù hợp.
+  2. Unbundling: theo Decision 4, chỉ gắn cờ khi bundle code VẮNG MẶT. Sửa code
+  ở unbundling.ts cho đúng, thêm test cho ca có cả bundle code lẫn thành phần
+  (không gắn cờ).
+  3. Clustering: dùng điều kiện amount >= 47.500 và amount < 50.000 thay vì so
+  với 49.999, để số lẻ như 49.999,50 cũng bị bắt. Thêm test cho 49.999,50 và
+  giữ nguyên các test biên 47.499, 47.500, 49.999, 50.000.
+  4. Sửa comment ở metrics.ts:4: "chỉ metrics.ts và inspect.ts (chỉ chẩn đoán,
+  không đi vào rule hay điểm) đọc labels".
+     Chạy lại generate, score, report. Dán kết quả typecheck, test, và
+  recall/FPR trước và sau thay đổi. Commit từng việc riêng. Nếu số liệu
+  recall/FPR đổi, báo rõ trước khi commit.
+
+⏺ Trước khi sửa, tôi đọc các test liên quan và cách generator chèn unbundling —
+  việc 2 có thể đụng test cũ.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ Việc 2 xung đột với test cũ ở unbundling.test.ts:41-46, vốn yêu cầu không được
+  sửa expected value. Tôi sẽ làm việc 1, 3, 4 trước vì độc lập, rồi hỏi bạn về
+  việc 2 — giờ đọc thêm các test liên quan.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ Việc 1, 3, 4 không đụng test cũ. Tôi ghi lại số liệu trước thay đổi, xem quy
+  ước commit, rồi tạo nhánh riêng vì đang ở main.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Tôi điều chỉnh lại nhận xét trước: metrics.ts đã ghi chú ngoại lệ cho inspect,
+  tôi đọc thiếu nên kết luận sai, nhưng việc 4 vẫn đúng yêu cầu. Giờ tôi tạo
+  nhánh và bắt đầu việc 1 bằng cách viết test trước.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Test của inspect kiểm tra đúng chuỗi "47,500–49,999: 0", nên ở việc 3 tôi sẽ
+  không đụng phần hiển thị của inspect.
+
+  Việc 1: thêm test trước.
+
+⏺ Update(tests/rules/dx-procedure-mismatch.test.ts)
+  ⎿  Added 19 lines
+      58      expect(evidence).toContain('P-1002 (Complete blood count)')
+          ;
+      59    });
+      60  
+      61 +  it('puts the claim amount, the stray count over the billed co
+         +des and the number of valid procedures in the evidence', () => 
+         +{                                                              
+      62 +    const evidence = evaluate(makeClaim({ procedure_codes: ['P-
+         +2001'], submitted_amount: 30_500 }))?.evidence ?? '';          
+      63 +    expect(evidence).toContain('claim amount 30,500');         
+      64 +    expect(evidence).toContain('1 of 1 billed procedures');    
+      65 +    // J06.9: P-1001 and P-1002.                               
+      66 +    expect(evidence).toContain('Valid procedures for J06.9 (2)'
+         +);                                                             
+      67 +  });                                                          
+      68 +                                                               
+      69 +  it('counts only the stray codes against all billed codes when
+         + some are valid', () => {                                      
+      70 +    const evidence = evaluate(makeClaim({ procedure_codes: ['P-
+         +1001', 'P-2001', 'P-3004'] }))?.evidence ?? '';                
+      71 +    expect(evidence).toContain('2 of 3 billed procedures');    
+      72 +  });                                                          
+      73 +                                                               
+      74 +  it('counts bundle codes and their components among the valid 
+         +procedures', () => {                                           
+      75 +    // E11.9: P-1001, P-1010, B-9001 and its components P-1002,
+         + P-1003, P-1004.                                               
+      76 +    const evidence = evaluate(makeClaim({ diagnosis_code: 'E11.
+         +9', procedure_codes: ['P-2001'] }))?.evidence ?? '';           
+      77 +    expect(evidence).toContain('Valid procedures for E11.9 (6)'
+         +);                                                             
+      78 +  });                                                          
+      79 +                                                               
+      80    it('lists bundle components and bundle codes among the valid 
+          procedures with their names', () => {
+      81      const evidence = evaluate(makeClaim({ diagnosis_code: 'E11.
+          9', procedure_codes: ['P-2001'] }))?.evidence ?? '';
+      82      expect(evidence).toContain('B-9001 (Basic blood panel)');
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ 3 test mới fail như dự kiến. Giờ sửa code:
+
+⏺ Update(src/rules/dx-procedure-mismatch.ts)
+  ⎿  Added 3 lines, removed 2 lines
+      21      severity: config.weights.dx_procedure_mismatch,
+      22      evidence:
+      23        `Diagnosis ${claim.diagnosis_code} (${claimType}) is bill
+          ed with ${noun} ` +
+      24 -      `${stray.map((code) => describeCode(code, config)).join('
+         -, ')} that it does not cover. ` +                              
+      25 -      `Valid procedures: ${valid.map((code) => describeCode(cod
+         -e, config)).join(', ')}`,                                      
+      24 +      `${stray.map((code) => describeCode(code, config)).join('
+         +, ')} that it does not cover ` +                               
+      25 +      `(${stray.length} of ${claim.procedure_codes.length} bill
+         +ed procedures, claim amount ${formatNumber(claim.submitted_amou
+         +nt)}). ` +                                                     
+      26 +      `Valid procedures for ${claim.diagnosis_code} (${valid.le
+         +ngth}): ${valid.map((code) => describeCode(code, config)).join(
+         +', ')}`,                                                       
+      27    };
+      28  }
+
+⏺ Update(src/rules/dx-procedure-mismatch.ts)
+  ⎿  Added 1 line
+      1  import { describeCode } from '../codes.js';
+      2 +import { formatNumber } from '../format.js';                    
+      3  import type { Claim, Flag, RuleContext } from '../types.js';
+      4  
+      5  /**
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ 186/186 pass. Chạy lại toàn bộ pipeline cho cả seed 42 và seed 7:
+
+⏺ Bash(cat > /tmp/fwa_cmp.sh <<'EOF'
+      #!/bin/sh…)
+  ⎿  Updated output/holdout/metrics.md (+1 -1)
+       97  ## Performance
+       98  
+       99  - Rules, scoring and ranking for 2,000 claims: **29.9 ms**.
+      100 -- Including reading config and claims and writing `scored.json
+          -` and `ranked.csv`: 37.5 ms.                                  
+      100 +- Including reading config and claims and writing `scored.json
+          +` and `ranked.csv`: 37.6 ms.                                  
+      101  - Brief limit: 30 s for 2,000 claims.
+  ⎿  Updated output/holdout/score-stats.json (+1 -1)
+      2    "claims": 2000,
+      3    "flagged": 249,
+      4    "scoring_ms": 29.9,
+      5 -  "total_ms": 37.5,                                             
+      5 +  "total_ms": 37.6,                                             
+      6    "upcoding_skipped": {
+      7      "min_other_claims": 10,
+      8      "insufficient_data": 25,
+  ⎿  Updated output/holdout/scored.json (+20 -20)
+      11        {
+      12          "rule": "dx_procedure_mismatch",
+      13          "severity": 2,
+      14 -        "evidence": "Diagnosis K80.20 (INPATIENT) is billed wit
+         -h procedures P-3002 (Dental X-ray), P-3001 (Dental filling) tha
+         -t it does not cover. Valid procedures: B-9003 (Cholecystectomy 
+         -package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P
+         --2003 (Laparoscopic cholecystectomy)"                          
+      14 +        "evidence": "Diagnosis K80.20 (INPATIENT) is billed wit
+         +h procedures P-3002 (Dental X-ray), P-3001 (Dental filling) tha
+         +t it does not cover (2 of 2 billed procedures, claim amount 2,5
+         +70). Valid procedures for K80.20 (4): B-9003 (Cholecystectomy p
+         +ackage), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-
+         +2003 (Laparoscopic cholecystectomy)"                           
+      15        }
+      16      ]
+      17    },
+     ...
+      2057        {
+      2058          "rule": "dx_procedure_mismatch",
+      2059          "severity": 2,
+      2060 -        "evidence": "Diagnosis J06.9 (OUTPATIENT) is billed w
+           -ith procedures P-1008 (Abdominal CT), B-9002 (Appendectomy pa
+           -ckage) that it does not cover. Valid procedures: P-1001 (Cons
+           -ultation), P-1002 (Complete blood count)"                    
+      2060 +        "evidence": "Diagnosis J06.9 (OUTPATIENT) is billed w
+           +ith procedures P-1008 (Abdominal CT), B-9002 (Appendectomy pa
+           +ckage) that it does not cover (2 of 2 billed procedures, clai
+           +m amount 53,300). Valid procedures for J06.9 (2): P-1001 (Con
+           +sultation), P-1002 (Complete blood count)"                   
+      2061        }
+      2062      ]
+      2063    },
+     ...
+      2090        {
+      2091          "rule": "dx_procedure_mismatch",
+      2092          "severity": 2,
+      2093 -        "evidence": "Diagnosis K80.20 (INPATIENT) is billed w
+           -ith procedure B-9004 (Root canal package) that it does not co
+           -ver. Valid procedures: B-9003 (Cholecystectomy package), P-10
+           -07 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Lapar
+           -oscopic cholecystectomy)"                                    
+      2093 +        "evidence": "Diagnosis K80.20 (INPATIENT) is billed w
+           +ith procedure B-9004 (Root canal package) that it does not co
+           +ver (1 of 1 billed procedures, claim amount 6,970). Valid pro
+           +cedures for K80.20 (4): B-9003 (Cholecystectomy package), P-1
+           +007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Lapa
+           +roscopic cholecystectomy)"                                   
+      2094        }
+      2095      ]
+      2096    },
+     ...
+      2123        {
+      2124          "rule": "dx_procedure_mismatch",
+      2125          "severity": 2,
+      2126 -        "evidence": "Diagnosis N39.0 (OUTPATIENT) is billed w
+           -ith procedures P-3002 (Dental X-ray), P-3004 (Tooth extractio
+           -n) that it does not cover. Valid procedures: P-1001 (Consulta
+           -tion), P-1005 (Urinalysis)"                                  
+      2126 +        "evidence": "Diagnosis N39.0 (OUTPATIENT) is billed w
+           +ith procedures P-3002 (Dental X-ray), P-3004 (Tooth extractio
+           +n) that it does not cover (2 of 2 billed procedures, claim am
+           +ount 1,650). Valid procedures for N39.0 (2): P-1001 (Consulta
+           +tion), P-1005 (Urinalysis)"                                  
+      2127        }
+      2128      ]
+      2129    },
+     ...
+      2145        {
+      2146          "rule": "dx_procedure_mismatch",
+      2147          "severity": 2,
+      2148 -        "evidence": "Diagnosis K80.20 (INPATIENT) is billed w
+           -ith procedures P-1001 (Consultation), P-1010 (HbA1c) that it 
+           -does not cover. Valid procedures: B-9003 (Cholecystectomy pac
+           -kage), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-
+           -2003 (Laparoscopic cholecystectomy)"                         
+      2148 +        "evidence": "Diagnosis K80.20 (INPATIENT) is billed w
+           +ith procedures P-1001 (Consultation), P-1010 (HbA1c) that it 
+           +does not cover (2 of 2 billed procedures, claim amount 1,420)
+           +. Valid procedures for K80.20 (4): B-9003 (Cholecystectomy pa
+           +ckage), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P
+           +-2003 (Laparoscopic cholecystectomy)"                        
+      2149        }
+      2150      ]
+      2151    },
+     … 120 more lines (ctrl+o to expand)
+  ⎿  Updated output/metrics.md (+2 -2)
+       96  
+       97  ## Performance
+       98  
+       99 -- Rules, scoring and ranking for 2,000 claims: **30.9 ms**.   
+      100 -- Including reading config and claims and writing `scored.json
+          -` and `ranked.csv`: 38.6 ms.                                  
+       99 +- Rules, scoring and ranking for 2,000 claims: **30.1 ms**.   
+      100 +- Including reading config and claims and writing `scored.json
+          +` and `ranked.csv`: 38.1 ms.                                  
+      101  - Brief limit: 30 s for 2,000 claims.
+  ⎿  Updated output/score-stats.json (+2 -2)
+      1  {
+      2    "claims": 2000,
+      3    "flagged": 252,
+      4 -  "scoring_ms": 30.9,                                           
+      5 -  "total_ms": 38.6,                                             
+      4 +  "scoring_ms": 30.1,                                           
+      5 +  "total_ms": 38.1,                                             
+      6    "upcoding_skipped": {
+      7      "min_other_claims": 10,
+      8      "insufficient_data": 25,
+  ⎿  … 1 more file changed
+
+  Ran 1 shell command (ctrl+o to expand)
+⏺ Data không đổi; scored.json chỉ đổi đúng 20 evidence của dx_mismatch;
+  metrics.md chỉ đổi số ms. Commit việc 1:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Commit message "20 + 19" của tôi bị sai — seed 7 cũng có 20 flag dx_mismatch
+  (diff 20 dòng), con số 19 trước đó là do lỗi bộ lọc của tôi. Tôi sẽ sửa lại
+  message của commit này, vì nó vẫn chưa được push.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Việc 3 (clustering): thêm test trước. Test 49.999,50 và một test cho biên mới:
+  49.999,99 bị bắt, 50.000 vẫn không.
+
+⏺ Update(tests/rules/amount-clustering.test.ts)
+  ⎿  Added 15 lines
+      29      expect(evaluate(makeClaim({ submitted_amount: 50_000 }))).t
+          oBeNull();
+      30    });
+      31  
+      32 +  it('flags 49,999.50 (cents above 49,999 but still below the t
+         +hreshold)', () => {                                            
+      33 +    expect(evaluate(makeClaim({ submitted_amount: 49_999.5 }))?
+         +.rule).toBe('amount_clustering');                              
+      34 +  });                                                          
+      35 +                                                               
+      36 +  it('flags everything strictly below the threshold, up to 49,9
+         +99.99', () => {                                                
+      37 +    expect(evaluate(makeClaim({ submitted_amount: 49_999.99 }))
+         +?.rule).toBe('amount_clustering');                             
+      38 +    expect(evaluate(makeClaim({ submitted_amount: 47_499.99 }))
+         +).toBeNull();                                                  
+      39 +  });                                                          
+      40 +                                                               
+      41 +  it('states the band as 47,500 ≤ amount < 50,000 in the eviden
+         +ce', () => {                                                   
+      42 +    const evidence = evaluate(makeClaim({ submitted_amount: 49_
+         +999.5 }))?.evidence ?? '';                                     
+      43 +    expect(evidence).toContain('Amount 49,999.5 ');            
+      44 +    expect(evidence).toContain('flag band 47,500 ≤ amount < 50,
+         +000');                                                         
+      45 +  });                                                          
+      46 +                                                               
+      47    it('reads the threshold and band from config: with a 100,000 
+          threshold, 49,000 is no longer flagged', () => {
+      48      const scaled: Config = {
+      49        ...config,
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ 3 test mới fail. Sửa rule, rồi cho generator dùng cùng điều kiện để bất biến
+  "clean claim không nằm trong band" (Decision 12) vẫn khớp với rule:
+
+⏺ Update(src/rules/amount-clustering.ts)
+  ⎿  Added 7 lines, removed 4 lines
+       2  import { formatNumber } from '../format.js';
+       3  import type { Claim, Flag, RuleContext } from '../types.js';
+       4  
+       5 -/** Amount in [min_amount, max_amount], just below the auto-app
+         -roval threshold (Decision 8). */                               
+       5 +/**                                                            
+       6 + * min_amount ≤ amount < auto_approval_threshold, just below th
+         +e threshold (Decision 8).                                      
+       7 + * The upper bound is the threshold itself, so amounts with cen
+         +ts such as 49,999.50 are caught.                               
+       8 + */                                                            
+       9  export function amountClustering(claim: Claim, ctx: RuleContext
+          ): Flag | null {
+       7 -  const { auto_approval_threshold, min_amount, max_amount } = c
+         -tx.config.thresholds.amount_clustering;                        
+      10 +  const { auto_approval_threshold, min_amount } = ctx.config.th
+         +resholds.amount_clustering;                                    
+      11    const amount = claim.submitted_amount;
+       9 -  if (amount < min_amount || amount > max_amount) return null; 
+      12 +  if (amount < min_amount || amount >= auto_approval_threshold)
+         + return null;                                                  
+      13  
+      14    const percent = ((amount / auto_approval_threshold) * 100).to
+          Fixed(1);
+      15    let evidence =
+      16      `Amount ${formatNumber(amount)} is ${percent}% of the ${for
+          matNumber(auto_approval_threshold)} ` +
+      14 -    `auto-approval threshold (flag band ${formatNumber(min_amou
+         -nt)}–${formatNumber(max_amount)})`;                            
+      17 +    `auto-approval threshold (flag band ${formatNumber(min_amou
+         +nt)} ≤ amount < ${formatNumber(auto_approval_threshold)})`;    
+      18  
+      19    const combo = comboKey(claim.procedure_codes);
+      20    const aggregate = ctx.comboAmounts.get(combo);
+
+⏺ Update(src/generate/amounts.ts)
+  ⎿  Added 2 lines, removed 1 line
+       7    return Math.round(amount / 10) * 10;
+       8  }
+       9  
+      10 +/** The amount_clustering rule's condition (Decision 8): min_am
+         +ount ≤ amount < auto_approval_threshold. */                    
+      11  export function inClusteringBand(amount: number, config: Config
+          ): boolean {
+      12    const band = config.thresholds.amount_clustering;
+      12 -  return amount >= band.min_amount && amount <= band.max_amount
+         -;                                                              
+      13 +  return amount >= band.min_amount && amount < band.auto_approv
+         +al_threshold;                                                  
+      14  }
+      15  
+      16  /**
+
+⏺ Update(docs/DECISIONS.md)
+  ⎿  Added 2 lines, removed 2 lines
+      90  
+      91  **Context:** The brief says "within 5% below the 50,000 thresho
+          ld (47,500–49,999)" without fixing the boundaries.
+      92  
+      93 -**Decision:** Flag when 47,500 ≤ amount ≤ 49,999. The threshold
+         -s are read from config.                                        
+      93 +**Decision:** Flag when 47,500 ≤ amount < 50,000, i.e. `min_amo
+         +unt` ≤ amount < `auto_approval_threshold`. The thresholds are r
+         +ead from config. The upper bound is the threshold itself rather
+         + than `max_amount` (49,999), so an amount with cents such as 49
+         +,999.50 is flagged. `max_amount` is only the highest amount the
+         + generator injects.                                            
+      94  
+      95 -**Consequence:** The boundaries are explicit and testable, and 
+         -can be changed without code changes.                           
+      95 +**Consequence:** The boundaries are explicit and testable, and 
+         +can be changed without code changes. Amounts that are not whole
+         + numbers cannot slip between 49,999 and 50,000.                
+      96  
+      97  ---
+      98  
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Bash(npm run all 2>&1 | tail -4 && npm run all -- --seed 7 --out data/holdout
+      2>&1 | tail -3 && /tmp/fwa_cmp.sh && git status --short && git diff
+      output/metrics.md |…)
+  ⎿  Updated output/holdout/metrics.md (+2 -2)
+       96  
+       97  ## Performance
+       98  
+       99 -- Rules, scoring and ranking for 2,000 claims: **29.9 ms**.   
+      100 -- Including reading config and claims and writing `scored.json
+          -` and `ranked.csv`: 37.6 ms.                                  
+       99 +- Rules, scoring and ranking for 2,000 claims: **30 ms**.     
+      100 +- Including reading config and claims and writing `scored.json
+          +` and `ranked.csv`: 38.5 ms.                                  
+      101  - Brief limit: 30 s for 2,000 claims.
+  ⎿  Updated output/holdout/score-stats.json (+2 -2)
+      1  {
+      2    "claims": 2000,
+      3    "flagged": 249,
+      4 -  "scoring_ms": 29.9,                                           
+      5 -  "total_ms": 37.6,                                             
+      4 +  "scoring_ms": 30,                                             
+      5 +  "total_ms": 38.5,                                             
+      6    "upcoding_skipped": {
+      7      "min_other_claims": 10,
+      8      "insufficient_data": 25,
+  ⎿  Updated output/holdout/scored.json (+20 -20)
+      1991        {
+      1992          "rule": "amount_clustering",
+      1993          "severity": 2,
+      1994 -        "evidence": "Amount 48,290 is 96.6% of the 50,000 aut
+           -o-approval threshold (flag band 47,500–49,999); typical amoun
+           -t for B-9002+P-1008 is 45,466.89 (mean of 106 other claims)" 
+      1994 +        "evidence": "Amount 48,290 is 96.6% of the 50,000 aut
+           +o-approval threshold (flag band 47,500 ≤ amount < 50,000); ty
+           +pical amount for B-9002+P-1008 is 45,466.89 (mean of 106 othe
+           +r claims)"                                                   
+      1995        }
+      1996      ]
+      1997    },
+     ...
+      2024        {
+      2025          "rule": "amount_clustering",
+      2026          "severity": 2,
+      2027 -        "evidence": "Amount 49,660 is 99.3% of the 50,000 aut
+           -o-approval threshold (flag band 47,500–49,999); typical amoun
+           -t for B-9002+P-1008 is 45,453.96 (mean of 106 other claims)" 
+      2027 +        "evidence": "Amount 49,660 is 99.3% of the 50,000 aut
+           +o-approval threshold (flag band 47,500 ≤ amount < 50,000); ty
+           +pical amount for B-9002+P-1008 is 45,453.96 (mean of 106 othe
+           +r claims)"                                                   
+      2028        }
+      2029      ]
+      2030    },
+     ...
+      2068        {
+      2069          "rule": "amount_clustering",
+      2070          "severity": 2,
+      2071 -        "evidence": "Amount 49,320 is 98.6% of the 50,000 aut
+           -o-approval threshold (flag band 47,500–49,999); typical amoun
+           -t for B-9003 is 66,203.91 (mean of 151 other claims)"        
+      2071 +        "evidence": "Amount 49,320 is 98.6% of the 50,000 aut
+           +o-approval threshold (flag band 47,500 ≤ amount < 50,000); ty
+           +pical amount for B-9003 is 66,203.91 (mean of 151 other claim
+           +s)"                                                          
+      2072        }
+      2073      ]
+      2074    },
+     ...
+      2079        {
+      2080          "rule": "amount_clustering",
+      2081          "severity": 2,
+      2082 -        "evidence": "Amount 48,690 is 97.4% of the 50,000 aut
+           -o-approval threshold (flag band 47,500–49,999); typical amoun
+           -t for B-9003 is 66,208.08 (mean of 151 other claims)"        
+      2082 +        "evidence": "Amount 48,690 is 97.4% of the 50,000 aut
+           +o-approval threshold (flag band 47,500 ≤ amount < 50,000); ty
+           +pical amount for B-9003 is 66,208.08 (mean of 151 other claim
+           +s)"                                                          
+      2083        }
+      2084      ]
+      2085    },
+     ...
+      2101        {
+      2102          "rule": "amount_clustering",
+      2103          "severity": 2,
+      2104 -        "evidence": "Amount 47,520 is 95.0% of the 50,000 aut
+           -o-approval threshold (flag band 47,500–49,999); typical amoun
+           -t for P-1006+P-2002+P-2004 is 65,393.78 (mean of 148 other cl
+           -aims)"                                                       
+      2104 +        "evidence": "Amount 47,520 is 95.0% of the 50,000 aut
+           +o-approval threshold (flag band 47,500 ≤ amount < 50,000); ty
+           +pical amount for P-1006+P-2002+P-2004 is 65,393.78 (mean of 1
+           +48 other claims)"                                            
+      2105        }
+      2106      ]
+      2107    },
+     … 120 more lines (ctrl+o to expand)
+  ⎿  Updated output/metrics.md (+2 -2)
+       96  
+       97  ## Performance
+       98  
+       99 -- Rules, scoring and ranking for 2,000 claims: **30.1 ms**.   
+      100 -- Including reading config and claims and writing `scored.json
+          -` and `ranked.csv`: 38.1 ms.                                  
+       99 +- Rules, scoring and ranking for 2,000 claims: **30.8 ms**.   
+      100 +- Including reading config and claims and writing `scored.json
+          +` and `ranked.csv`: 37.9 ms.                                  
+      101  - Brief limit: 30 s for 2,000 claims.
+  ⎿  Updated output/score-stats.json (+2 -2)
+      1  {
+      2    "claims": 2000,
+      3    "flagged": 252,
+      4 -  "scoring_ms": 30.1,                                           
+      5 -  "total_ms": 38.1,                                             
+      4 +  "scoring_ms": 30.8,                                           
+      5 +  "total_ms": 37.9,                                             
+      6    "upcoding_skipped": {
+      7      "min_other_claims": 10,
+      8      "insufficient_data": 25,
+  ⎿  … 1 more file changed
+
+⏺ Data vẫn giữ nguyên, vì generator làm tròn số tiền tới 10 nên điều kiện mới
+  cho kết quả như cũ. Kiểm tra phạm vi thay đổi trong output:
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Việc 4: test ở metrics.test.ts (dòng 290-301) đã xác nhận chỉ metrics.ts và
+  inspect.ts đọc labels.csv, nên tôi sẽ dựa vào test có sẵn này vì sửa comment
+  không cần test mới.
+
+⏺ Update(src/metrics.ts)
+  ⎿  Added 3 lines, removed 2 lines
+      1  /**
+      2   * `npm run report`: compares the scored output with the fraud l
+         abels and writes
+      3 - * metrics.md. Apart from the `npm run inspect` diagnostic (Deci
+        -sion 21), this is the                                           
+      4 - * only module that reads labels.csv; the rules, the engine and 
+        -the scorer never see labels.                                    
+      3 + * metrics.md. Only metrics.ts and inspect.ts read labels.csv; i
+        +nspect.ts is a diagnostic                                       
+      4 + * only (Decision 21), and nothing it computes reaches the rules
+        + or the score. The rules,                                       
+      5 + * the engine and the scorer never see labels.                  
+      6   */
+      7  import { existsSync, readFileSync, writeFileSync } from 'node:fs
+         ';
+      8  import { join } from 'node:path';
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Việc 1, 3, 4 đã xong và commit. Còn việc 2, tôi cần bạn quyết định trước khi
+  làm:
+
+⏺ User answered Claude's questions:
+  ⎿  · Việc 2 xung đột với test cũ: unbundling.test.ts:41-46 yêu cầu ca 'B-9001
+     cùng P-1002, P-1003, P-1004' PHẢI bị gắn cờ (evidence chứa 'twice'). Làm
+     theo Decision 4 thì phải đổi expected value của test đó, trái với yêu cầu
+     của bạn và CLAUDE.md. Thêm nữa, ca này là tính tiền hai lần cho cùng dịch
+     vụ, và không rule nào khác bắt được (các thành phần đều hợp lệ với chẩn
+     đoán, không trùng claim). Generator không chèn ca này, nên recall/FPR không
+     đổi dù chọn cách nào. Bạn muốn xử lý thế nào? → Sửa Decision 4 theo code
+     (Recommended)
+
+⏺ Việc này đã được kiểm chứng qua test tại unbundling.test.ts:37-46, xác nhận
+  bundle code đứng riêng không bị gắn cờ còn đi kèm đủ thành phần sẽ bị gắn cờ
+  với evidence "twice". Vậy nên tôi chỉ cần chỉnh lại tài liệu cho khớp với hành
+  vi đó.
+
+⏺ Update(docs/DECISIONS.md)
+  ⎿  Added 9 lines, removed 2 lines
+      44  
+      45  **Context:** The brief does not say how many components of a bu
+          ndle must be present.
+      46  
+      47 -**Decision:** Flag only when ALL components of a bundle are pre
+         -sent on the claim and the bundle code is absent.               
+      47 +**Decision:**                                                  
+      48 +- Flag only when ALL components of a bundle are present on the 
+         +claim.                                                         
+      49 +- If the bundle code is absent, the components are billed separ
+         +ately instead of the bundle (split billing).                   
+      50 +- If the bundle code is present as well, the same services are 
+         +billed twice. This is also flagged, and the evidence says so.  
+      51 +- The bundle code alone, without all its components, is not fla
+         +gged.                                                          
+      52  
+      49 -**Consequence:** A "≥ 2 components" threshold would flag every 
+         -normal visit + blood test. Requiring the full set avoids that. 
+      53 +**Consequence:**                                               
+      54 +- A "≥ 2 components" threshold would flag every normal visit + 
+         +blood test. Requiring the full set avoids that.                
+      55 +- Bundle + components is the more serious case, and no other ru
+         +le catches it: the components are valid procedures for the diag
+         +nosis (Decision 7) and the claim is not a duplicate. Leaving it
+         + unflagged would make it a silent gap.                         
+      56 +- The generator only injects split billing (bundle code absent)
+         +, so this case does not affect the metrics.                    
+      57  
+      58  ---
+      59  
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Cả 4 việc đã xong, mỗi việc một commit riêng, tổng cộng 4 commit trên nhánh
+  mới review-fixes. Typecheck sạch, 189/189 test pass. Recall/FPR không đổi ở cả
+  hai seed.
+
+  Kết quả typecheck và test (lần chạy cuối):
+  > tsc --noEmit
+  (không có lỗi)
+
+   Test Files  20 passed (20)
+        Tests  189 passed (189)
+  Số test tăng từ 183 lên 189. Không test cũ nào bị đổi expected value.
+
+  Recall/FPR trước và sau (chạy lại generate, score, report cho cả seed 42 và
+  seed 7):
+
+  ┌──────┬─────────────────┬─────────────┬───────────────┬───────────┐
+  │ Seed │     Recall      │     FPR     │   Precision   │  Flagged  │
+  ├──────┼─────────────────┼─────────────┼───────────────┼───────────┤
+  │ 42   │ 100,0% → 100,0% │ 2,9% → 2,9% │ 79,4% → 79,4% │ 252 → 252 │
+  ├──────┼─────────────────┼─────────────┼───────────────┼───────────┤
+  │ 7    │ 100,0% → 100,0% │ 2,7% → 2,7% │ 80,3% → 80,3% │ 249 → 249 │
+  └──────┴─────────────────┴─────────────┴───────────────┴───────────┘
+
+  Dữ liệu sinh ra giống hệt bản cũ. Trong output chỉ có evidence và số mili-giây
+  thay đổi.
+
+  Các commit:
+  1. 1526a44 Việc 1, dx_procedure_mismatch: evidence giờ có số tiền claim, số mã
+     sai trên tổng số mã ("2 of 2 billed procedures") và số thủ tục hợp lệ
+     ("Valid procedures for K80.20 (4): …"). Có 3 test mới.
+  2. 72d5a90 Việc 3, clustering: điều kiện mới là min_amount ≤ amount <
+     auto_approval_threshold. Có 3 test mới (49.999,50; 49.999,99; 47.499,99); 4
+     test biên cũ giữ nguyên. Generator cũng dùng cùng điều kiện này, để clean
+     claim vẫn không bao giờ rơi vào vùng của rule. Decision 8 đã cập nhật.
+  3. c0df6ca Việc 4: sửa comment ở metrics.ts:2-5
+     (ai-challenge-10-fraud-detection/src/metrics.ts#L2-L5). Thay đổi chỉ nằm
+     trong comment nên không cần chạy lại pipeline. Test cách ly labels có sẵn
+     đã kiểm tra đúng nội dung này.
+  4. ed824d5 Việc 2: theo lựa chọn của bạn, giữ code và test, sửa Decision 4 cho
+     khớp với code.
+
+  Lưu ý:
+  - Tôi đã sai một chỗ trong bài review trước. metrics.ts
+    (ai-challenge-10-fraud-detection/src/metrics.ts) vốn đã ghi ngoại lệ cho
+    inspect. Việc 4 chỉ làm câu đó rõ hơn.
+  - Commit nằm trên nhánh review-fixes, không phải main, vì quy ước của tôi là
+    không commit thẳng vào nhánh mặc định. Nếu muốn, bạn có thể fast-forward
+    nhánh này vào main. Tôi chưa push. main vẫn còn 3 commit cũ chưa push lên
+    origin.
+  - Phần hiển thị của npm run inspect vẫn ghi "47,500–49,999", vì test cũ ở
+    inspect.test.ts:15
+    (ai-challenge-10-fraud-detection/tests/inspect.test.ts#L15) kiểm tra đúng
+    chuỗi đó. Kết quả không sai, vì mọi số tiền đều là bội số của 10, nhưng nhãn
+    này hơi lệch so với rule mới.
+  - max_amount trong config giờ chỉ còn là mức trần khi generator chèn claim
+    clustering; rule không đọc tới nó nữa.
+
+❯ /model sonnet
+  ⎿  Set model to claude-sonnet-5-5
+
+❯ Gộp nhánh review-fixes vào main bằng fast-forward: git checkout main rồi git
+  merge --ff-only review-fixes. Chạy typecheck và test trên main, dán kết quả
+  cùng git log --oneline -10 và git status. Chưa push, chưa xóa nhánh
+  review-fixes.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ main đã được fast-forward lên ed824d5, gồm 4 commit từ review-fixes. Typecheck
+  sạch, 189/189 test pass. Tôi chưa push và chưa xoá nhánh review-fixes.
+
+  - Typecheck: tsc --noEmit không báo lỗi.
+  - Test: 20 file pass, 189/189 test pass.
+  - Git status: working tree sạch. main đang đi trước origin/main 7 commit (3
+    commit cũ cộng 4 commit mới).
+
+  git log --oneline -10:
+  ed824d5 docs(decisions): Decision 4 matches unbundling.ts on bundle +
+  components
+  c0df6ca docs(metrics): state that only metrics.ts and inspect.ts read labels
+  72d5a90 fix(amount_clustering): flag min_amount <= amount < threshold
+  (Decision 8)
+  1526a44 feat(dx_procedure_mismatch): put amount and counts in the evidence
+  c47a369 log 05
+  ff965c0 feat(inspect): leakage and realism checks; document data limits
+  3869f4c feat(score,report): risk scoring, metrics report and seed-7 holdout
+  (Decision 20)
+  14a84b8 feat(engine): run all 8 rules over the claim set
+  eb6738c fix(weekend_anomaly): share over surgical claims, excluding the
+  evaluated one (Decision 19)
+  9a0f8b8 feat(rules): upcoding with O(1) leave-one-out stats (Decisions 3, 15)
