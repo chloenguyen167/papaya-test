@@ -96,6 +96,6 @@ A labeled claim counts as caught when its score is > 0, whichever rule fired.
 
 ## Performance
 
-- Rules, scoring and ranking for 2,000 claims: **29.9 ms**.
-- Including reading config and claims and writing `scored.json` and `ranked.csv`: 37.6 ms.
+- Rules, scoring and ranking for 2,000 claims: **30 ms**.
+- Including reading config and claims and writing `scored.json` and `ranked.csv`: 38.5 ms.
 - Brief limit: 30 s for 2,000 claims.

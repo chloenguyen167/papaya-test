@@ -7,9 +7,10 @@ export function roundTo10(amount: number): number {
   return Math.round(amount / 10) * 10;
 }
 
+/** The amount_clustering rule's condition (Decision 8): min_amount ≤ amount < auto_approval_threshold. */
 export function inClusteringBand(amount: number, config: Config): boolean {
   const band = config.thresholds.amount_clustering;
-  return amount >= band.min_amount && amount <= band.max_amount;
+  return amount >= band.min_amount && amount < band.auto_approval_threshold;
 }
 
 /**

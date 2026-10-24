@@ -90,9 +90,9 @@ Interpretation decisions for ambiguous or conflicting parts of [BRIEF.md](BRIEF.
 
 **Context:** The brief says "within 5% below the 50,000 threshold (47,500–49,999)" without fixing the boundaries.
 
-**Decision:** Flag when 47,500 ≤ amount ≤ 49,999. The thresholds are read from config.
+**Decision:** Flag when 47,500 ≤ amount < 50,000, i.e. `min_amount` ≤ amount < `auto_approval_threshold`. The thresholds are read from config. The upper bound is the threshold itself rather than `max_amount` (49,999), so an amount with cents such as 49,999.50 is flagged. `max_amount` is only the highest amount the generator injects.
 
-**Consequence:** The boundaries are explicit and testable, and can be changed without code changes.
+**Consequence:** The boundaries are explicit and testable, and can be changed without code changes. Amounts that are not whole numbers cannot slip between 49,999 and 50,000.
 
 ---
 

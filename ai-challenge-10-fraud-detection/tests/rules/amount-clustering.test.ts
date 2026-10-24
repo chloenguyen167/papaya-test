@@ -29,6 +29,21 @@ describe('amountClustering', () => {
     expect(evaluate(makeClaim({ submitted_amount: 50_000 }))).toBeNull();
   });
 
+  it('flags 49,999.50 (cents above 49,999 but still below the threshold)', () => {
+    expect(evaluate(makeClaim({ submitted_amount: 49_999.5 }))?.rule).toBe('amount_clustering');
+  });
+
+  it('flags everything strictly below the threshold, up to 49,999.99', () => {
+    expect(evaluate(makeClaim({ submitted_amount: 49_999.99 }))?.rule).toBe('amount_clustering');
+    expect(evaluate(makeClaim({ submitted_amount: 47_499.99 }))).toBeNull();
+  });
+
+  it('states the band as 47,500 ≤ amount < 50,000 in the evidence', () => {
+    const evidence = evaluate(makeClaim({ submitted_amount: 49_999.5 }))?.evidence ?? '';
+    expect(evidence).toContain('Amount 49,999.5 ');
+    expect(evidence).toContain('flag band 47,500 ≤ amount < 50,000');
+  });
+
   it('reads the threshold and band from config: with a 100,000 threshold, 49,000 is no longer flagged', () => {
     const scaled: Config = {
       ...config,

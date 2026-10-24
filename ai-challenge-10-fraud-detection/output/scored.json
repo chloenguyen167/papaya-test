@@ -2023,7 +2023,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,110 is 98.2% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,003.98 (mean of 103 other claims)"
+        "evidence": "Amount 49,110 is 98.2% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9002+P-1008 is 45,003.98 (mean of 103 other claims)"
       }
     ]
   },
@@ -2100,7 +2100,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 48,150 is 96.3% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,568.62 (mean of 152 other claims)"
+        "evidence": "Amount 48,150 is 96.3% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9003 is 66,568.62 (mean of 152 other claims)"
       }
     ]
   },
@@ -2122,7 +2122,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 47,500 is 95.0% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 63,755.13 (mean of 152 other claims)"
+        "evidence": "Amount 47,500 is 95.0% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for P-1006+P-2002+P-2004 is 63,755.13 (mean of 152 other claims)"
       }
     ]
   },
@@ -2155,7 +2155,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,240 is 98.5% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 63,743.68 (mean of 152 other claims)"
+        "evidence": "Amount 49,240 is 98.5% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for P-1006+P-2002+P-2004 is 63,743.68 (mean of 152 other claims)"
       }
     ]
   },
@@ -2210,7 +2210,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 48,080 is 96.2% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,569.08 (mean of 152 other claims)"
+        "evidence": "Amount 48,080 is 96.2% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9003 is 66,569.08 (mean of 152 other claims)"
       }
     ]
   },
@@ -2221,7 +2221,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,070 is 98.1% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,004.37 (mean of 103 other claims)"
+        "evidence": "Amount 49,070 is 98.1% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9002+P-1008 is 45,004.37 (mean of 103 other claims)"
       }
     ]
   },
@@ -2243,7 +2243,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 48,810 is 97.6% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,006.89 (mean of 103 other claims)"
+        "evidence": "Amount 48,810 is 97.6% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9002+P-1008 is 45,006.89 (mean of 103 other claims)"
       }
     ]
   },
@@ -2276,7 +2276,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 48,050 is 96.1% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,014.27 (mean of 103 other claims)"
+        "evidence": "Amount 48,050 is 96.1% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9002+P-1008 is 45,014.27 (mean of 103 other claims)"
       }
     ]
   },
@@ -2298,7 +2298,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 47,660 is 95.3% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,018.06 (mean of 103 other claims)"
+        "evidence": "Amount 47,660 is 95.3% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9002+P-1008 is 45,018.06 (mean of 103 other claims)"
       }
     ]
   },
@@ -2364,7 +2364,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,100 is 98.2% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,562.37 (mean of 152 other claims)"
+        "evidence": "Amount 49,100 is 98.2% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9003 is 66,562.37 (mean of 152 other claims)"
       }
     ]
   },
@@ -2386,7 +2386,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 48,730 is 97.5% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,564.8 (mean of 152 other claims)"
+        "evidence": "Amount 48,730 is 97.5% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9003 is 66,564.8 (mean of 152 other claims)"
       }
     ]
   },
@@ -2397,7 +2397,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,010 is 98.0% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 63,745.2 (mean of 152 other claims)"
+        "evidence": "Amount 49,010 is 98.0% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for P-1006+P-2002+P-2004 is 63,745.2 (mean of 152 other claims)"
       }
     ]
   },
@@ -2419,7 +2419,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,820 is 99.6% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 63,739.87 (mean of 152 other claims)"
+        "evidence": "Amount 49,820 is 99.6% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for P-1006+P-2002+P-2004 is 63,739.87 (mean of 152 other claims)"
       }
     ]
   },
@@ -2507,7 +2507,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,680 is 99.4% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 63,740.79 (mean of 152 other claims)"
+        "evidence": "Amount 49,680 is 99.4% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for P-1006+P-2002+P-2004 is 63,740.79 (mean of 152 other claims)"
       }
     ]
   },
@@ -2518,7 +2518,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,970 is 99.9% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 63,738.88 (mean of 152 other claims)"
+        "evidence": "Amount 49,970 is 99.9% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for P-1006+P-2002+P-2004 is 63,738.88 (mean of 152 other claims)"
       }
     ]
   },
@@ -2529,7 +2529,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,040 is 98.1% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,562.76 (mean of 152 other claims)"
+        "evidence": "Amount 49,040 is 98.1% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9003 is 66,562.76 (mean of 152 other claims)"
       }
     ]
   },
@@ -2562,7 +2562,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,790 is 99.6% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 44,997.38 (mean of 103 other claims)"
+        "evidence": "Amount 49,790 is 99.6% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9002+P-1008 is 44,997.38 (mean of 103 other claims)"
       }
     ]
   },
@@ -2617,7 +2617,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 47,550 is 95.1% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,572.57 (mean of 152 other claims)"
+        "evidence": "Amount 47,550 is 95.1% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9003 is 66,572.57 (mean of 152 other claims)"
       }
     ]
   },
@@ -2639,7 +2639,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,570 is 99.1% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,559.28 (mean of 152 other claims)"
+        "evidence": "Amount 49,570 is 99.1% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for B-9003 is 66,559.28 (mean of 152 other claims)"
       }
     ]
   },
@@ -2705,7 +2705,7 @@
       {
         "rule": "amount_clustering",
         "severity": 2,
-        "evidence": "Amount 49,460 is 98.9% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 63,742.24 (mean of 152 other claims)"
+        "evidence": "Amount 49,460 is 98.9% of the 50,000 auto-approval threshold (flag band 47,500 ≤ amount < 50,000); typical amount for P-1006+P-2002+P-2004 is 63,742.24 (mean of 152 other claims)"
       }
     ]
   },
