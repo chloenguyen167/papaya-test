@@ -1,0 +1,2746 @@
+[
+  {
+    "claim_id": "CLM-00068",
+    "risk_score": 78,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,570 for procedures P-3001+P-3002 has z = 2.39 (> 2): mean 1,999.26, SD 239.2 over 54 other claims with the same procedure codes, excluding this claim"
+      },
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00037",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00036: same member M-0134, provider PRV-17, date 2024-01-04, diagnosis Z00.0; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00075",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00073: same member M-0352, provider PRV-17, date 2024-01-11, diagnosis K80.20; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00182",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00176: same member M-0409, provider PRV-10, date 2024-01-31, diagnosis J06.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00209",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00204: same member M-0346, provider PRV-15, date 2024-02-05, diagnosis A09; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00471",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00469: same member M-0023, provider PRV-37, date 2024-03-26, diagnosis K35.80; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00494",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00489: same member M-0423, provider PRV-12, date 2024-03-29, diagnosis I10; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00495",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00490: same member M-0216, provider PRV-01, date 2024-03-29, diagnosis J06.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00526",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00523: same member M-0345, provider PRV-20, date 2024-04-04, diagnosis S61.0; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00562",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00558: same member M-0431, provider PRV-44, date 2024-04-11, diagnosis K35.80; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00578",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00573: same member M-0111, provider PRV-15, date 2024-04-16, diagnosis Z00.0; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00606",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00601: same member M-0111, provider PRV-01, date 2024-04-19, diagnosis J06.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00666",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00664: same member M-0034, provider PRV-09, date 2024-05-01, diagnosis K35.80; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00764",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00760: same member M-0489, provider PRV-09, date 2024-05-20, diagnosis K35.80; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00923",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00920: same member M-0420, provider PRV-33, date 2024-06-20, diagnosis N39.0; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00935",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-00934: same member M-0235, provider PRV-28, date 2024-06-23, diagnosis E11.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01024",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01022: same member M-0418, provider PRV-19, date 2024-07-08, diagnosis J18.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01192",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01178: same member M-0341, provider PRV-45, date 2024-08-08, diagnosis K80.20; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01234",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01233: same member M-0130, provider PRV-14, date 2024-08-16, diagnosis E11.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01381",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01375: same member M-0363, provider PRV-16, date 2024-09-11, diagnosis N39.0; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01450",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01446: same member M-0270, provider PRV-17, date 2024-09-24, diagnosis K35.80; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01474",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01473: same member M-0032, provider PRV-22, date 2024-09-28, diagnosis E11.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01527",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01525: same member M-0415, provider PRV-33, date 2024-10-10, diagnosis M54.5; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01531",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01529: same member M-0359, provider PRV-03, date 2024-10-10, diagnosis J06.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01572",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01570: same member M-0285, provider PRV-46, date 2024-10-17, diagnosis K35.80; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01599",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01600",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01601",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01602",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01603",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01604",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01605",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01606",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01607",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01608",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01609",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01610",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01611",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01612",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01613",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01614",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01615",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01616",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01617",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01618",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01619",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01621",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01623",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01624",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01625",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01626",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01627",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01628",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01629",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01630",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01631",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01632",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "phantom_billing",
+        "severity": 5,
+        "evidence": "Provider PRV-14 submitted 32 claims on 2024-10-22 (limit 30); its average is 2.16 claims per active day (69 claims over 32 active days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01663",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01661: same member M-0219, provider PRV-19, date 2024-10-28, diagnosis A09; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01748",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01740: same member M-0386, provider PRV-02, date 2024-11-13, diagnosis N39.0; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01755",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01752: same member M-0198, provider PRV-09, date 2024-11-14, diagnosis J06.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01824",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01819: same member M-0094, provider PRV-11, date 2024-11-28, diagnosis M54.5; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01934",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01931: same member M-0016, provider PRV-48, date 2024-12-18, diagnosis K02.9; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01945",
+    "risk_score": 71,
+    "flags": [
+      {
+        "rule": "duplicate_claim",
+        "severity": 5,
+        "evidence": "Duplicate of CLM-01942: same member M-0409, provider PRV-27, date 2024-12-19, diagnosis K08.1; copy 2 of 2"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00027",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,470 for procedures P-3002+P-3004 has z = 3.42 (> 2): mean 1,736.8, SD 214.12 over 97 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00030",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-3003, P-3002, P-3001 are billed separately; bundle B-9004 (Root canal package) should be used (bundle price 7,000 vs itemized total 8,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00058",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,100 for procedures P-1001 has z = 2.54 (> 2): mean 805.8, SD 115.79 over 200 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00087",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,490 for procedures P-1001+P-1002 has z = 2.05 (> 2): mean 1,220.67, SD 131.22 over 119 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00113",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 98,300 for procedures B-9003 has z = 2.96 (> 2): mean 65,879.54, SD 10,954.33 over 151 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00128",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,100 for procedures P-1001 has z = 2.54 (> 2): mean 805.8, SD 115.79 over 200 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00130",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,560 for procedures P-1001+P-1005 has z = 3.21 (> 2): mean 1,112.83, SD 139.33 over 127 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00137",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 10,420 for procedures B-9004 has z = 3.12 (> 2): mean 7,150.53, SD 1,046.53 over 94 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00153",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,590 for procedures P-1001+P-1002 has z = 2.87 (> 2): mean 1,219.83, SD 129.14 over 119 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00178",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,630 for procedures P-1001+P-1006 has z = 2.48 (> 2): mean 2,038.87, SD 238.15 over 124 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00205",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,040 for procedures P-1001 has z = 2.01 (> 2): mean 806.1, SD 116.48 over 200 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00236",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,200 for procedures P-1001 has z = 3.45 (> 2): mean 805.3, SD 114.29 over 200 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00301",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 3,000 for procedures P-1001+P-1006 has z = 4.23 (> 2): mean 2,035.89, SD 228.11 over 124 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00324",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2001, P-2002 are billed separately; bundle B-9002 (Appendectomy package) should be used (bundle price 36,000 vs itemized total 38,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00325",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2003, P-2002, P-1007 are billed separately; bundle B-9003 (Cholecystectomy package) should be used (bundle price 65,000 vs itemized total 70,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00344",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,550 for procedures P-1001+P-1002 has z = 2.54 (> 2): mean 1,220.17, SD 130.05 over 119 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00366",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2001, P-2002 are billed separately; bundle B-9002 (Appendectomy package) should be used (bundle price 36,000 vs itemized total 38,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00391",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 91,960 for procedures P-1006+P-2002+P-2004 has z = 2.91 (> 2): mean 65,093.51, SD 9,224.02 over 148 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00399",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,690 for procedures P-1001+P-1002 has z = 3.73 (> 2): mean 1,218.99, SD 126.35 over 119 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00413",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2001, P-2002 are billed separately; bundle B-9002 (Appendectomy package) should be used (bundle price 36,000 vs itemized total 38,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00419",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-1002, P-1003, P-1004 are billed separately; bundle B-9001 (Basic blood panel) should be used (bundle price 1,000 vs itemized total 1,200)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00435",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2003, P-2002, P-1007 are billed separately; bundle B-9003 (Cholecystectomy package) should be used (bundle price 65,000 vs itemized total 70,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00452",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-1001, P-1002, P-1005, P-1006 are billed separately; bundle B-9005 (General health check) should be used (bundle price 2,200 vs itemized total 2,700)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00460",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 5,120 for procedures P-1001+P-2005 has z = 2.66 (> 2): mean 3,854.49, SD 476.64 over 127 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00465",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,990 for procedures P-1001+P-1009 has z = 3.33 (> 2): mean 1,504.78, SD 145.87 over 69 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00491",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,620 for procedures P-1001+P-1005 has z = 3.69 (> 2): mean 1,112.36, SD 137.69 over 127 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00500",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,010 for procedures P-1001+P-1010 has z = 4.19 (> 2): mean 1,414.14, SD 142.21 over 70 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00559",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,030 for procedures P-1001+P-1010 has z = 4.37 (> 2): mean 1,413.86, SD 140.97 over 70 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00599",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-1001, P-1002, P-1005, P-1006 are billed separately; bundle B-9005 (General health check) should be used (bundle price 2,200 vs itemized total 2,700)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00623",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-1002, P-1003, P-1004 are billed separately; bundle B-9001 (Basic blood panel) should be used (bundle price 1,000 vs itemized total 1,200)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00626",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 88,240 for procedures P-1006+P-2002+P-2004 has z = 2.49 (> 2): mean 65,118.65, SD 9,292.34 over 148 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00682",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,450 for procedures P-1001+P-1005 has z = 2.37 (> 2): mean 1,113.7, SD 141.76 over 127 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00700",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,440 for procedures B-9001+P-1001 has z = 3.37 (> 2): mean 1,838.13, SD 178.5 over 64 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00714",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,310 for procedures P-3001 has z = 3.10 (> 2): mean 1,531.09, SD 251 over 46 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00732",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2001, P-2002 are billed separately; bundle B-9002 (Appendectomy package) should be used (bundle price 36,000 vs itemized total 38,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00741",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 52,790 for procedures B-9002+P-1007 has z = 2.41 (> 2): mean 37,418.7, SD 6,373.89 over 100 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00793",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,390 for procedures P-3002+P-3004 has z = 3.01 (> 2): mean 1,737.63, SD 216.8 over 97 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00819",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 107,280 for procedures B-9003 has z = 3.86 (> 2): mean 65,820.07, SD 10,750.55 over 151 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00870",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,100 for procedures P-1001 has z = 2.54 (> 2): mean 805.8, SD 115.79 over 200 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00875",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 5,480 for procedures P-1001+P-2005 has z = 3.48 (> 2): mean 3,851.65, SD 467.89 over 127 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00900",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-3003, P-3002, P-3001 are billed separately; bundle B-9004 (Root canal package) should be used (bundle price 7,000 vs itemized total 8,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00907",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 95,600 for procedures B-9003 has z = 2.70 (> 2): mean 65,897.42, SD 11,005.25 over 151 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00941",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,650 for procedures P-1001+P-1006 has z = 2.57 (> 2): mean 2,038.71, SD 237.74 over 124 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00965",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,060 for procedures P-1001 has z = 2.18 (> 2): mean 806, SD 116.27 over 200 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00982",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,430 for procedures P-1001+P-1005 has z = 2.22 (> 2): mean 1,113.86, SD 142.13 over 127 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01015",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2003, P-2002, P-1007 are billed separately; bundle B-9003 (Cholecystectomy package) should be used (bundle price 65,000 vs itemized total 70,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01031",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,690 for procedures P-3001+P-3002 has z = 2.97 (> 2): mean 1,997.04, SD 233.14 over 54 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01060",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 5,000 for procedures P-1001+P-2005 has z = 2.39 (> 2): mean 3,855.43, SD 479.04 over 127 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01071",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 93,240 for procedures B-9003 has z = 2.47 (> 2): mean 65,913.05, SD 11,045.94 over 151 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01073",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 3,320 for procedures B-9005 has z = 4.17 (> 2): mean 2,179.08, SD 273.82 over 130 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01077",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 51,930 for procedures B-9002+P-1007 has z = 2.27 (> 2): mean 37,427.3, SD 6,394.22 over 100 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01079",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-3003, P-3002, P-3001 are billed separately; bundle B-9004 (Root canal package) should be used (bundle price 7,000 vs itemized total 8,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01088",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 5,270 for procedures P-1001+P-2005 has z = 2.99 (> 2): mean 3,853.31, SD 473.28 over 127 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01090",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,840 for procedures P-3001+P-3002 has z = 3.78 (> 2): mean 1,994.26, SD 223.6 over 54 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01107",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-3003, P-3002, P-3001 are billed separately; bundle B-9004 (Root canal package) should be used (bundle price 7,000 vs itemized total 8,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01109",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-1001, P-1002, P-1005, P-1006 are billed separately; bundle B-9005 (General health check) should be used (bundle price 2,200 vs itemized total 2,700)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01114",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,820 for procedures P-1001+P-1009 has z = 2.05 (> 2): mean 1,507.25, SD 152.56 over 69 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01118",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,310 for procedures B-9001+P-1001 has z = 2.55 (> 2): mean 1,840.16, SD 184.59 over 64 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01146",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,840 for procedures P-1001+P-1006 has z = 3.44 (> 2): mean 2,037.18, SD 233.1 over 124 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01152",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 3,030 for procedures B-9005 has z = 3.01 (> 2): mean 2,181.31, SD 281.87 over 130 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01193",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2001, P-2002 are billed separately; bundle B-9002 (Appendectomy package) should be used (bundle price 36,000 vs itemized total 38,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01200",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2003, P-2002, P-1007 are billed separately; bundle B-9003 (Cholecystectomy package) should be used (bundle price 65,000 vs itemized total 70,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01204",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 61,300 for procedures B-9002+P-1007 has z = 3.93 (> 2): mean 37,333.6, SD 6,102.87 over 100 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01254",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 84,590 for procedures P-1006+P-2002+P-2004 has z = 2.08 (> 2): mean 65,143.31, SD 9,349.04 over 148 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01267",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 100,800 for procedures B-9003 has z = 3.20 (> 2): mean 65,862.98, SD 10,902.97 over 151 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01314",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,560 for procedures P-1001+P-1011 has z = 3.94 (> 2): mean 1,772.19, SD 200.18 over 73 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01316",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2003, P-2002, P-1007 are billed separately; bundle B-9003 (Cholecystectomy package) should be used (bundle price 65,000 vs itemized total 70,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01333",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,110 for procedures P-1001 has z = 2.63 (> 2): mean 805.75, SD 115.66 over 200 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01336",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2001, P-2002 are billed separately; bundle B-9002 (Appendectomy package) should be used (bundle price 36,000 vs itemized total 38,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01342",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,200 for procedures P-3002+P-3004 has z = 2.08 (> 2): mean 1,739.59, SD 221.82 over 97 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01370",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,690 for procedures P-1001+P-1006 has z = 2.75 (> 2): mean 2,038.39, SD 236.87 over 124 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01423",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,270 for procedures P-1001+P-1011 has z = 2.32 (> 2): mean 1,776.16, SD 212.68 over 73 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01431",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,270 for procedures P-1001+P-1011 has z = 2.32 (> 2): mean 1,776.16, SD 212.68 over 73 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01435",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,400 for procedures P-3002+P-3004 has z = 3.06 (> 2): mean 1,737.53, SD 216.48 over 97 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01468",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2001, P-2002 are billed separately; bundle B-9002 (Appendectomy package) should be used (bundle price 36,000 vs itemized total 38,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01478",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,210 for procedures P-1001 has z = 3.55 (> 2): mean 805.25, SD 114.11 over 200 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01484",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-2001, P-2002 are billed separately; bundle B-9002 (Appendectomy package) should be used (bundle price 36,000 vs itemized total 38,000)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01502",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 1,130 for procedures P-1001 has z = 2.81 (> 2): mean 805.65, SD 115.39 over 200 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01515",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 3,120 for procedures P-1001+P-1002+P-1006 has z = 3.38 (> 2): mean 2,413.33, SD 209.21 over 57 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01532",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,990 for procedures P-1001+P-1002+P-1006 has z = 2.66 (> 2): mean 2,415.61, SD 216.2 over 57 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01554",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,240 for procedures P-3001 has z = 2.77 (> 2): mean 1,532.61, SD 255.56 over 46 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01648",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-1002, P-1003, P-1004 are billed separately; bundle B-9001 (Basic blood panel) should be used (bundle price 1,000 vs itemized total 1,200)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01662",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 58,520 for procedures B-9002+P-1008 has z = 2.27 (> 2): mean 45,370.38, SD 5,793.34 over 106 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01721",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 92,450 for procedures P-1006+P-2002+P-2004 has z = 2.97 (> 2): mean 65,090.2, SD 9,214.22 over 148 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01731",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 88,600 for procedures B-9003 has z = 2.04 (> 2): mean 65,943.77, SD 11,115.71 over 151 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01733",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 67,340 for procedures B-9002+P-1008 has z = 3.99 (> 2): mean 45,287.17, SD 5,532.25 over 106 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01741",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-1001, P-1002, P-1005, P-1006 are billed separately; bundle B-9005 (General health check) should be used (bundle price 2,200 vs itemized total 2,700)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01745",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,260 for procedures P-1001+P-1011 has z = 2.27 (> 2): mean 1,776.3, SD 213 over 73 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01768",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 3,070 for procedures B-9005 has z = 3.16 (> 2): mean 2,181, SD 280.91 over 130 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01773",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 10,700 for procedures B-9004 has z = 3.43 (> 2): mean 7,147.55, SD 1,036.67 over 94 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01777",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 3,060 for procedures B-9005 has z = 3.13 (> 2): mean 2,181.08, SD 281.15 over 130 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01795",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 4,870 for procedures P-1001+P-2005 has z = 2.11 (> 2): mean 3,856.46, SD 481.36 over 127 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01827",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 58,410 for procedures B-9002+P-1007 has z = 3.39 (> 2): mean 37,362.5, SD 6,209.6 over 100 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01923",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,590 for procedures P-3001+P-3002 has z = 2.48 (> 2): mean 1,998.89, SD 238.28 over 54 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01960",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "unbundling",
+        "severity": 4,
+        "evidence": "Unbundling: components P-1002, P-1003, P-1004 are billed separately; bundle B-9001 (Basic blood panel) should be used (bundle price 1,000 vs itemized total 1,200)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01979",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,880 for procedures P-1001+P-1002+P-1006 has z = 2.09 (> 2): mean 2,417.54, SD 220.86 over 57 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01982",
+    "risk_score": 63,
+    "flags": [
+      {
+        "rule": "upcoding",
+        "severity": 4,
+        "evidence": "Amount 2,320 for procedures P-3002+P-3004 has z = 2.66 (> 2): mean 1,738.35, SD 218.86 over 97 other claims with the same procedure codes, excluding this claim"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00084",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9003 (Cholecystectomy package) containing P-2003 (Laparoscopic cholecystectomy), P-2002 (Anesthesia) on Sunday 2024-01-14 at provider PRV-09, whose weekend share of surgical claims is 2.8% (1/36 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00119",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9003 (Cholecystectomy package) containing P-2003 (Laparoscopic cholecystectomy), P-2002 (Anesthesia) on Saturday 2024-01-20 at provider PRV-01, whose weekend share of surgical claims is 2.9% (1/34 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00199",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure P-2004 (Forearm fracture fixation); P-2002 (Anesthesia) on Saturday 2024-02-03 at provider PRV-45, whose weekend share of surgical claims is 3.0% (1/33 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00642",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9002 (Appendectomy package) containing P-2001 (Appendectomy), P-2002 (Anesthesia) on Sunday 2024-04-28 at provider PRV-33, whose weekend share of surgical claims is 3.1% (1/32 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00684",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9002 (Appendectomy package) containing P-2001 (Appendectomy), P-2002 (Anesthesia) on Sunday 2024-05-05 at provider PRV-17, whose weekend share of surgical claims is 0.0% (0/33 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00725",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9003 (Cholecystectomy package) containing P-2003 (Laparoscopic cholecystectomy), P-2002 (Anesthesia) on Sunday 2024-05-12 at provider PRV-29, whose weekend share of surgical claims is 3.2% (1/31 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01235",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9002 (Appendectomy package) containing P-2001 (Appendectomy), P-2002 (Anesthesia) on Saturday 2024-08-17 at provider PRV-37, whose weekend share of surgical claims is 0.0% (0/31 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01237",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9002 (Appendectomy package) containing P-2001 (Appendectomy), P-2002 (Anesthesia) on Sunday 2024-08-18 at provider PRV-33, whose weekend share of surgical claims is 3.1% (1/32 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01239",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9003 (Cholecystectomy package) containing P-2003 (Laparoscopic cholecystectomy), P-2002 (Anesthesia) on Sunday 2024-08-18 at provider PRV-11, whose weekend share of surgical claims is 3.1% (1/32 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01280",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9002 (Appendectomy package) containing P-2001 (Appendectomy), P-2002 (Anesthesia) on Sunday 2024-08-25 at provider PRV-09, whose weekend share of surgical claims is 2.8% (1/36 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01351",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure P-2004 (Forearm fracture fixation); P-2002 (Anesthesia) on Sunday 2024-09-08 at provider PRV-45, whose weekend share of surgical claims is 3.0% (1/33 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01475",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9002 (Appendectomy package) containing P-2001 (Appendectomy), P-2002 (Anesthesia) on Sunday 2024-09-29 at provider PRV-04, whose weekend share of surgical claims is 3.0% (1/33 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01585",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure P-2004 (Forearm fracture fixation); P-2002 (Anesthesia) on Saturday 2024-10-19 at provider PRV-29, whose weekend share of surgical claims is 3.2% (1/31 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01587",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure P-2004 (Forearm fracture fixation); P-2002 (Anesthesia) on Sunday 2024-10-20 at provider PRV-01, whose weekend share of surgical claims is 2.9% (1/34 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01765",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9002 (Appendectomy package) containing P-2001 (Appendectomy), P-2002 (Anesthesia) on Sunday 2024-11-17 at provider PRV-04, whose weekend share of surgical claims is 3.0% (1/33 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01802",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9002 (Appendectomy package) containing P-2001 (Appendectomy), P-2002 (Anesthesia) on Saturday 2024-11-23 at provider PRV-11, whose weekend share of surgical claims is 3.1% (1/32 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01836",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9003 (Cholecystectomy package) containing P-2003 (Laparoscopic cholecystectomy), P-2002 (Anesthesia) on Sunday 2024-12-01 at provider PRV-46, whose weekend share of surgical claims is 0.0% (0/34 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01874",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9003 (Cholecystectomy package) containing P-2003 (Laparoscopic cholecystectomy), P-2002 (Anesthesia) on Sunday 2024-12-08 at provider PRV-03, whose weekend share of surgical claims is 0.0% (0/33 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01875",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure B-9002 (Appendectomy package) containing P-2001 (Appendectomy), P-2002 (Anesthesia) on Sunday 2024-12-08 at provider PRV-44, whose weekend share of surgical claims is 2.9% (1/34 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01959",
+    "risk_score": 53,
+    "flags": [
+      {
+        "rule": "weekend_anomaly",
+        "severity": 3,
+        "evidence": "Surgical procedure P-2004 (Forearm fracture fixation); P-2002 (Anesthesia) on Sunday 2024-12-22 at provider PRV-44, whose weekend share of surgical claims is 2.9% (1/34 surgical claims, excluding this claim), below the 5% limit"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00039",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,290 is 96.6% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,466.89 (mean of 106 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00041",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0105 and diagnosis A09 as CLM-00034 (2024-01-04), resubmitted 1 day later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00078",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0149 and diagnosis I10 as CLM-00042 (2024-01-05), resubmitted 7 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00097",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 49,660 is 99.3% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,453.96 (mean of 106 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00151",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0217 and diagnosis J18.9 as CLM-00112 (2024-01-19), resubmitted 6 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00175",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0053 and diagnosis J18.9 as CLM-00138 (2024-01-24), resubmitted 7 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00189",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis J06.9 (OUTPATIENT) is billed with procedures P-1008 (Abdominal CT), B-9002 (Appendectomy package) that it does not cover. Valid procedures: P-1001 (Consultation), P-1002 (Complete blood count)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00190",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 49,320 is 98.6% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,203.91 (mean of 151 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00192",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,690 is 97.4% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,208.08 (mean of 151 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00210",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedure B-9004 (Root canal package) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00232",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 47,520 is 95.0% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 65,393.78 (mean of 148 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00234",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0401 and diagnosis E11.9 as CLM-00221 (2024-02-07), resubmitted 2 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00258",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis N39.0 (OUTPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3004 (Tooth extraction) that it does not cover. Valid procedures: P-1001 (Consultation), P-1005 (Urinalysis)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00296",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0433 and diagnosis K04.0 as CLM-00284 (2024-02-20), resubmitted 1 day later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00343",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedures P-1001 (Consultation), P-1010 (HbA1c) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00347",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K35.80 (INPATIENT) is billed with procedure B-9004 (Root canal package) that it does not cover. Valid procedures: B-9002 (Appendectomy package), P-1007 (Abdominal ultrasound), P-1008 (Abdominal CT), P-2001 (Appendectomy), P-2002 (Anesthesia)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00364",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis S52.50 (INPATIENT) is billed with procedure P-3001 (Dental filling) that it does not cover. Valid procedures: P-1006 (X-ray), P-2002 (Anesthesia), P-2004 (Forearm fracture fixation)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00382",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,930 is 97.9% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,206.49 (mean of 151 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00403",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 49,160 is 98.3% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 65,382.7 (mean of 148 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00423",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K02.9 (DENTAL) is billed with procedures P-1007 (Abdominal ultrasound), B-9002 (Appendectomy package) that it does not cover. Valid procedures: P-3001 (Dental filling), P-3002 (Dental X-ray)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00434",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0276 and diagnosis N39.0 as CLM-00420 (2024-03-14), resubmitted 1 day later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00436",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 49,210 is 98.4% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,458.21 (mean of 106 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00557",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0123 and diagnosis Z00.0 as CLM-00550 (2024-04-09), resubmitted 1 day later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00584",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,200 is 96.4% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,467.74 (mean of 106 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00661",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 47,520 is 95.0% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 65,393.78 (mean of 148 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00677",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,320 is 96.6% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,210.53 (mean of 151 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00679",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedures P-1007 (Abdominal ultrasound), B-9002 (Appendectomy package) that it does not cover. Valid procedures: P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00737",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0473 and diagnosis A09 as CLM-00717 (2024-05-10), resubmitted 4 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00762",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,580 is 97.2% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,208.81 (mean of 151 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00786",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K02.9 (DENTAL) is billed with procedures P-1006 (X-ray), P-2004 (Forearm fracture fixation), P-2002 (Anesthesia) that it does not cover. Valid procedures: P-3001 (Dental filling), P-3002 (Dental X-ray)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00825",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0219 and diagnosis K08.1 as CLM-00806 (2024-05-29), resubmitted 5 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00840",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0284 and diagnosis S61.0 as CLM-00824 (2024-06-03), resubmitted 2 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00861",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 47,650 is 95.3% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,472.92 (mean of 106 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00873",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 49,620 is 99.2% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 65,379.59 (mean of 148 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00910",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0238 and diagnosis J06.9 as CLM-00870 (2024-06-12), resubmitted 7 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00939",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0204 and diagnosis K02.9 as CLM-00894 (2024-06-17), resubmitted 7 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-00969",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,110 is 96.2% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 65,389.8 (mean of 148 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01026",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0404 and diagnosis M54.5 as CLM-00991 (2024-07-02), resubmitted 6 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01046",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedure P-3001 (Dental filling) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01063",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0434 and diagnosis K08.1 as CLM-01045 (2024-07-11), resubmitted 5 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01113",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K04.0 (DENTAL) is billed with procedure P-1001 (Consultation) that it does not cover. Valid procedures: B-9004 (Root canal package), P-3001 (Dental filling), P-3002 (Dental X-ray), P-3003 (Root canal treatment)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01128",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedure P-1001 (Consultation) that it does not cover. Valid procedures: P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01161",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0450 and diagnosis S61.0 as CLM-01153 (2024-08-02), resubmitted 4 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01283",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0012 and diagnosis K08.1 as CLM-01263 (2024-08-22), resubmitted 4 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01294",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0133 and diagnosis E11.9 as CLM-01256 (2024-08-21), resubmitted 6 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01379",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0370 and diagnosis I10 as CLM-01348 (2024-09-06), resubmitted 5 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01436",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis J06.9 (OUTPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover. Valid procedures: P-1001 (Consultation), P-1002 (Complete blood count)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01458",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0496 and diagnosis S61.0 as CLM-01425 (2024-09-19), resubmitted 7 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01488",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,410 is 96.8% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,209.93 (mean of 151 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01498",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0164 and diagnosis S61.0 as CLM-01480 (2024-10-01), resubmitted 3 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01506",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01542",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0229 and diagnosis A09 as CLM-01533 (2024-10-10), resubmitted 1 day later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01550",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K02.9 (DENTAL) is billed with procedures P-1001 (Consultation), P-1002 (Complete blood count) that it does not cover. Valid procedures: P-3001 (Dental filling), P-3002 (Dental X-ray)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01553",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0235 and diagnosis Z00.0 as CLM-01514 (2024-10-09), resubmitted 6 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01563",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,510 is 97.0% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for P-1006+P-2002+P-2004 is 65,387.09 (mean of 148 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01566",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0342 and diagnosis Z00.0 as CLM-01564 (2024-10-16), resubmitted 1 day later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01592",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis S52.50 (INPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover. Valid procedures: P-1006 (X-ray), P-2002 (Anesthesia), P-2004 (Forearm fracture fixation)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01677",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0114 and diagnosis Z00.0 as CLM-01665 (2024-10-29), resubmitted 2 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01697",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 47,870 is 95.7% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,470.85 (mean of 106 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01699",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0091 and diagnosis K02.9 as CLM-01696 (2024-11-04), resubmitted 1 day later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01716",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis A09 (OUTPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3004 (Tooth extraction) that it does not cover. Valid procedures: P-1001 (Consultation), P-1002 (Complete blood count)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01738",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0081 and diagnosis E11.9 as CLM-01723 (2024-11-10), resubmitted 2 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01818",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0362 and diagnosis Z00.0 as CLM-01792 (2024-11-21), resubmitted 7 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01843",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 49,840 is 99.7% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9002+P-1008 is 45,452.26 (mean of 106 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01898",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0334 and diagnosis I10 as CLM-01865 (2024-12-06), resubmitted 5 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01915",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedure B-9005 (General health check) that it does not cover. Valid procedures: P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01916",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "rapid_resubmission",
+        "severity": 2,
+        "evidence": "Same member M-0162 and diagnosis K02.9 as CLM-01895 (2024-12-10), resubmitted 6 days later (window 1–7 days)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01927",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "amount_clustering",
+        "severity": 2,
+        "evidence": "Amount 48,420 is 96.8% of the 50,000 auto-approval threshold (flag band 47,500–49,999); typical amount for B-9003 is 66,209.87 (mean of 151 other claims)"
+      }
+    ]
+  },
+  {
+    "claim_id": "CLM-01988",
+    "risk_score": 39,
+    "flags": [
+      {
+        "rule": "dx_procedure_mismatch",
+        "severity": 2,
+        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedures P-1001 (Consultation), P-1002 (Complete blood count) that it does not cover. Valid procedures: P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
+      }
+    ]
+  }
+]

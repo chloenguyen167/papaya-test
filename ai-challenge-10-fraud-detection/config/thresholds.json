@@ -9,6 +9,7 @@
     "dx_procedure_mismatch": 2,
     "amount_clustering": 2
   },
+  "scoring": { "saturation": 4, "high_priority_min": 70, "medium_priority_min": 50 },
   "rules": {
     "rapid_resubmission": { "min_gap_days": 1, "max_gap_days": 7 },
     "upcoding": { "z_threshold": 2, "min_other_claims": 10 },

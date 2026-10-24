@@ -43,6 +43,26 @@ describe('config', () => {
     expect(() => parseConfig(raw)).toThrow('thresholds.json rules.phantom_billing.max_claims_per_provider_day: missing');
   });
 
+  it('loads the scoring section', () => {
+    expect(loadConfig(dir).scoring).toEqual({ saturation: 4, high_priority_min: 70, medium_priority_min: 50 });
+  });
+
+  it('rejects a missing or non-positive saturation', () => {
+    const raw = rawConfig();
+    const scoring = (raw.thresholds as { scoring: Record<string, unknown> }).scoring;
+    delete scoring['saturation'];
+    expect(() => parseConfig(raw)).toThrow('thresholds.json scoring.saturation: missing');
+    scoring['saturation'] = 0;
+    expect(() => parseConfig(raw)).toThrow('thresholds.json scoring.saturation: must be > 0, got 0');
+  });
+
+  it('rejects priority bands where Medium does not start below High', () => {
+    const raw = rawConfig();
+    const scoring = (raw.thresholds as { scoring: Record<string, unknown> }).scoring;
+    scoring['medium_priority_min'] = 70;
+    expect(() => parseConfig(raw)).toThrow('1 <= medium_priority_min < high_priority_min <= 100, got 70 and 70');
+  });
+
   it('reports every problem at once', () => {
     const raw = rawConfig();
     const t = thresholdsOf(raw);

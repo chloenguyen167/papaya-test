@@ -33,30 +33,28 @@ Phases run in order. Each phase ends with `npm run typecheck` and `npm test` pas
   - a partial bundle;
   - an unmapped diagnosis.
 
-## Phase 3 — Scoring
+## Phase 3 — Scoring (done)
 
-- Composite score = weighted sum of fired rules normalized to 0–100, with weights from config.
+- Composite score = weighted sum of fired rules normalized to 0–100 (Decision 20), with weights from config.
 - A claim is flagged when its score > 0 (Decision 9).
-- `npm run score` writes the ranked output to `data/scored.json`.
+- `npm run score` (`src/score.ts`) writes `output/scored.json` (flagged claims, in the brief's per-claim shape), `output/ranked.csv` (every claim with score, priority and rule names) and `output/score-stats.json` (timing and upcoding skips, no labels).
 - 2,000 claims must be processed in < 30 s.
 
 ## Phase 4 — Report
 
-- **`npm run report`:**
-  - precision, recall and FPR (FP / (FP + TN)), plus precision@K;
+- **`npm run report`** (`src/metrics.ts`, the only module that reads `data/labels.csv`) writes `output/metrics.md` (done):
+  - confusion matrix, precision, recall, FPR (FP / (FP + TN)) and F1 at score > 0;
+  - a threshold sweep at 1, 10, 20, …, 90, and precision@50/100/200;
   - a per-rule and per-pattern breakdown;
-  - the number of claims skipped by upcoding;
-  - the known false positives from Decision 5.
+  - the number of claims skipped by upcoding, and the scoring time.
+- Still to do: list the known false positives from Decision 5.
+- **Holdout (done):** `npm run all -- --seed 7 --out data/holdout` writes the dataset to `data/holdout` and results to `output/holdout`, with the config untouched. A seed 42 vs seed 7 table (precision, recall, FPR, F1, precision@100) sits at the top of both `metrics.md` files; a gap above 5 pp is marked, and a config-hash mismatch is flagged as not a clean holdout.
 - **Holdout:** a run on a second seed with no tuning (Decision 11).
 
 ## Phase 5 — README and submission
 
 - Cover how to run the project, weight justification, results, and limitations, including Decision 12's synthetic-data assumption.
 - Commit the dataset, scored output and report.
-
-## Open items
-
-1. **Score normalization and priority bands.** What the score is divided by, and the High/Medium/Low cut-offs. To decide in Phase 3.
 
 ## Resolved items
 
@@ -77,3 +75,4 @@ Phases run in order. Each phase ends with `npm run typecheck` and `npm test` pas
 6. **Overlapping patterns.** Each fraudulent claim has exactly one `fraud_type` and is built to fire only its own rule where this can be controlled.
    - Injected claims with "normal" amounts use the same amount sampler as clean claims. A few of them may naturally exceed 2 SD, at the same rate as clean claims.
    - This is accepted, because suppressing it would itself reveal the label. The report lists claims fired by more than one rule.
+7. **Score normalization and priority bands.** Resolved by Decision 20: saturating exponential with saturation 4; High ≥ 70, Medium 50–69, Low 1–49.

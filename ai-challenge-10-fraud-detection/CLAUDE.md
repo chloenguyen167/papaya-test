@@ -9,7 +9,7 @@ Rule-based fraud scoring engine for insurance claims (AI Challenge 10, see `docs
 - `npm run inspect` — print dataset sanity stats
 - `npm run score` — run rules and write scored output
 - `npm run report` — compute metrics and write the report
-- `npm run all` — generate → score → report
+- `npm run all` — generate → score → report; `npm run all -- --seed 7 --out data/holdout` runs the same pipeline on another seed, data in `data/holdout`, results in `output/holdout`, and adds a seed comparison to the top of both `metrics.md` files
 - `npm test` — run unit tests
 - `npm run typecheck` — `tsc --noEmit`
 

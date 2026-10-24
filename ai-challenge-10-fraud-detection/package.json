@@ -7,8 +7,8 @@
     "generate": "tsx src/generate/index.ts",
     "inspect": "tsx src/inspect.ts",
     "score": "tsx src/score.ts",
-    "report": "tsx src/report.ts",
-    "all": "npm run generate && npm run score && npm run report",
+    "report": "tsx src/metrics.ts",
+    "all": "tsx src/pipeline.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

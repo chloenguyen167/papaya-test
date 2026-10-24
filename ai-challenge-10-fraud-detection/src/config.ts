@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -10,6 +11,7 @@ import {
   type Procedure,
   type ProcedureCategory,
   type RuleName,
+  type ScoringConfig,
   type Thresholds,
 } from './types.js';
 
@@ -221,6 +223,24 @@ function parseThresholds(v: Validator, root: Record<string, unknown>, file: stri
   return t;
 }
 
+function parseScoring(v: Validator, root: Record<string, unknown>, file: string): ScoringConfig {
+  const path = `${file} scoring`;
+  const obj = v.object(root['scoring'], path) ?? {};
+  const scoring: ScoringConfig = {
+    saturation: v.number(obj, 'saturation', path),
+    high_priority_min: v.number(obj, 'high_priority_min', path),
+    medium_priority_min: v.number(obj, 'medium_priority_min', path),
+  };
+  if (!(scoring.saturation > 0) && !Number.isNaN(scoring.saturation)) {
+    v.fail(`${path}.saturation`, `must be > 0, got ${scoring.saturation}`);
+  }
+  const { high_priority_min: high, medium_priority_min: medium } = scoring;
+  if (!Number.isNaN(high) && !Number.isNaN(medium) && !(Number.isInteger(medium) && Number.isInteger(high) && 1 <= medium && medium < high && high <= 100)) {
+    v.fail(path, `priority bands must be integers with 1 <= medium_priority_min < high_priority_min <= 100, got ${medium} and ${high}`);
+  }
+  return scoring;
+}
+
 function checkCodeReferences(
   v: Validator,
   procedures: Record<string, Procedure>,
@@ -270,6 +290,7 @@ export function parseConfig(raw: RawConfig): Config {
   const thresholdsRoot = v.object(raw.thresholds, CONFIG_FILES.thresholds) ?? {};
   const weights = parseWeights(v, thresholdsRoot, CONFIG_FILES.thresholds);
   const thresholds = parseThresholds(v, thresholdsRoot, CONFIG_FILES.thresholds);
+  const scoring = parseScoring(v, thresholdsRoot, CONFIG_FILES.thresholds);
   checkCodeReferences(v, procedures, bundles, dxProtocols);
 
   if (v.problems.length > 0) throw new ConfigError(v.problems);
@@ -281,6 +302,7 @@ export function parseConfig(raw: RawConfig): Config {
     validProceduresByDx: deriveValidProcedures(dxProtocols, bundles),
     weights,
     thresholds,
+    scoring,
   };
 }
 
@@ -306,4 +328,11 @@ export function loadConfig(dir = 'config'): Config {
     dxProcedureMap: readJson(dir, CONFIG_FILES.dxProcedureMap),
     thresholds: readJson(dir, CONFIG_FILES.thresholds),
   });
+}
+
+/** Short SHA-256 of the four config files, to tell whether two runs used the same config. */
+export function configFingerprint(dir = 'config'): string {
+  const hash = createHash('sha256');
+  for (const file of Object.values(CONFIG_FILES)) hash.update(`${file}\n${readFileSync(join(dir, file), 'utf8')}\n`);
+  return hash.digest('hex').slice(0, 12);
 }

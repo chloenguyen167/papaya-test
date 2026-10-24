@@ -1,0 +1,11 @@
+{
+  "claims": 2000,
+  "flagged": 249,
+  "scoring_ms": 29.9,
+  "total_ms": 37.5,
+  "upcoding_skipped": {
+    "min_other_claims": 10,
+    "insufficient_data": 25,
+    "zero_sd": 0
+  }
+}

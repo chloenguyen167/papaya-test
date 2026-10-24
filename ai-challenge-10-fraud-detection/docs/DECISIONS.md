@@ -265,3 +265,24 @@ Both choices change the result at the boundary, so a test cannot pin the behavio
 - Weekend consultations at a provider do not mask weekend surgery. A provider with 100 routine claims but 5 surgeries is not evaluated.
 - The brief's "historical weekend volume" is read as weekend surgical volume.
 - On the generated data the rule flags exactly the 20 injected weekend cases and nothing else.
+
+---
+
+## 20. Score normalization and priority bands
+
+**Context:** The brief asks for a "weighted sum of triggered rules, normalized to 0–100" without saying what to normalize by.
+- Dividing by the sum of all 8 weights (27) puts a confirmed duplicate at 19 and no real claim near 100.
+- Dividing by the highest raw sum in the dataset makes a claim's score depend on the other claims, so it changes between runs.
+
+**Decision:**
+- raw = sum of the severities of the claim's flags (each severity is the rule's weight from config).
+- risk_score = round(100 × (1 − e^(−raw / saturation))), with `saturation` = 4 in `config/thresholds.json`.
+- A claim with at least one flag scores at least 1, so "score > 0" always means "a rule fired" (Decision 9), whatever the saturation.
+- Priority: High ≥ 70, Medium 50–69, Low 1–49; a score of 0 has priority None. The two cut-offs are in config.
+- Ranking: score descending, then claim_id ascending.
+
+**Consequence:**
+- Single rules score: weight 2 → 39 (Low), 3 → 53 (Medium), 4 → 63 (Medium), 5 → 71 (High). Two weight-2 rules → 63; upcoding + clustering (4 + 2) → 78.
+- Each extra flag raises the score by less than the previous one; 100 needs raw ≥ 22.
+- A claim's score depends only on its own flags and the config, so it is the same on any dataset.
+- Patterns detected only by weight-2 rules are Low priority but still flagged (Decision 9).

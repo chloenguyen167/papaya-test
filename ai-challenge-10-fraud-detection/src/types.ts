@@ -77,6 +77,20 @@ export interface Thresholds {
   amount_clustering: { auto_approval_threshold: number; min_amount: number; max_amount: number };
 }
 
+/** Score normalization and priority bands (Decision 20). */
+export interface ScoringConfig {
+  /** Raw severity sum at which the score reaches 100 × (1 − 1/e) ≈ 63. */
+  saturation: number;
+  /** Lowest score with High priority. */
+  high_priority_min: number;
+  /** Lowest score with Medium priority; flagged claims below it are Low. */
+  medium_priority_min: number;
+}
+
+export const PRIORITIES = ['High', 'Medium', 'Low', 'None'] as const;
+/** 'None' is a claim with score 0, i.e. no rule fired. */
+export type Priority = (typeof PRIORITIES)[number];
+
 export interface Config {
   procedures: Record<string, Procedure>;
   bundles: Record<string, Bundle>;
@@ -85,6 +99,7 @@ export interface Config {
   validProceduresByDx: Record<string, string[]>;
   weights: Record<RuleName, number>;
   thresholds: Thresholds;
+  scoring: ScoringConfig;
 }
 
 /** Count, sum and sum of squares of the amounts billed under one procedure-code combination. */
