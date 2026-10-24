@@ -1,0 +1,1790 @@
+
+❯ phase scoring + metrics, gồm ba phần:
+
+  1. src/score.ts: severity của mỗi cờ lấy từ trọng số trong config; raw = tổng
+  severity; risk_score = round(100 × (1 − e^(−raw / saturation))), saturation
+  = 4 trong config. Xếp hạng theo điểm giảm dần, hòa thì theo claim_id tăng
+  dần. Mức ưu tiên: High ≥ 70, Medium 50–69, Low 1–49. Ghi output/scored.json
+  (đúng dạng mỗi claim trong đề, chỉ claim bị gắn cờ) và output/ranked.csv (mọi
+  claim: claim_id, risk_score, priority, danh sách tên rule).
+  2. src/metrics.ts (npm run report): đọc output/scored.json và
+  data/labels.csv, đây là module DUY NHẤT được đọc nhãn. Ghi output/metrics.md
+  gồm:
+     - confusion matrix, precision, recall, FPR (mẫu số = số claim sạch, không
+  phải tổng claim), F1, ở ngưỡng "điểm > 0";
+     - bảng threshold sweep với các ngưỡng 1, 10, 20, …, 90;
+     - precision@50, @100, @200;
+     - bảng theo rule: số lần bật, trong đó bao nhiêu là gian lận thật,
+  precision của rule, recall trên đúng kiểu gian lận của nó;
+     - recall của cả engine theo từng kiểu gian lận;
+     - số claim bị upcoding bỏ qua vì nhóm quá nhỏ;
+     - thời gian chấm 2.000 claim.
+       Mọi phép chia đều phải chặn chia cho 0.
+  3. npm run all = generate → score → report, cuối cùng in tóm tắt 5 dòng (số
+  claim, số bị gắn cờ, precision, recall, FPR, thời gian). Dùng process.argv,
+  không thư viện CLI.
+
+  Nêu test sẽ viết cho mỗi phần.
+
+⏺ I'll look at the repo structure and existing code first.
+
+  Read 3 files, ran 3 shell commands (ctrl+o to expand)
+  ⎿  Loaded CLAUDE.md
+
+⏺ Let me check the labels format, how the generator writes outputs, and whether
+  anything else already reads labels.
+
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+⏺ Before writing the entry points, I'll check how process.argv[1] looks under
+  tsx so the "run main only when executed directly" guard works.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ False because /tmp is a symlink on macOS. I'll compare real paths instead.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ The guard works. Now I'll add the scoring config (saturation plus the priority
+  cut-offs, following the "thresholds come from config" convention).
+
+⏺ Bash(python3 - <<'EOF'
+      import re…)
+  ⎿  Updated config/thresholds.json (+1 -0)
+       9      "dx_procedure_mismatch": 2,
+      10      "amount_clustering": 2
+      11    },
+      12 +  "scoring": { "saturation": 4, "high_priority_min": 70, "mediu
+         +m_priority_min": 50 },                                         
+      13    "rules": {
+      14      "rapid_resubmission": { "min_gap_days": 1, "max_gap_days": 
+          7 },
+      15      "upcoding": { "z_threshold": 2, "min_other_claims": 10 },
+  ⎿  Updated src/types.ts (+15 -0)
+      77    amount_clustering: { auto_approval_threshold: number; min_amo
+          unt: number; max_amount: number };
+      78  }
+      79  
+      80 +/** Score normalization and priority bands (Decision 20). */   
+      81 +export interface ScoringConfig {                               
+      82 +  /** Raw severity sum at which the score reaches 100 × (1 − 1/
+         +e) ≈ 63. */                                                    
+      83 +  saturation: number;                                          
+      84 +  /** Lowest score with High priority. */                      
+      85 +  high_priority_min: number;                                   
+      86 +  /** Lowest score with Medium priority; flagged claims below i
+         +t are Low. */                                                  
+      87 +  medium_priority_min: number;                                 
+      88 +}                                                              
+      89 +                                                               
+      90 +export const PRIORITIES = ['High', 'Medium', 'Low', 'None'] as 
+         +const;                                                         
+      91 +/** 'None' is a claim with score 0, i.e. no rule fired. */     
+      92 +export type Priority = (typeof PRIORITIES)[number];            
+      93 +                                                               
+      94  export interface Config {
+      95    procedures: Record<string, Procedure>;
+      96    bundles: Record<string, Bundle>;
+     ...
+       99    validProceduresByDx: Record<string, string[]>;
+      100    weights: Record<RuleName, number>;
+      101    thresholds: Thresholds;
+      102 +  scoring: ScoringConfig;                                     
+      103  }
+      104  
+      105  /** Count, sum and sum of squares of the amounts billed under 
+           one procedure-code combination. */
+
+⏺ Now the config parser and validation for the new section.
+
+⏺ Update(src/config.ts)
+  ⎿  Added 18 lines
+      221    return t;
+      222  }
+      223  
+      224 +function parseScoring(v: Validator, root: Record<string, unkno
+          +wn>, file: string): ScoringConfig {                           
+      225 +  const path = `${file} scoring`;                             
+      226 +  const obj = v.object(root['scoring'], path) ?? {};          
+      227 +  const scoring: ScoringConfig = {                            
+      228 +    saturation: v.number(obj, 'saturation', path),            
+      229 +    high_priority_min: v.number(obj, 'high_priority_min', path
+          +),                                                            
+      230 +    medium_priority_min: v.number(obj, 'medium_priority_min', 
+          +path),                                                        
+      231 +  };                                                          
+      232 +  if (!(scoring.saturation > 0) && !Number.isNaN(scoring.satur
+          +ation)) {                                                     
+      233 +    v.fail(`${path}.saturation`, `must be > 0, got ${scoring.s
+          +aturation}`);                                                 
+      234 +  }                                                           
+      235 +  const { high_priority_min: high, medium_priority_min: medium
+          + } = scoring;                                                 
+      236 +  if (!Number.isNaN(high) && !Number.isNaN(medium) && !(Number
+          +.isInteger(medium) && Number.isInteger(high) && 1 <= medium &&
+          + medium < high && high <= 100)) {                             
+      237 +    v.fail(path, `priority bands must be integers with 1 <= me
+          +dium_priority_min < high_priority_min <= 100, got ${medium} an
+          +d ${high}`);                                                  
+      238 +  }                                                           
+      239 +  return scoring;                                             
+      240 +}                                                             
+      241 +                                                              
+      242  function checkCodeReferences(
+      243    v: Validator,
+      244    procedures: Record<string, Procedure>,
+
+⏺ Bash(python3 - <<'EOF'
+      p='src/config.ts'…)
+  ⎿  Updated src/config.ts (+3 -0)
+      10    type Procedure,
+      11    type ProcedureCategory,
+      12    type RuleName,
+      13 +  type ScoringConfig,                                          
+      14    type Thresholds,
+      15  } from './types.js';
+      16  
+     ...
+      289    const thresholdsRoot = v.object(raw.thresholds, CONFIG_FILES
+           .thresholds) ?? {};
+      290    const weights = parseWeights(v, thresholdsRoot, CONFIG_FILES
+           .thresholds);
+      291    const thresholds = parseThresholds(v, thresholdsRoot, CONFIG
+           _FILES.thresholds);
+      292 +  const scoring = parseScoring(v, thresholdsRoot, CONFIG_FILES
+          +.thresholds);                                                 
+      293    checkCodeReferences(v, procedures, bundles, dxProtocols);
+      294  
+      295    if (v.problems.length > 0) throw new ConfigError(v.problems)
+           ;
+     ...
+      301      validProceduresByDx: deriveValidProcedures(dxProtocols, bu
+           ndles),
+      302      weights,
+      303      thresholds,
+      304 +    scoring,                                                  
+      305    };
+      306  }
+      307  
+
+⏺ Next, a small shared argv helper (used by score and metrics; the generator
+  keeps its own parser).
+
+⏺ Write(src/cli.ts)
+  ⎿  Wrote 41 lines to src/cli.ts
+       1 import { realpathSync } from 'node:fs';
+       2 import { fileURLToPath } from 'node:url';
+       4 /**
+       5  * Parses `--name value` and `--name=value` from `argv`. Every a
+         ccepted flag is a
+         g is absent.
+       7  * Throws on an unknown flag or a flag without a value, appendin
+         g `usage`.
+       9 export function parseFlags<K extends string>(
+      10   argv: readonly string[],
+     … +37 lines (ctrl+o to expand)
+
+⏺ Write(src/score.ts)
+  ⎿  Wrote 122 lines to src/score.ts
+       1 import { mkdirSync, writeFileSync } from 'node:fs';
+       2 import { join } from 'node:path';
+       3 import { isEntryPoint, parseFlags } from './cli.js';
+       4 import { loadConfig } from './config.js';
+       5 import { buildContext, compareClaimIds } from './context.js';
+       7 import { runRules, type ClaimFlags } from './engine.js';
+       8 import { formatNumber } from './format.js';
+       9 import { countUpcodingSkips } from './rules/upcoding.js';
+      10 import type { Priority, ScoredClaim, ScoringConfig } from './typ
+         es.js';
+     … +143 lines (ctrl+o to expand)
+
+⏺ Now the metrics module — the only place that reads labels.csv.
+
+⏺ Write(src/metrics.ts)
+  ⎿  Wrote 426 lines to src/metrics.ts
+       1 /**
+       2  * `npm run report`: compares the scored output with the fraud l
+         abels and writes
+         e rules, the engine
+       4  * and the scorer never see labels.
+       5  */
+       6 import { readFileSync, writeFileSync } from 'node:fs';
+       8 import { isEntryPoint, parseFlags } from './cli.js';
+       9 import { parseCsv } from './csv.js';
+      10 import { formatNumber } from './format.js';
+     … +521 lines (ctrl+o to expand)
+
+⏺ Bash(sed -i '' 's#"report": "tsx src/report.ts"#"report": "tsx
+      src/metrics.ts"#' package.json && grep report package.json && npx tsc
+      --noEmit && npm run score && npm…)
+  ⎿  Created output/metrics.md (+84 -0)
+       1 +# Metrics report                                               
+       2 +                                                               
+       3 +Computed from `output/scored.json` and `data/labels.csv`: 2,000
+         + claims, 200 labeled fraud and 1,800 clean.                    
+       4 +                                                               
+       5 +## Headline: flagged = score > 0 (Decision 9)                  
+       6 +                                                               
+       7 +|  | Labeled fraud | Labeled clean | Total |                   
+       8 +| :--- | ---: | ---: | ---: |                                  
+       9 +| **Flagged** | TP 200 | FP 52 | 252 |                         
+      10 +| **Not flagged** | FN 0 | TN 1,748 | 1,748 |                  
+      11 +| **Total** | 200 | 1,800 | 2,000 |                            
+      12 +                                                               
+      13 +| Metric | Value | Formula | Target |                          
+      14 +| :--- | ---: | ---: | ---: |                                  
+      15 +| Precision | 79.4% | TP / (TP + FP) |  |                      
+      16 +| Recall | 100.0% | TP / (TP + FN) | ≥ 70.0%: met |            
+      17 +| FPR | 2.9% | FP / (FP + TN), i.e. over clean claims only | ≤ 
+         +20.0%: met |                                                   
+      18 +| F1 | 88.5% | 2TP / (2TP + FP + FN) |  |                      
+      19 +                                                               
+      20 +## Threshold sweep: flagged = score ≥ t                        
+      21 +                                                               
+      22 +| t | Flagged | TP | FP | FN | TN | Precision | Recall | FPR | 
+         +F1 |                                                           
+      23 +| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: 
+         +| ---: |                                                       
+      24 +| 1 | 252 | 200 | 52 | 0 | 1,748 | 79.4% | 100.0% | 2.9% | 88.5
+         +% |                                                            
+      25 +| 10 | 252 | 200 | 52 | 0 | 1,748 | 79.4% | 100.0% | 2.9% | 88.
+         +5% |                                                           
+      26 +| 20 | 252 | 200 | 52 | 0 | 1,748 | 79.4% | 100.0% | 2.9% | 88.
+         +5% |                                                           
+      27 +| 30 | 252 | 200 | 52 | 0 | 1,748 | 79.4% | 100.0% | 2.9% | 88.
+         +5% |                                                           
+      28 +| 40 | 182 | 130 | 52 | 70 | 1,748 | 71.4% | 65.0% | 2.9% | 68.
+         +1% |                                                           
+      29 +| 50 | 182 | 130 | 52 | 70 | 1,748 | 71.4% | 65.0% | 2.9% | 68.
+         +1% |                                                           
+      30 +| 60 | 164 | 112 | 52 | 88 | 1,748 | 68.3% | 56.0% | 2.9% | 61.
+         +5% |                                                           
+      31 +| 70 | 63 | 57 | 6 | 143 | 1,794 | 90.5% | 28.5% | 0.3% | 43.3%
+         + |                                                             
+      32 +| 80 | 3 | 3 | 0 | 197 | 1,800 | 100.0% | 1.5% | 0.0% | 3.0% | 
+      33 +| 90 | 0 | 0 | 0 | 200 | 1,800 | n/a | 0.0% | 0.0% | 0.0% |    
+      34 +                                                               
+      35 +## Precision@K                                                 
+      36 +                                                               
+      37 +Top K flagged claims in rank order (score descending, then clai
+         +m_id ascending). If fewer than K claims are flagged, all flagge
+         +d claims are used. Claims tied with the score at the cut-off ma
+         +y fall on either side of it.                                   
+      38 +                                                               
+      39 +| K | Claims considered | Fraud | Precision@K | Score at cut-of
+         +f |                                                            
+      40 +| :--- | ---: | ---: | ---: | ---: |                           
+     … 44 more lines (ctrl+o to expand)
+  ⎿  Created output/score-stats.json (+11 -0)
+       1 +{                                                              
+       2 +  "claims": 2000,                                              
+       3 +  "flagged": 252,                                              
+       4 +  "scoring_ms": 44.9,                                          
+       5 +  "total_ms": 56.5,                                            
+       6 +  "upcoding_skipped": {                                        
+       7 +    "min_other_claims": 10,                                    
+       8 +    "insufficient_data": 25,                                   
+       9 +    "zero_sd": 0                                               
+      10 +  }                                                            
+      11 +}                                                              
+  ⎿  Updated package.json (+1 -1)
+       7      "generate": "tsx src/generate/index.ts",
+       8      "inspect": "tsx src/inspect.ts",
+       9      "score": "tsx src/score.ts",
+      10 -    "report": "tsx src/report.ts",                             
+      10 +    "report": "tsx src/metrics.ts",                            
+      11      "all": "npm run generate && npm run score && npm run report
+          ",
+      12      "test": "vitest run",
+      13      "typecheck": "tsc --noEmit"
+  ⎿  … 2 more files changed
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Pipeline works: 252 flagged, precision 79.4%, recall 100%, FPR 2.9%, 45 ms.
+  Small fix: the formula/target columns should be left-aligned.
+
+⏺ Bash(python3 - <<'EOF'
+      p='src/metrics.ts'…)
+  ⎿  Updated src/metrics.ts (+4 -3)
+      294    return met(value) ? 'met' : '**not met**';
+      295  }
+      296  
+      297 -/** Markdown table; the first column is left-aligned, the rest
+          - right-aligned. */                                            
+      298 -function table(header: readonly string[], rows: readonly (read
+          -only string[])[]): string {                                   
+      297 +/** Markdown table. Columns listed in `leftAligned` (default: 
+          +the first) are left-aligned, the rest right-aligned. */       
+      298 +function table(header: readonly string[], rows: readonly (read
+          +only string[])[], leftAligned: readonly number[] = [0]): strin
+          +g {                                                           
+      299    const line = (cells: readonly string[]): string => `| ${cell
+           s.join(' | ')} |`;
+      300 -  const align = header.map((_, i) => (i === 0 ? ':---' : '---:
+          -'));                                                          
+      300 +  const align = header.map((_, i) => (leftAligned.includes(i) 
+          +? ':---' : '---:'));                                          
+      301    return [line(header), line(align), ...rows.map(line)].join('
+           \n');
+      302  }
+      303  
+     ...
+      326          ['FPR', formatRate(h.fpr), 'FP / (FP + TN), i.e. over 
+           clean claims only', `≤ ${formatRate(TARGETS.maxFpr)}: ${target
+           Status(h.fpr, (v) => v <= TARGETS.maxFpr)}`],
+      327          ['F1', formatRate(h.f1), '2TP / (2TP + FP + FN)', ''],
+      328        ],
+      329 +      [0, 2, 3],                                              
+      330      ),
+      331  
+      332      '## Threshold sweep: flagged = score ≥ t',
+
+⏺ Now the tests. First score and CLI:
+
+⏺ Write(tests/score.test.ts)
+  ⎿  Wrote 126 lines to tests/score.test.ts
+       1 import { join } from 'node:path';
+       2 import { describe, expect, it } from 'vitest';
+       3 import { loadConfig } from '../src/config.js';
+       4 import { readClaims } from '../src/csv.js';
+       5 import { runRules, type ClaimFlags } from '../src/engine.js';
+         edJson } from '../src/score.js';
+       7 import type { Config, Flag, RuleName } from '../src/types.js';
+       8 import { makeClaim } from './helpers.js';
+       9
+      10 const root = join(import.meta.dirname, '..');
+     … +144 lines (ctrl+o to expand)
+
+⏺ Write(tests/cli.test.ts)
+  ⎿  Wrote 26 lines to tests/cli.test.ts
+       1 import { describe, expect, it } from 'vitest';
+       2 import { parseFlags } from '../src/cli.js';
+       3
+       4 const defaults = { labels: 'data/labels.csv', out: 'output' };
+       5 const usage = 'Usage: report [--labels PATH] [--out DIR]';
+       6
+       7 describe('parseFlags', () => {
+       8   it('returns the defaults when no flags are given', () => {
+       9     expect(parseFlags([], defaults, usage)).toEqual(defaults);
+      10   });
+     … +24 lines (ctrl+o to expand)
+
+⏺ Now the metrics tests, including a static check that no other module in src/
+  reads labels.
+⏺ Write(tests/metrics.test.ts)
+  ⎿  Wrote 249 lines to tests/metrics.test.ts
+       1 import { readdirSync, readFileSync } from 'node:fs';
+       2 import { join, relative } from 'node:path';
+       3 import { describe, expect, it } from 'vitest';
+       4 import { loadConfig } from '../src/config.js';
+       5 import { readClaims } from '../src/csv.js';
+       6 import { runRules } from '../src/engine.js';
+       7 import {
+       8   binaryMetrics,
+       9   computeMetrics,
+      10   labelsFromCsv,
+     … +324 lines (ctrl+o to expand)
+
+⏺ Config validation tests for the new section:
+
+⏺ Update(tests/config.test.ts)
+  ⎿  Added 20 lines
+      43      expect(() => parseConfig(raw)).toThrow('thresholds.json rul
+          es.phantom_billing.max_claims_per_provider_day: missing');
+      44    });
+      45  
+      46 +  it('loads the scoring section', () => {                      
+      47 +    expect(loadConfig(dir).scoring).toEqual({ saturation: 4, hi
+         +gh_priority_min: 70, medium_priority_min: 50 });               
+      48 +  });                                                          
+      49 +                                                               
+      50 +  it('rejects a missing or non-positive saturation', () => {   
+      51 +    const raw = rawConfig();                                   
+      52 +    const scoring = (raw.thresholds as { scoring: Record<string
+         +, unknown> }).scoring;                                         
+      53 +    delete scoring['saturation'];                              
+      54 +    expect(() => parseConfig(raw)).toThrow('thresholds.json sco
+         +ring.saturation: missing');                                    
+      55 +    scoring['saturation'] = 0;                                 
+      56 +    expect(() => parseConfig(raw)).toThrow('thresholds.json sco
+         +ring.saturation: must be > 0, got 0');                         
+      57 +  });                                                          
+      58 +                                                               
+      59 +  it('rejects priority bands where Medium does not start below 
+         +High', () => {                                                 
+      60 +    const raw = rawConfig();                                   
+      61 +    const scoring = (raw.thresholds as { scoring: Record<string
+         +, unknown> }).scoring;                                         
+      62 +    scoring['medium_priority_min'] = 70;                       
+      63 +    expect(() => parseConfig(raw)).toThrow('1 <= medium_priorit
+         +y_min < high_priority_min <= 100, got 70 and 70');             
+      64 +  });                                                          
+      65 +                                                               
+      66    it('reports every problem at once', () => {
+      67      const raw = rawConfig();
+      68      const t = thresholdsOf(raw);
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ 171/171 pass. Now npm run all end to end, then a check that regeneration with
+  the default seed leaves the committed data unchanged:
+
+⏺ Bash(npm run all 2>&1 | tail -12; git status --short)
+  ⎿  Updated output/metrics.md (+3 -3)
+      11  | **Total** | 200 | 1,800 | 2,000 |
+      12  
+      13  | Metric | Value | Formula | Target |
+      14 -| :--- | ---: | ---: | ---: |                                  
+      14 +| :--- | ---: | :--- | :--- |                                  
+      15  | Precision | 79.4% | TP / (TP + FP) |  |
+      16  | Recall | 100.0% | TP / (TP + FN) | ≥ 70.0%: met |
+      17  | FPR | 2.9% | FP / (FP + TN), i.e. over clean claims only | ≤ 
+          20.0%: met |
+     ...
+      79  
+      80  ## Performance
+      81  
+      82 -- Rules, scoring and ranking for 2,000 claims: **44.9 ms**.    
+      83 -- Including reading config and claims and writing `scored.json`
+         - and `ranked.csv`: 56.5 ms.                                    
+      82 +- Rules, scoring and ranking for 2,000 claims: **32.2 ms**.    
+      83 +- Including reading config and claims and writing `scored.json`
+         + and `ranked.csv`: 42.4 ms.                                    
+      84  - Brief limit: 30 s for 2,000 claims.
+  ⎿  Updated output/score-stats.json (+2 -2)
+      1  {
+      2    "claims": 2000,
+      3    "flagged": 252,
+      4 -  "scoring_ms": 44.9,                                           
+      5 -  "total_ms": 56.5,                                             
+      4 +  "scoring_ms": 32.2,                                           
+      5 +  "total_ms": 42.4,                                             
+      6    "upcoding_skipped": {
+      7      "min_other_claims": 10,
+      8      "insufficient_data": 25,
+
+⏺ Output and data are as expected (the data files are byte-identical after
+  regenerating with seed 42). Now the docs: Decision 20 for the normalization,
+  which also closes the open item in PLAN.md.
+
+⏺ Bash(cat >> docs/DECISIONS.md <<'EOF'…)
+  ⎿  Updated docs/DECISIONS.md (+21 -0)
+      265  - Weekend consultations at a provider do not mask weekend surg
+           ery. A provider with 100 routine claims but 5 surgeries is not
+            evaluated.
+      266  - The brief's "historical weekend volume" is read as weekend s
+           urgical volume.
+      267  - On the generated data the rule flags exactly the 20 injected
+            weekend cases and nothing else.
+      268 +                                                              
+      269 +---                                                           
+      270 +                                                              
+      271 +## 20. Score normalization and priority bands                 
+      272 +                                                              
+      273 +**Context:** The brief asks for a "weighted sum of triggered r
+          +ules, normalized to 0–100" without saying what to normalize by
+          +.                                                             
+      274 +- Dividing by the sum of all 8 weights (27) puts a confirmed d
+          +uplicate at 19 and no real claim near 100.                    
+      275 +- Dividing by the highest raw sum in the dataset makes a claim
+          +'s score depend on the other claims, so it changes between run
+          +s.                                                            
+      276 +                                                              
+      277 +**Decision:**                                                 
+      278 +- raw = sum of the severities of the claim's flags (each sever
+          +ity is the rule's weight from config).                        
+      279 +- risk_score = round(100 × (1 − e^(−raw / saturation))), with 
+          +`saturation` = 4 in `config/thresholds.json`.                 
+      280 +- A claim with at least one flag scores at least 1, so "score 
+          +> 0" always means "a rule fired" (Decision 9), whatever the sa
+          +turation.                                                     
+      281 +- Priority: High ≥ 70, Medium 50–69, Low 1–49; a score of 0 ha
+          +s priority None. The two cut-offs are in config.              
+      282 +- Ranking: score descending, then claim_id ascending.         
+      283 +                                                              
+      284 +**Consequence:**                                              
+      285 +- Single rules score: weight 2 → 39 (Low), 3 → 53 (Medium), 4 
+          +→ 63 (Medium), 5 → 71 (High). Two weight-2 rules → 63; upcodin
+          +g + clustering (4 + 2) → 78.                                  
+      286 +- Each extra flag raises the score by less than the previous o
+          +ne; 100 needs raw ≥ 22.                                       
+      287 +- A claim's score depends only on its own flags and the config
+          +, so it is the same on any dataset.                           
+      288 +- Patterns detected only by weight-2 rules are Low priority bu
+          +t still flagged (Decision 9).                                 
+  ⎿  Updated docs/PLAN.md (+9 -11)
+      33    - a partial bundle;
+      34    - an unmapped diagnosis.
+      35  
+      36 -## Phase 3 — Scoring                                           
+      36 +## Phase 3 — Scoring (done)                                    
+      37  
+      38 -- Composite score = weighted sum of fired rules normalized to 0
+         -–100, with weights from config.                                
+      38 +- Composite score = weighted sum of fired rules normalized to 0
+         +–100 (Decision 20), with weights from config.                  
+      39  - A claim is flagged when its score > 0 (Decision 9).
+      40 -- `npm run score` writes the ranked output to `data/scored.json
+         -`.                                                             
+      40 +- `npm run score` (`src/score.ts`) writes `output/scored.json` 
+         +(flagged claims, in the brief's per-claim shape), `output/ranke
+         +d.csv` (every claim with score, priority and rule names) and `o
+         +utput/score-stats.json` (timing and upcoding skips, no labels).
+      41  - 2,000 claims must be processed in < 30 s.
+      42  
+      43  ## Phase 4 — Report
+      44  
+      45 -- **`npm run report`:**                                        
+      46 -  - precision, recall and FPR (FP / (FP + TN)), plus precision@
+         -K;                                                             
+      45 +- **`npm run report`** (`src/metrics.ts`, the only module that 
+         +reads `data/labels.csv`) writes `output/metrics.md` (done):    
+      46 +  - confusion matrix, precision, recall, FPR (FP / (FP + TN)) a
+         +nd F1 at score > 0;                                            
+      47 +  - a threshold sweep at 1, 10, 20, …, 90, and precision@50/100
+         +/200;                                                          
+      48    - a per-rule and per-pattern breakdown;
+      48 -  - the number of claims skipped by upcoding;                  
+      49 -  - the known false positives from Decision 5.                 
+      49 +  - the number of claims skipped by upcoding, and the scoring t
+         +ime.                                                           
+      50 +- Still to do: list the known false positives from Decision 5. 
+      51  - **Holdout:** a run on a second seed with no tuning (Decision 
+          11).
+      52  
+      53  ## Phase 5 — README and submission
+     ...
+      55  - Cover how to run the project, weight justification, results, 
+          and limitations, including Decision 12's synthetic-data assumpt
+          ion.
+      56  - Commit the dataset, scored output and report.
+      57  
+      57 -## Open items                                                  
+      58 -                                                               
+      59 -1. **Score normalization and priority bands.** What the score i
+         -s divided by, and the High/Medium/Low cut-offs. To decide in Ph
+         -ase 3.                                                         
+      60 -                                                               
+      58  ## Resolved items
+      59  
+      60  1. **Clustering vs upcoding on K35.80 [P-1007, B-9002].** Resol
+          ved by Decision 16: the combination is removed, and clustering 
+          bases need a measured mean + 2 SD ≥ 50,500.
+     ...
+      74  6. **Overlapping patterns.** Each fraudulent claim has exactly 
+          one `fraud_type` and is built to fire only its own rule where t
+          his can be controlled.
+      75     - Injected claims with "normal" amounts use the same amount 
+          sampler as clean claims. A few of them may naturally exceed 2 S
+          D, at the same rate as clean claims.
+     … 2 more lines (ctrl+o to expand)
+
+⏺ Before wrapping up, I'll check where the 52 false positives come from, then do
+  a final typecheck and test run.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Cả ba phần đã chạy được. npm run all chạy trọn generate → score → report và in
+  tóm tắt 5 dòng:
+
+  Claims:     2,000 (200 labeled fraud, 1,800 clean)
+  Flagged:    252 (score > 0)
+  Precision:  79.4%   Recall: 100.0% (target ≥ 70.0%)
+  FPR:        2.9% = FP / clean claims (target ≤ 20.0%)
+  Time:       32.2 ms to score 2,000 claims (42.4 ms with file I/O)
+
+  Chạy lại generate với seed mặc định cho ra data/ giống hệt bản đã commit. Mình
+  chưa commit gì.
+
+  Đã làm
+
+  - src/score.ts: tính điểm theo đúng công thức, saturation = 4 đọc từ config.
+    Ghi output/scored.json (chỉ claim bị gắn cờ, đúng 3 khóa như đề) và
+    output/ranked.csv (đủ 2.000 claim, các rule nối bằng |, claim điểm 0 có
+    priority None).
+  - src/metrics.ts: ghi output/metrics.md đủ các mục bạn liệt kê. Mọi phép chia
+    đi qua hàm ratio(), mẫu số bằng 0 thì trả null và hiển thị n/a. Script
+    report trong package.json đã trỏ sang file này (trước đó trỏ tới
+    src/report.ts, file chưa tồn tại).
+  - src/cli.ts: đọc tham số từ process.argv: score nhận --claims và --out,
+    report nhận --labels và --out, để sau này chạy holdout trên dataset khác.
+  - Docs: thêm Decision 20 (cách chuẩn hóa điểm và các mức ưu tiên). PLAN.md
+    được cập nhật đường dẫn output/, mục mở về chuẩn hóa điểm chuyển sang đã
+    giải quyết.
+
+  Vài điểm mình tự quyết, bạn xem có ổn không
+
+  1. Ngưỡng High (70) và Medium (50) cũng để trong config, cạnh saturation, theo
+     quy ước "ngưỡng lấy từ config" trong CLAUDE.md.
+  2. Claim có cờ được tối thiểu 1 điểm. Nếu saturation rất lớn, một cờ có thể
+     làm tròn ra 0. Khi đó "điểm > 0" (Decision 9) không còn nghĩa là "có rule
+     bật". Với saturation 4 thì không xảy ra, vì điểm thấp nhất là 22.
+  3. Thời gian chấm được truyền qua file thêm output/score-stats.json, vì
+     scored.json phải giữ đúng dạng của đề. File này còn chứa số claim upcoding
+     bỏ qua và không có nhãn. Report đối chiếu nó với labels.csv và báo lỗi nếu
+     hai bên lệch số claim, tức là output đã cũ.
+  4. precision@K chỉ xét các claim bị gắn cờ. Nếu có ít hơn K claim bị gắn cờ
+     thì lấy hết. Bảng có thêm cột điểm tại vị trí cắt, vì các claim cùng điểm ở
+     đó được xếp theo claim_id.
+
+  Kết quả đáng chú ý
+
+  Upcoding gây phần lớn false positive: 46 trên 52 FP, precision của rule là
+  41.8%. 6 FP còn lại là các claim sạch trong ngày phantom (Decision 5). Với
+  ngưỡng z > 2, khoảng 2–3% claim sạch tự nhiên vượt ngưỡng, nên con số này đúng
+  kỳ vọng thống kê chứ không phải bug. Nên ghi vào phần hạn chế của README.
+
+  Test (171/171 pass, tsc --noEmit không lỗi)
+
+  Phần 1, score (tests/score.test.ts):
+  - Điểm thô 2, 3, 4, 5, 6 ra 39, 53, 63, 71, 78.
+  - Không có cờ thì 0, có cờ thì tối thiểu 1; điểm không giảm khi raw tăng và
+    tối đa 100.
+  - Ranh giới priority 0, 1, 49, 50, 69, 70, 100; ngưỡng đổi được qua config.
+  - Xếp hạng điểm giảm dần, hòa thì theo claim_id, kể cả CLM-9 đứng trước
+    CLM-10.
+  - Đổi trọng số duplicate_claim trong config thì điểm đổi theo (5 → 71, 1
+    → 22).
+  - scored.json chỉ có claim bị gắn cờ, đúng 3 khóa; ranked.csv có đủ mọi claim.
+  - Trên dataset thật: 2.000 claim, chạy dưới 30 giây, điểm > 0 khi và chỉ khi
+    có cờ.
+
+  Phần 2, metrics (tests/metrics.test.ts), dùng một bộ 10 claim dựng tay:
+  - Confusion matrix và các tỉ lệ; FPR = 2/6 (chia cho số claim sạch), không
+    phải 2/10.
+  - Mẫu số bằng 0 ra n/a, không bao giờ ra NaN hay Infinity; F1 = 0 khi có gian
+    lận nhưng không bắt được.
+  - Sweep đúng các ngưỡng 1, 10, …, 90; ngưỡng 1 trùng với headline; quy tắc
+    "điểm ≥ t" đúng tại 63 và 64.
+  - precision@K tách đúng các claim đồng điểm, và xử lý trường hợp K lớn hơn số
+    claim bị gắn cờ.
+  - Bảng theo rule: precision của rule tính gian lận mọi loại, còn recall chỉ
+    tính đúng kiểu gian lận của rule đó.
+  - Recall theo từng kiểu gian lận.
+  - Báo lỗi khi claim không có nhãn, bị trùng, hoặc stats lệch số claim.
+  - Parser từ chối nhãn sai, rule lạ, điểm 0.
+  - Tóm tắt đúng 5 dòng; metrics.md có đủ các mục.
+  - Cô lập nhãn: quét src/ để chắc chỉ metrics.ts đọc labels.csv (generator chỉ
+    ghi), và các file rules, engine, context, score không nhắc tới fraud_type
+    hay FraudLabel.
+  - Trên dataset thật đạt mục tiêu của đề: recall ≥ 70%, FPR ≤ 20%.
+
+  Phần 3, CLI (tests/cli.test.ts) và config:
+  - Nhận cả --flag value lẫn --flag=value; báo lỗi khi gặp flag lạ hoặc flag
+    thiếu giá trị.
+  - Config báo lỗi khi thiếu saturation, khi saturation ≤ 0, và khi ngưỡng
+    Medium không nhỏ hơn High.
+  - Bản thân lệnh npm run all không có unit test; mình đã kiểm tra bằng cách
+    chạy thật như ở đầu.
+
+  Phase 4 còn hai việc chưa làm: liệt kê các false positive đã biết của Decision
+  5 trong report, và chạy holdout trên seed khác.
+
+❯ /model sonnet
+  ⎿  Set model to claude-sonnet-5-5
+
+❯ Thêm tùy chọn chạy toàn bộ pipeline với seed khác vào thư mục riêng: --seed 7
+  --out data/holdout, kết quả ra output/holdout. Chạy mà không đổi bất kỳ
+  config nào. Thêm vào đầu metrics.md một bảng so sánh seed 42 và seed 7
+  (precision, recall, FPR, F1, precision@100). Giải thích ngắn nếu hai bên lệch
+  nhau hơn 5 điểm phần trăm.
+
+⏺ Mình xem nhanh API của generator trước khi thiết kế phần pipeline.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Trước khi viết code, thử xem generator có chạy được với seed 7 không (nếu
+  verify của generator fail thì phải biết sớm).
+
+⏺ Bash(npx tsx src/generate/index.ts --seed 7 --out data/holdout 2>&1 | head
+      -30)
+  ⎿  2 files changed (binary, mode only or too large to show)
+
+⏺ Generator chạy tốt với seed 7. Giờ refactor score.ts/metrics.ts thành hàm gọi
+  được, rồi viết pipeline.
+
+⏺ Bash(python3 - <<'EOF'
+      # --- config.ts: config fingerprint…)
+  ⎿  Updated src/config.ts (+8 -0)
+      1 +import { createHash } from 'node:crypto';                       
+      2  import { readFileSync } from 'node:fs';
+      3  import { join } from 'node:path';
+      4  import {
+     ...
+      329      thresholds: readJson(dir, CONFIG_FILES.thresholds),
+      330    });
+      331  }
+      332 +                                                              
+      333 +/** Short SHA-256 of the four config files, to tell whether tw
+          +o runs used the same config. */                               
+      334 +export function configFingerprint(dir = 'config'): string {   
+      335 +  const hash = createHash('sha256');                          
+      336 +  for (const file of Object.values(CONFIG_FILES)) hash.update(
+          +`${file}\n${readFileSync(join(dir, file), 'utf8')}\n`);       
+      337 +  return hash.digest('hex').slice(0, 12);                     
+      338 +}                                                             
+  ⎿  Updated src/score.ts (+15 -12)
+       7  import { runRules, type ClaimFlags } from './engine.js';
+       8  import { formatNumber } from './format.js';
+       9  import { countUpcodingSkips } from './rules/upcoding.js';
+      10 -import type { Priority, ScoredClaim, ScoringConfig } from './ty
+         -pes.js';                                                       
+      10 +import type { Config, Priority, ScoredClaim, ScoringConfig } fr
+         +om './types.js';                                               
+      11  
+      12  export const OUTPUT_FILES = {
+      13    scored: 'scored.json',
+      14    ranked: 'ranked.csv',
+      15    stats: 'score-stats.json',
+      16    metrics: 'metrics.md',
+      17 +  summary: 'run-summary.json',                                 
+      18  } as const;
+      19  
+      20  export const RANKED_COLUMNS = ['claim_id', 'risk_score', 'prior
+          ity', 'rules'] as const;
+     ...
+       82  
+       83  const roundMs = (ms: number): number => Math.round(ms * 10) / 
+           10;
+       84  
+       84 -function main(argv: readonly string[]): void {                
+       85 -  const args = parseFlags(argv, { claims: 'data/claims.csv', o
+          -ut: 'output' }, 'Usage: score [--claims PATH] [--out DIR]');  
+       86 -                                                              
+       85 +/** Scores the claims in `claimsPath` and writes scored.json, 
+          +ranked.csv and score-stats.json into `outDir`. */             
+       86 +export function runScore(claimsPath: string, outDir: string, c
+          +onfig: Config = loadConfig()): ScoreStats {                   
+       87    const start = performance.now();
+       88 -  const config = loadConfig();                                
+       89 -  const claims = readClaims(args.claims);                     
+       88 +  const claims = readClaims(claimsPath);                      
+       89    const scoringStart = performance.now();
+       90    const ranked = scoreClaims(runRules(claims, config), config.
+           scoring);
+       91    const scoringMs = performance.now() - scoringStart;
+       92  
+       93    const scored = toScoredJson(ranked);
+       95 -  mkdirSync(args.out, { recursive: true });                   
+       96 -  writeFileSync(join(args.out, OUTPUT_FILES.scored), `${JSON.s
+          -tringify(scored, null, 2)}\n`, 'utf8');                       
+       97 -  writeFileSync(join(args.out, OUTPUT_FILES.ranked), rankedToC
+          -sv(ranked), 'utf8');                                          
+       94 +  mkdirSync(outDir, { recursive: true });                     
+       95 +  writeFileSync(join(outDir, OUTPUT_FILES.scored), `${JSON.str
+          +ingify(scored, null, 2)}\n`, 'utf8');                         
+       96 +  writeFileSync(join(outDir, OUTPUT_FILES.ranked), rankedToCsv
+          +(ranked), 'utf8');                                            
+       97    const totalMs = performance.now() - start;
+       98  
+     … 22 more lines (ctrl+o to expand)
+
+⏺ Bash(python3 - <<'EOF'
+      p='src/metrics.ts'…)
+  ⎿  Updated src/metrics.ts (+169 -13)
+       3   * metrics.md. This is the only module that reads labels.csv; t
+          he rules, the engine
+       4   * and the scorer never see labels.
+       5   */
+       6 -import { readFileSync, writeFileSync } from 'node:fs';         
+       6 +import { existsSync, readFileSync, writeFileSync } from 'node:f
+         +s';                                                            
+       7  import { join } from 'node:path';
+       8  import { isEntryPoint, parseFlags } from './cli.js';
+       9 +import { configFingerprint } from './config.js';               
+      10  import { parseCsv } from './csv.js';
+      11  import { formatNumber } from './format.js';
+      12  import { compareRanked, OUTPUT_FILES, type ScoreStats } from '.
+          /score.js';
+     ...
+      237  }
+      238  
+      239  export interface Metrics {
+      240 +  /** Generator seed of the dataset, when known. */           
+      241 +  seed: number | null;                                        
+      242    claims: number;
+      243    fraud: number;
+      244    clean: number;
+     ...
+      251  }
+      252  
+      253  /** Throws if scored.json, score-stats.json and labels.csv do 
+           not describe the same claim set. */
+      251 -export function computeMetrics(scored: readonly ScoredClaim[],
+          - labels: readonly FraudLabel[], stats: ScoreStats): Metrics { 
+      254 +export function computeMetrics(                               
+      255 +  scored: readonly ScoredClaim[],                             
+      256 +  labels: readonly FraudLabel[],                              
+      257 +  stats: ScoreStats,                                          
+      258 +  seed: number | null = null,                                 
+      259 +): Metrics {                                                  
+      260    const rerun = 'Run `npm run score` on the same dataset as th
+           e labels.';
+      261    if (stats.claims !== labels.length) {
+      262      throw new Error(`${OUTPUT_FILES.stats} reports ${stats.cla
+           ims} scored claims but labels.csv has ${labels.length}. ${reru
+           n}`);
+     ...
+      274  
+      275    const fraudIds = new Set(labels.filter((l) => l.fraud_type !
+           == 'clean').map((l) => l.claim_id));
+      276    return {
+      277 +    seed,                                                     
+      278      claims: labels.length,
+      279      fraud: fraudIds.size,
+      280      clean: labels.length - fraudIds.size,
+     ...
+      409  export function summaryLines(m: Metrics): string[] {
+     … 184 more lines (ctrl+o to expand)
+
+⏺ Giờ là pipeline npm run all:
+
+⏺ Bash(cat > src/pipeline.ts <<'EOF'
+      import { isAbsolute, join, relative } from 'node:path';…)
+  ⎿  Created output/holdout/metrics.md (+99 -0)
+       1 +# Metrics report                                               
+       2 +                                                               
+       3 +<!-- seed-comparison:start -->                                 
+       4 +## seed 42 vs seed 7                                           
+       5 +                                                               
+       6 +Each run is a separate dataset scored with the same code and co
+         +nfig, with no tuning in between. Flagged = score > 0. Differenc
+         +e = seed 7 − seed 42.                                          
+       7 +                                                               
+       8 +| Metric | seed 42 | seed 7 | Difference |                     
+       9 +| :--- | ---: | ---: | ---: |                                  
+      10 +| Precision | 79.4% | 80.3% | +1.0 pp |                        
+      11 +| Recall | 100.0% | 100.0% | +0.0 pp |                         
+      12 +| FPR | 2.9% | 2.7% | −0.2 pp |                                
+      13 +| F1 | 88.5% | 89.1% | +0.6 pp |                               
+      14 +| Precision@100 | 79.0% | 80.0% | +1.0 pp |                    
+      15 +| Flagged claims | 252 | 249 |  |                              
+      16 +<!-- seed-comparison:end -->                                   
+      17 +                                                               
+      18 +Computed from `output/holdout/scored.json` and `data/holdout/la
+         +bels.csv`: 2,000 claims, 200 labeled fraud and 1,800 clean.    
+      19 +                                                               
+      20 +## Headline: flagged = score > 0 (Decision 9)                  
+      21 +                                                               
+      22 +|  | Labeled fraud | Labeled clean | Total |                   
+      23 +| :--- | ---: | ---: | ---: |                                  
+      24 +| **Flagged** | TP 200 | FP 49 | 249 |                         
+      25 +| **Not flagged** | FN 0 | TN 1,751 | 1,751 |                  
+      26 +| **Total** | 200 | 1,800 | 2,000 |                            
+      27 +                                                               
+      28 +| Metric | Value | Formula | Target |                          
+      29 +| :--- | ---: | :--- | :--- |                                  
+      30 +| Precision | 80.3% | TP / (TP + FP) |  |                      
+      31 +| Recall | 100.0% | TP / (TP + FN) | ≥ 70.0%: met |            
+      32 +| FPR | 2.7% | FP / (FP + TN), i.e. over clean claims only | ≤ 
+         +20.0%: met |                                                   
+      33 +| F1 | 89.1% | 2TP / (2TP + FP + FN) |  |                      
+      34 +                                                               
+      35 +## Threshold sweep: flagged = score ≥ t                        
+      36 +                                                               
+      37 +| t | Flagged | TP | FP | FN | TN | Precision | Recall | FPR | 
+         +F1 |                                                           
+      38 +| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: 
+         +| ---: |                                                       
+      39 +| 1 | 249 | 200 | 49 | 0 | 1,751 | 80.3% | 100.0% | 2.7% | 89.1
+         +% |                                                            
+      40 +| 10 | 249 | 200 | 49 | 0 | 1,751 | 80.3% | 100.0% | 2.7% | 89.
+         +1% |                                                           
+     … 59 more lines (ctrl+o to expand)
+  ⎿  Created output/holdout/run-summary.json (+12 -0)
+       1 +{                                                              
+       2 +  "seed": 7,                                                   
+       3 +  "config_hash": "f146836804d7",                               
+       4 +  "claims": 2000,                                              
+       5 +  "fraud": 200,                                                
+       6 +  "flagged": 249,                                              
+       7 +  "precision": 0.8032128514056225,                             
+       8 +  "recall": 1,                                                 
+       9 +  "fpr": 0.02722222222222222,                                  
+      10 +  "f1": 0.89086859688196,                                      
+      11 +  "precision_at_100": 0.8                                      
+      12 +}                                                              
+  ⎿  Created output/holdout/score-stats.json (+11 -0)
+       1 +{                                                              
+       2 +  "claims": 2000,                                              
+       3 +  "flagged": 249,                                              
+       4 +  "scoring_ms": 29.4,                                          
+       5 +  "total_ms": 36.8,                                            
+       6 +  "upcoding_skipped": {                                        
+       7 +    "min_other_claims": 10,                                    
+       8 +    "insufficient_data": 25,                                   
+       9 +    "zero_sd": 0                                               
+      10 +  }                                                            
+      11 +}                                                              
+  ⎿  Updated output/metrics.md (+17 -2)
+       1  # Metrics report
+       2  
+       3 +<!-- seed-comparison:start -->                                 
+       4 +## seed 42 vs seed 7                                           
+       5 +                                                               
+       6 +Each run is a separate dataset scored with the same code and co
+         +nfig, with no tuning in between. Flagged = score > 0. Differenc
+         +e = seed 7 − seed 42.                                          
+       7 +                                                               
+       8 +| Metric | seed 42 | seed 7 | Difference |                     
+       9 +| :--- | ---: | ---: | ---: |                                  
+      10 +| Precision | 79.4% | 80.3% | +1.0 pp |                        
+      11 +| Recall | 100.0% | 100.0% | +0.0 pp |                         
+      12 +| FPR | 2.9% | 2.7% | −0.2 pp |                                
+      13 +| F1 | 88.5% | 89.1% | +0.6 pp |                               
+      14 +| Precision@100 | 79.0% | 80.0% | +1.0 pp |                    
+      15 +| Flagged claims | 252 | 249 |  |                              
+      16 +<!-- seed-comparison:end -->                                   
+      17 +                                                               
+      18  Computed from `output/scored.json` and `data/labels.csv`: 2,000
+           claims, 200 labeled fraud and 1,800 clean.
+      19  
+      20  ## Headline: flagged = score > 0 (Decision 9)
+     ...
+      94  
+      95  ## Performance
+      96  
+      82 -- Rules, scoring and ranking for 2,000 claims: **32.2 ms**.    
+      83 -- Including reading config and claims and writing `scored.json`
+         - and `ranked.csv`: 42.4 ms.                                    
+      97 +- Rules, scoring and ranking for 2,000 claims: **30.4 ms**.    
+      98 +- Including reading config and claims and writing `scored.json`
+         + and `ranked.csv`: 39.4 ms.                                    
+      99  - Brief limit: 30 s for 2,000 claims.
+  ⎿  Created output/run-summary.json (+12 -0)
+       1 +{                                                              
+       2 +  "seed": 42,                                                  
+       3 +  "config_hash": "f146836804d7",                               
+       4 +  "claims": 2000,                                              
+       5 +  "fraud": 200,                                                
+       6 +  "flagged": 252,                                              
+       7 +  "precision": 0.7936507936507936,                             
+       8 +  "recall": 1,                                                 
+       9 +  "fpr": 0.028888888888888888,                                 
+      10 +  "f1": 0.8849557522123894,                                    
+      11 +  "precision_at_100": 0.79                                     
+      12 +}                                                              
+  ⎿  … 5 more files changed
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Không có chỉ số nào lệch quá 5 điểm phần trăm. Mình thêm một câu xác nhận điều
+  này vào bảng (để người đọc không phải tự suy ra), rồi viết test.
+
+⏺ Bash(python3 - <<'EOF'
+      p='src/metrics.ts'…)
+  ⎿  Updated src/metrics.ts (+5 -1)
+      518    if (first.config_hash !== second.config_hash) {
+      519      lines.push(`**Warning:** the config differs between the tw
+           o runs (${first.config_hash} vs ${second.config_hash}), so thi
+           s is not a clean holdout.`);
+      520    }
+      521 -  if (wide.length > 0) lines.push(`Gaps above ${GAP_THRESHOLD_
+          -PP} pp: ${wide.join(', ')}.`);                                
+      521 +  lines.push(                                                 
+      522 +    wide.length > 0                                           
+      523 +      ? `Gaps above ${GAP_THRESHOLD_PP} pp: ${wide.join(', ')}
+          +.`                                                            
+      524 +      : `No metric differs by more than ${GAP_THRESHOLD_PP} pp
+          +.`,                                                           
+      525 +  );                                                          
+      526    return lines.join('\n\n');
+      527  }
+      528  
+  ⎿  Updated tests/metrics.test.ts (+63 -0)
+      10    labelsFromCsv,
+      11    precisionAtK,
+      12    ratio,
+      13 +  gapPp,                                                       
+      14 +  renderComparison,                                            
+      15    renderMarkdown,
+      16    scoredFromJson,
+      17 +  summarize,                                                   
+      18 +  summaryFromJson,                                             
+      19 +  upsertComparison,                                            
+      20 +  COMPARISON_END,                                              
+      21 +  COMPARISON_START,                                            
+      22 +  type RunSummary,                                             
+      23    statsFromJson,
+      24    summaryLines,
+      25    SWEEP_THRESHOLDS,
+     ...
+      225    });
+      226  });
+      227  
+      228 +describe('seed comparison', () => {                           
+      229 +  const base: RunSummary = {                                  
+      230 +    seed: 42, config_hash: 'abc', claims: 2000, fraud: 200, fl
+          +agged: 252,                                                   
+      231 +    precision: 0.794, recall: 1, fpr: 0.029, f1: 0.885, precis
+          +ion_at_100: 0.79,                                             
+      232 +  };                                                          
+      233 +  const other: RunSummary = { ...base, seed: 7, flagged: 249, 
+          +precision: 0.803, fpr: 0.027, f1: 0.891, precision_at_100: 0.8
+          + };                                                           
+      234 +                                                              
+      235 +  it('summarizes a run, with precision@100 taken from the K = 
+          +100 row', () => {                                             
+      236 +    const m = computeMetrics(scored, labels, stats, 42);      
+      237 +    const summary = summarize(m, 'abc');                      
+      238 +    expect(summary).toMatchObject({ seed: 42, config_hash: 'ab
+          +c', claims: 10, fraud: 4, flagged: 5, recall: 0.75 });        
+      239 +    expect(summary.precision_at_100).toBe(m.precisionAtK.find(
+          +(p) => p.k === 100)?.precision);                              
+      240 +    expect(summaryFromJson(JSON.stringify(summary))).toEqual(s
+          +ummary);                                                      
+      241 +    expect(() => summaryFromJson('{"seed": 1}')).toThrow('conf
+          +ig_hash');                                                    
+      242 +  });                                                         
+      243 +                                                              
+      244 +  it('gapPp is the difference in percentage points and null wh
+          +en a side is missing', () => {                                
+      245 +    expect(gapPp(0.5, 0.56)).toBeCloseTo(6);                  
+      246 +    expect(gapPp(null, 0.5)).toBeNull();                      
+      247 +  });                                                         
+      248 +                                                              
+     … 37 more lines (ctrl+o to expand)
+  ⎿  Created tests/pipeline.test.ts (+32 -0)
+       1 +import { describe, expect, it } from 'vitest';                 
+       2 +import { compareDirFor, parseSeed, resultsDirFor } from '../src
+         +/pipeline.js';                                                 
+       3 +                                                               
+       4 +describe('resultsDirFor', () => {                              
+       5 +  it('maps data → output and data/<name> → output/<name>', () =
+         +> {                                                            
+       6 +    expect(resultsDirFor('data')).toBe('output');              
+       7 +    expect(resultsDirFor('data/')).toBe('output');             
+       8 +    expect(resultsDirFor('data/holdout')).toBe('output/holdout'
+         +);                                                             
+       9 +  });                                                          
+      10 +                                                               
+      11 +  it('rejects directories outside data/', () => {              
+      12 +    expect(() => resultsDirFor('elsewhere')).toThrow('inside it
+         +');                                                            
+      13 +    expect(() => resultsDirFor('/tmp/data')).toThrow('inside it
+         +');                                                            
+      14 +  });                                                          
+      15 +});                                                            
+      16 +                                                               
+      17 +describe('compareDirFor', () => {                              
+      18 +  it('pairs the baseline with output/holdout and every other ru
+         +n with the baseline', () => {                                  
+      19 +    expect(compareDirFor('output')).toBe('output/holdout');    
+      20 +    expect(compareDirFor('output/holdout')).toBe('output');    
+      21 +  });                                                          
+      22 +});                                                            
+      23 +                                                               
+      24 +describe('parseSeed', () => {                                  
+      25 +  it('accepts integers in [0, 2^32)', () => {                  
+      26 +    expect([parseSeed('0'), parseSeed('7'), parseSeed('42949672
+         +95')]).toEqual([0, 7, 4294967295]);                            
+      27 +  });                                                          
+      28 +                                                               
+      29 +  it('rejects anything else', () => {                          
+      30 +    for (const bad of ['', ' ', '-1', '1.5', 'abc', '4294967296
+         +']) expect(() => parseSeed(bad)).toThrow('--seed');            
+      31 +  });                                                          
+      32 +});                                                            
+
+⏺ Test cách ly nhãn fail vì pipeline.ts giờ import metrics.js — đây là thay đổi
+  hợp lệ nên mình sẽ sửa test để chỉ cho phép pipeline.ts import metrics, còn
+  rules/engine/context/score thì không. Nêu rõ lý do vì CLAUDE.md cấm sửa test
+  chỉ để cho pass. · summary
+
+⏺ Bash(python3 - <<'EOF'
+      p='tests/metrics.test.ts'…)
+  ⎿  Updated tests/metrics.test.ts (+2 -1)
+      289  
+      290    it('lets only metrics.ts read labels.csv; the generator only
+            writes it', () => {
+      291      expect(files.filter((f) => f.text.includes('labels.csv')).
+           map((f) => f.path).sort()).toEqual(['src/generate/generate.ts'
+           , 'src/metrics.ts']);
+      292 -    expect(files.filter((f) => /from '\.\.?\/(\.\.\/)*metrics\
+          -.js'/.test(f.text)).map((f) => f.path)).toEqual([]);          
+      292 +    // The pipeline only passes the labels path to runReport; 
+          +it never opens the file.                                      
+      293 +    expect(files.filter((f) => /from '\.\.?\/(\.\.\/)*metrics\
+          +.js'/.test(f.text)).map((f) => f.path)).toEqual(['src/pipeline
+          +.ts']);                                                       
+      294    });
+      295  
+      296    it('keeps fraud labels out of the rules, the engine and the 
+           scorer', () => {
+
+⏺ Cập nhật tài liệu và chạy lại toàn bộ lần cuối (baseline rồi holdout) để file
+  trong output/ khớp với code mới.
+
+⏺ Bash(python3 - <<'EOF'
+      p='CLAUDE.md'…)  ⎿  Updated CLAUDE.md (+1 -1)
+       9  - `npm run inspect` — print dataset sanity stats
+      10  - `npm run score` — run rules and write scored output
+      11  - `npm run report` — compute metrics and write the report
+      12 -- `npm run all` — generate → score → report                    
+      12 +- `npm run all` — generate → score → report; `npm run all -- --
+         +seed 7 --out data/holdout` runs the same pipeline on another se
+         +ed, data in `data/holdout`, results in `output/holdout`, and ad
+         +ds a seed comparison to the top of both `metrics.md` files     
+      13  - `npm test` — run unit tests
+      14  - `npm run typecheck` — `tsc --noEmit`
+      15  
+  ⎿  Updated docs/PLAN.md (+1 -0)
+      48    - a per-rule and per-pattern breakdown;
+      49    - the number of claims skipped by upcoding, and the scoring t
+          ime.
+      50  - Still to do: list the known false positives from Decision 5.
+      51 +- **Holdout (done):** `npm run all -- --seed 7 --out data/holdo
+         +ut` writes the dataset to `data/holdout` and results to `output
+         +/holdout`, with the config untouched. A seed 42 vs seed 7 table
+         + (precision, recall, FPR, F1, precision@100) sits at the top of
+         + both `metrics.md` files; a gap above 5 pp is marked, and a con
+         +fig-hash mismatch is flagged as not a clean holdout.           
+      52  - **Holdout:** a run on a second seed with no tuning (Decision 
+          11).
+      53  
+      54  ## Phase 5 — README and submission
+  ⎿  Updated output/holdout/metrics.md (+4 -2)
+      13  | F1 | 88.5% | 89.1% | +0.6 pp |
+      14  | Precision@100 | 79.0% | 80.0% | +1.0 pp |
+      15  | Flagged claims | 252 | 249 |  |
+      16 +                                                               
+      17 +No metric differs by more than 5 pp.                           
+      18  <!-- seed-comparison:end -->
+      19  
+      20  Computed from `output/holdout/scored.json` and `data/holdout/la
+          bels.csv`: 2,000 claims, 200 labeled fraud and 1,800 clean.
+     ...
+       96  
+       97  ## Performance
+       98  
+       97 -- Rules, scoring and ranking for 2,000 claims: **29.4 ms**.   
+       98 -- Including reading config and claims and writing `scored.json
+          -` and `ranked.csv`: 36.8 ms.                                  
+       99 +- Rules, scoring and ranking for 2,000 claims: **29.9 ms**.   
+      100 +- Including reading config and claims and writing `scored.json
+          +` and `ranked.csv`: 37.5 ms.                                  
+      101  - Brief limit: 30 s for 2,000 claims.
+  ⎿  Updated output/holdout/score-stats.json (+2 -2)
+      1  {
+      2    "claims": 2000,
+      3    "flagged": 249,
+      4 -  "scoring_ms": 29.4,                                           
+      5 -  "total_ms": 36.8,                                             
+      4 +  "scoring_ms": 29.9,                                           
+      5 +  "total_ms": 37.5,                                             
+      6    "upcoding_skipped": {
+      7      "min_other_claims": 10,
+      8      "insufficient_data": 25,
+  ⎿  Updated output/metrics.md (+4 -2)
+      13  | F1 | 88.5% | 89.1% | +0.6 pp |
+      14  | Precision@100 | 79.0% | 80.0% | +1.0 pp |
+      15  | Flagged claims | 252 | 249 |  |
+      16 +                                                               
+      17 +No metric differs by more than 5 pp.                           
+      18  <!-- seed-comparison:end -->
+      19  
+      20  Computed from `output/scored.json` and `data/labels.csv`: 2,000
+           claims, 200 labeled fraud and 1,800 clean.
+     ...
+       96  
+       97  ## Performance
+       98  
+       97 -- Rules, scoring and ranking for 2,000 claims: **30.4 ms**.   
+       98 -- Including reading config and claims and writing `scored.json
+          -` and `ranked.csv`: 39.4 ms.                                  
+       99 +- Rules, scoring and ranking for 2,000 claims: **30.9 ms**.   
+      100 +- Including reading config and claims and writing `scored.json
+          +` and `ranked.csv`: 38.6 ms.                                  
+      101  - Brief limit: 30 s for 2,000 claims.
+  ⎿  … 1 more file changed
+
+⏺ Chạy được: npm run all -- --seed 7 --out data/holdout chạy trọn generate →
+  score → report cho seed 7, dữ liệu ra data/holdout/, kết quả ra
+  output/holdout/. Config không đổi (git status không thấy file config nào bị
+  sửa thêm so với lần trước). npm run typecheck sạch, npm test pass 182/182.
+  Mình chưa commit gì.
+
+  Kết quả so sánh
+
+  Bảng này nằm ngay dưới tiêu đề của cả output/metrics.md và
+  output/holdout/metrics.md:
+
+  ┌───────────────┬─────────┬────────┬────────────┐
+  │    Chỉ số     │ seed 42 │ seed 7 │ Chênh lệch │
+  ├───────────────┼─────────┼────────┼────────────┤
+  │ Precision     │   79.4% │  80.3% │    +1.0 pp │
+  ├───────────────┼─────────┼────────┼────────────┤
+  │ Recall        │  100.0% │ 100.0% │    +0.0 pp │
+  ├───────────────┼─────────┼────────┼────────────┤
+  │ FPR           │    2.9% │   2.7% │    −0.2 pp │
+  ├───────────────┼─────────┼────────┼────────────┤
+  │ F1            │   88.5% │  89.1% │    +0.6 pp │
+  ├───────────────┼─────────┼────────┼────────────┤
+  │ Precision@100 │   79.0% │  80.0% │    +1.0 pp │
+  └───────────────┴─────────┴────────┴────────────┘
+
+  Hai bên không lệch nhau hơn 5 điểm phần trăm, lệch lớn nhất chỉ 1,0 pp, nên
+  không cần giải thích. Bảng sẽ in dòng "No metric differs by more than 5 pp."
+  trong trường hợp này. Nếu có chỉ số lệch quá 5 pp, hàng đó được in đậm kèm (>
+  5 pp) và có một dòng liệt kê các chỉ số đó.
+
+  Một điều cần lưu ý khi đọc kết quả: recall đạt 100% ở cả hai seed vì dữ liệu
+  tổng hợp được dựng sao cho từng kiểu gian lận bật đúng rule của nó. Holdout
+  này cho thấy kết quả không phụ thuộc vào seed 42, nhưng không chứng minh
+  engine bắt được gian lận thật. README nên nói rõ điều này, vì Decision 12 đã
+  nêu giả định dữ liệu tổng hợp.
+
+  Cách hoạt động
+
+  - npm run all giờ là src/pipeline.ts, nhận --seed (mặc định 42) và --out (mặc
+    định data). Thư mục kết quả suy ra từ --out: data thành output, data/holdout
+    thành output/holdout. --out nằm ngoài data/ thì báo lỗi.
+  - Bảng so sánh được ghi vào cả hai báo cáo, dù bạn chạy bên nào sau. Mỗi lần
+    chạy lưu một file nhỏ run-summary.json (không chứa nhãn). Khi chạy bên thứ
+    hai, bảng được chèn vào metrics.md của cả hai bên giữa cặp dấu <!--
+    seed-comparison -->, nên chạy lại chỉ thay khối cũ.
+  - Cờ kiểm tra config: mỗi lần chạy lưu thêm mã băm của 4 file config. Nếu hai
+    bên khác nhau thì bảng in cảnh báo "không phải holdout sạch".
+  - score.ts và metrics.ts được tách thành runScore và runReport để pipeline gọi
+    trực tiếp. npm run score và npm run report vẫn chạy riêng được, và report
+    có thêm --seed và --compare.
+
+  Hai điểm cần bạn biết
+
+  - Mình đã sửa một test. Test cô lập nhãn trước đó yêu cầu không module nào
+    import metrics.js. Giờ pipeline.ts import nó. Mình đổi thành chỉ cho phép
+    đúng src/pipeline.ts, và pipeline chỉ truyền đường dẫn file nhãn, không tự
+    mở nó. Test vẫn chặn rules, engine, context, score đọc nhãn.
+  - Bảng so sánh phụ thuộc vào thứ tự chạy. Báo cáo seed 42 chỉ có bảng sau khi
+    bạn đã chạy holdout ít nhất một lần. Hiện cả hai đã có, vì mình chạy cả hai.
+
+  data/holdout/ hiện chưa được theo dõi bởi git; nếu muốn nộp cùng bài thì cần
+  git add.
+
+❯ Kết quả hoàn hảo là đáng ngờ. Kiểm tra: (1) có rule hay module nào ngoài
+  metrics đọc labels không; (2) claim gian lận có đặc điểm hình thức nào khác
+  claim sạch (ID, làm tròn, ngày); (3) dữ liệu sạch có thiếu nhiễu tự nhiên mà
+  thiết kế đã dự kiến không (tái khám thật trong 7 ngày, giá vượt 2 SD tự
+  nhiên). Báo cáo trước, chưa sửa.
+
+⏺ Mình điều tra, chưa sửa gì. Bắt đầu với (1), tìm mọi chỗ đọc nhãn, rồi (2) và
+  (3) bằng script phân tích đặt ngoài repo.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ (1) sạch về mặt code. Giờ (2): so sánh hình thức giữa claim gian lận và sạch.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Chưa phát hiện rò rỉ qua ID hay độ tròn số tiền, nhưng có vài điểm đáng chú ý
+  (claim 4 thủ tục chỉ xuất hiện ở nhóm gian lận, upcoding và mismatch không rơi
+  vào số tiền chẵn trăm). Tôi sẽ tiếp tục đào sâu tổ hợp thủ tục và phân bố số
+  tiền. · summary
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Tôi phát hiện hai kiểu gian lận có tổ hợp (chẩn đoán, thủ tục) chưa từng xuất
+  hiện trong các claim sạch. Giờ tôi sẽ đếm nhiễu tự nhiên trong dữ liệu sạch để
+  so sánh với kỳ vọng nếu sinh ngẫu nhiên. · summary
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Mình chưa sửa gì trong repo. Script phân tích nằm ở /tmp/fraudcheck/, ngoài
+  repo. Kết luận chung: kết quả hoàn hảo là do cách dựng dữ liệu, không phải do
+  rò rỉ nhãn. Nhưng phần nhiễu trong dữ liệu sạch ít hơn thiết kế ban đầu dự
+  kiến.
+
+  (1) Module nào đọc nhãn
+
+  Không có module nào ngoài metrics.ts đọc labels.csv.
+  - Trong src/, các file ngoài generate/ và metrics.ts chỉ nhắc nhãn trong chú
+    thích, trong kiểu FraudLabel, hoặc trong pipeline.ts, nơi chỉ truyền đường
+    dẫn.
+  - Rules chỉ import codes, context, dates, format, types. Không có fs, process,
+    Math.random.
+  - score.ts chỉ đọc claims.csv.
+
+  Có hai điểm cần lưu ý, đều không phải rò nhãn:
+  - Kiểm tra vòng tròn. Generator dùng cùng stats.ts (leave-one-out) và cùng
+    ngưỡng config với rules. verify.ts kiểm tra "mọi claim upcoding có z ≥ 2.5"
+    bằng chính hàm thống kê của rule. Vì vậy recall của upcoding gần như được
+    bảo đảm từ lúc sinh dữ liệu.
+  - npm run inspect đang hỏng. Script trỏ tới src/inspect.ts, file này không tồn
+    tại. PLAN.md Phase 1 hứa các kiểm tra rò rỉ nhãn (thứ tự ID, độ tròn số
+    tiền) nhưng chưa bao giờ được viết. Phần (2) bên dưới là lần đầu chúng được
+    chạy.
+
+  (2) Claim gian lận khác claim sạch ở điểm nào
+
+  Không khác ở ID, độ tròn số tiền hay ngày một cách đủ để tách từng claim.
+
+  ┌─────────────────────────┬────────────────┬──────────────┐
+  │        Đặc điểm         │ Gian lận (200) │ Sạch (1.800) │
+  ├─────────────────────────┼────────────────┼──────────────┤
+  │ ID: thứ hạng trung bình │ 916            │ 1.009        │
+  ├─────────────────────────┼────────────────┼──────────────┤
+  │ Số tiền là bội của 10   │ 100%           │ 100%         │
+  ├─────────────────────────┼────────────────┼──────────────┤
+  │ Số tiền là bội của 100  │ 11,5%          │ 9,9%         │
+  ├─────────────────────────┼────────────────┼──────────────┤
+  │ Chủ nhật/thứ bảy        │ 16,5%          │ 7,5%         │
+  ├─────────────────────────┼────────────────┼──────────────┤
+  │ Nội trú                 │ 37%            │ 25%          │
+  └─────────────────────────┴────────────────┴──────────────┘
+
+  - ID: gian lận hơi dồn về nửa đầu (số lần đổi trạng thái liên tiếp là 335, kỳ
+    vọng 361, lệch khoảng 3 độ lệch chuẩn). Điều này khớp với việc 31 claim
+    phantom cùng một ngày nên có ID liền nhau, và các cặp duplicate, rapid nằm
+    sát nhau theo ngày. Mình chưa kiểm chứng riêng nguyên nhân này.
+  - Ngày: thứ Tư chiếm 25,5% và tháng 4 chiếm 19% trong nhóm gian lận. Đó là
+    ngày phantom. Tỉ lệ cuối tuần cao là do pattern weekend. Cả hai là dấu vết
+    của chính các pattern.
+
+  Có ba khác biệt cần báo:
+  1. Tổ hợp (chẩn đoán, thủ tục) chưa từng thấy ở claim sạch: 20/20 claim
+     mismatch và 25/25 claim unbundling, so với 0 ở mọi loại còn lại. Claim 4
+     thủ tục cũng chỉ có ở unbundling (8 claim). Hai pattern này vì thế tách
+     được khỏi dữ liệu sạch chỉ bằng "tổ hợp lạ", không cần rule nào.
+  2. Upcoding có z từ 3,14 đến 4,48 (trung bình 3,71), ngưỡng của rule là 2.
+     Không claim upcoding nào gần ranh giới. Claim sạch cũng có 9 trường hợp z >
+     3 và tối đa 4,24, nên z > 3 không tách hoàn toàn.
+  3. Số tiền upcoding và mismatch không bao giờ là bội của 100: 0/50, trong khi
+     claim sạch là 9,9%. Xác suất ngẫu nhiên khoảng 0,5%. Không rule nào dùng
+     đặc điểm này và mình chưa truy ra nguyên nhân, nhưng đây là dấu hiệu hình
+     thức thật.
+
+  (3) Dữ liệu sạch có thiếu nhiễu không
+
+  Có, thiếu nhiều. Trên claim sạch chỉ có 2 rule bật: upcoding (46) và phantom
+  (6, do Decision 5). Sáu rule còn lại có precision 100% và recall 100% trên cả
+  hai seed.
+
+  ┌─────────────────────────────┬─────────────────────┬──────────────────────┐
+  │         Loại nhiễu          │ Quan sát (seed 42)  │  Kỳ vọng nếu ngẫu    │
+  │                             │                     │        nhiên         │
+  ├─────────────────────────────┼─────────────────────┼──────────────────────┤
+  │ Tái khám cùng member và     │ 0 (207 cặp, khoảng  │                      │
+  │ chẩn đoán trong 1–7 ngày    │ cách nhỏ nhất 10    │ khoảng 8 (dải 4–17)  │
+  │                             │ ngày)               │                      │
+  ├─────────────────────────────┼─────────────────────┼──────────────────────┤
+  │ Số tiền sạch trong          │ 0, dù có 370 claim  │ khoảng 15% của combo │
+  │ 47.500–49.999               │ ≥ 40.000            │  K35.80 [P-1008,     │
+  │                             │                     │ B-9002]              │
+  ├─────────────────────────────┼─────────────────────┼──────────────────────┤
+  │ Duplicate sạch (cùng        │                     │                      │
+  │ member, provider, ngày,     │ 0                   │                      │
+  │ chẩn đoán)                  │                     │                      │
+  ├─────────────────────────────┼─────────────────────┼──────────────────────┤
+  │ Mismatch, unbundling, phẫu  │ 0                   │                      │
+  │ thuật cuối tuần sạch        │                     │                      │
+  ├─────────────────────────────┼─────────────────────┼──────────────────────┤
+  │ Claim sạch vượt 2 SD        │ 63/1.800 (3,5%)     │ 2,28% nếu chuẩn      │
+  └─────────────────────────────┴─────────────────────┴──────────────────────┘
+
+  - Nhiễu thật chỉ có ở upcoding: 3,5% claim sạch vượt 2 SD là tự nhiên và nằm
+    ngoài nguyên tắc dựng. Seed 7 cho kết quả tương tự (0 tái khám trong 1–7
+    ngày, 42 FP upcoding, 7 FP phantom).
+  - Các số 0 trên là do thiết kế cố ý: Decision 12 loại số tiền sạch khỏi dải
+    clustering. Decision 18 đặt khoảng cách tối thiểu 8 ngày giữa các lần khám
+    cùng chẩn đoán.
+  - Decision 13 từng dự kiến nhiễu này. Nó viết rằng claim sạch tái khám trong 7
+    ngày "được báo cáo, không loại bỏ". Decision 18 sau đó loại bỏ chúng hoàn
+    toàn.
+  - Dải 47.500–49.999 để lại một "lỗ" nhìn thấy được. Ở K35.80 [P-1008, B-9002]:
+    17 claim sạch ngay dưới dải, 0 trong dải, 14 ngay trên dải.
+
+  Kết luận và việc có thể làm tiếp
+
+  Recall 100% gần như là đồng nghĩa lặp: mỗi pattern được chèn vượt ngưỡng rule
+  với biên an toàn, bằng cùng config và cùng hàm thống kê. Con số có thông tin
+  thật chỉ là FPR 2,7–2,9% và precision upcoding khoảng 42%, đều đến từ nhiễu tự
+  nhiên của upcoding. Với chấm điểm chính thức, FPR ≈ 3% chưa chắc phản ánh dữ
+  liệu thật.
+
+  Các hướng có thể xử lý, bạn chọn:
+  - Thêm nhiễu thật vào claim sạch: cho một tỉ lệ nhỏ tái khám trong 7 ngày (kèm
+    hoặc không kèm nhãn), và để số tiền sạch rơi vào dải 47.500–49.999. Cách
+    này thay đổi Decision 12 và 18, nên phải ghi lại.
+  - Viết inspect.ts để các kiểm tra rò rỉ ở (2) chạy tự động, gồm cả hai phát
+    hiện mới (tổ hợp lạ, số tiền không chẵn trăm).
+  - Không đổi dữ liệu, chỉ ghi vào README rằng 100% recall là do dựng dữ liệu,
+    và dùng FPR cùng precision của upcoding làm số liệu đáng tin.
+
+  Bạn muốn làm hướng nào?
+
+❯ /model opus
+  ⎿  Set model to claude-opus-5-5
+
+❯ Giữ nguyên dữ liệu, không thêm nhiễu. Làm các việc sau:
+  1. Ghi Decision 20 vào docs/DECISIONS.md: giữ nguyên Decision 12 và 18, không
+  thêm nhiễu vào claim sạch. Lý do: dữ liệu tổng hợp, recall 100% là do cách
+  dựng và sẽ được nêu rõ trong README. Ghi thêm: verify.ts dùng cùng hàm thống
+  kê và cùng ngưỡng với rule nên recall upcoding gần như được bảo đảm từ lúc
+  sinh.
+  2. Viết src/inspect.ts để npm run inspect chạy được. In các kiểm tra sau trên
+  claims.csv + labels.csv, với tiêu đề "Known tells of the synthetic data (not
+  used by any rule)": thứ hạng ID trung bình của claim gian lận và claim sạch;
+  tỷ lệ số tiền chia hết cho 100; tỷ lệ cuối tuần; tỷ lệ nội trú; số tổ hợp
+  (chẩn đoán, thủ tục) chưa từng xuất hiện ở claim sạch, theo từng loại gian
+  lận; số claim sạch trong dải 47.500–49.999 và số claim sạch có khoảng cách
+  1–7 ngày cùng member và chẩn đoán.
+  3. Thêm một test nhỏ xác nhận inspect chạy xong không lỗi trên dữ liệu
+  seed 42.
+     Chạy typecheck và test, dán kết quả, rồi commit "feat(inspect): leakage
+  and realism checks; document data limits".
+
+⏺ Trước khi viết: docs/DECISIONS.md đã có Decision 20 (chuẩn hóa điểm, viết ở
+  phase scoring), nên mình sẽ ghi quyết định mới thành Decision 21. Kiểm tra
+  dates.ts và đoạn cuối DECISIONS:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Thấy toàn bộ phần scoring, metrics và holdout vẫn chưa commit, mình sẽ commit
+  riêng phần này trước để không lẫn vào commit feat(inspect): .... Đang kiểm tra
+  lại phần cũ còn xanh không.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Phần cũ đã vào commit 3869f4c. Giờ viết src/inspect.ts. Mình tái dùng parser
+  nhãn có sẵn trong metrics.ts thay vì viết parser thứ hai.
+
+⏺ Write(src/inspect.ts)
+  ⎿  Wrote 153 lines to src/inspect.ts
+       1 /**
+       2  * `npm run inspect`: shows how fraudulent claims differ from cl
+       3  * rule uses, and which kinds of natural noise the clean data la
+         cks (Decision 21).
+       4  * Diagnostic only: it reads labels.csv, and nothing here feeds
+       5  */
+       6 import { readFileSync } from 'node:fs';
+       7 import { join } from 'node:path';
+       9 import { comboKey } from './codes.js';
+      10 import { loadConfig } from './config.js';
+     … +185 lines (ctrl+o to expand)
+
+⏺ Sửa một chỗ khó đọc: sắp xếp theo ngày nên so sánh chuỗi ISO trực tiếp, thay
+  vì dùng diffDays với đối số đảo ngược.
+
+⏺ Update(src/inspect.ts)
+  ⎿  Added 1 line, removed 1 line
+      87    }
+      88    let cleanRapidPairs = 0;
+      89    for (const list of history.values()) {
+      90 -    list.sort((a, b) => diffDays(b.claim_date, a.claim_date)); 
+      90 +    list.sort((a, b) => a.claim_date.localeCompare(b.claim_date
+         +));                                                            
+      91      for (let i = 1; i < list.length; i++) {
+      92        const gap = diffDays((list[i - 1] as Claim).claim_date, (
+          list[i] as Claim).claim_date);
+      93        if (gap >= min_gap_days && gap <= max_gap_days) cleanRapi
+          dPairs += 1;
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Số liệu khớp với lần phân tích bằng Python trước đó (thứ hạng lệch 1 vì giờ
+  đánh số từ 1). Giờ viết test, cập nhật test cách ly nhãn và tài liệu.
+
+⏺ Bash(cat > tests/inspect.test.ts <<'EOF'
+      import { join } from 'node:path';…)
+  ⎿  Updated src/metrics.ts (+2 -2)
+      1  /**
+      2   * `npm run report`: compares the scored output with the fraud l
+         abels and writes
+      3 - * metrics.md. This is the only module that reads labels.csv; th
+        -e rules, the engine                                             
+      4 - * and the scorer never see labels.                             
+      3 + * metrics.md. Apart from the `npm run inspect` diagnostic (Deci
+        +sion 21), this is the                                           
+      4 + * only module that reads labels.csv; the rules, the engine and 
+        +the scorer never see labels.                                    
+      5   */
+      6  import { existsSync, readFileSync, writeFileSync } from 'node:fs
+         ';
+      7  import { join } from 'node:path';
+  ⎿  Created tests/inspect.test.ts (+18 -0)
+       1 +import { join } from 'node:path';                              
+       2 +import { describe, expect, it } from 'vitest';                 
+       3 +import { runInspect, TELLS_TITLE } from '../src/inspect.js';   
+       4 +                                                               
+       5 +const root = join(import.meta.dirname, '..');                  
+       6 +                                                               
+       7 +describe('npm run inspect', () => {                            
+       8 +  it('runs to completion on the seed 42 dataset and prints ever
+         +y check', () => {                                              
+       9 +    const text = runInspect(join(root, 'data'), join(root, 'con
+         +fig'));                                                        
+      10 +    expect(text.startsWith(TELLS_TITLE)).toBe(true);           
+      11 +    for (const column of ['Mean ID rank', 'Amount % 100 = 0', '
+         +Weekend', 'Inpatient', 'Unseen (dx, procedures)']) {           
+      12 +      expect(text).toContain(column);                          
+      13 +    }                                                          
+      14 +    // Decisions 12 and 18: the clean data has none of these by
+         + construction.                                                 
+      15 +    expect(text).toContain('Clean claims with amount in 47,500–
+         +49,999: 0');                                                   
+      16 +    expect(text).toContain('Clean claim pairs, same member + di
+         +agnosis, 1–7 days apart: 0');                                  
+      17 +  });                                                          
+      18 +});                                                            
+  ⎿  Updated tests/metrics.test.ts (+11 -4)
+      287      );
+      288    const files = srcFiles(join(root, 'src')).map((f) => ({ path
+           : relative(root, f), text: readFileSync(f, 'utf8') }));
+      289  
+      290 -  it('lets only metrics.ts read labels.csv; the generator only
+          - writes it', () => {                                          
+      291 -    expect(files.filter((f) => f.text.includes('labels.csv')).
+          -map((f) => f.path).sort()).toEqual(['src/generate/generate.ts'
+          -, 'src/metrics.ts']);                                         
+      292 -    // The pipeline only passes the labels path to runReport; 
+          -it never opens the file.                                      
+      293 -    expect(files.filter((f) => /from '\.\.?\/(\.\.\/)*metrics\
+          -.js'/.test(f.text)).map((f) => f.path)).toEqual(['src/pipeline
+          -.ts']);                                                       
+      290 +  it('lets only metrics.ts and the inspect diagnostic read lab
+          +els.csv; the generator only writes it', () => {               
+      291 +    expect(files.filter((f) => f.text.includes('labels.csv')).
+          +map((f) => f.path).sort()).toEqual([                          
+      292 +      'src/generate/generate.ts',                             
+      293 +      'src/inspect.ts',                                       
+      294 +      'src/metrics.ts',                                       
+      295 +    ]);                                                       
+      296 +    // The pipeline only passes the labels path to runReport; 
+          +inspect (Decision 21) reuses the labels parser.               
+      297 +    expect(files.filter((f) => /from '\.\.?\/(\.\.\/)*metrics\
+          +.js'/.test(f.text)).map((f) => f.path).sort()).toEqual([      
+      298 +      'src/inspect.ts',                                       
+      299 +      'src/pipeline.ts',                                      
+      300 +    ]);                                                       
+      301    });
+      302  
+      303    it('keeps fraud labels out of the rules, the engine and the 
+           scorer', () => {
+
+⏺ Trước khi viết Decision 21, mình kiểm tra chính xác verify.ts dùng hàm và
+  ngưỡng nào, để mô tả cho đúng:
+
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+⏺ Mình đính chính lại: rule upcoding không gọi stats.ts, mà tự tính tổng tích
+  lũy O(1), còn verify.ts dùng leaveOneOutStats để tính cùng đại lượng (trung
+  bình/SD leave-one-out theo nhóm thủ tục, cùng min_other_claims), nên recall
+  upcoding được bảo đảm vì ngưỡng z của verify (2,5) chặt hơn ngưỡng rule (2).
+  Mình sẽ ghi lại đúng như vậy vào Decision 21.
+
+⏺ Bash(cat >> docs/DECISIONS.md <<'EOF'…)
+  ⎿  Updated docs/DECISIONS.md (+25 -0)
+      286  - Each extra flag raises the score by less than the previous o
+           ne; 100 needs raw ≥ 22.
+      287  - A claim's score depends only on its own flags and the config
+           , so it is the same on any dataset.
+      288  - Patterns detected only by weight-2 rules are Low priority bu
+           t still flagged (Decision 9).
+      289 +                                                              
+      290 +---                                                           
+      291 +                                                              
+      292 +## 21. Clean data stays as designed; perfect recall comes from
+          + how the data is built                                        
+      293 +                                                              
+      294 +**Context:** Recall is 100% for every pattern on both seed 42 
+          +and seed 7, and 6 of the 8 rules never fire on a clean claim. 
+          +An audit of the generated data (now `npm run inspect`) found w
+          +hy:                                                           
+      295 +- The clean data lacks two kinds of natural noise, by Decision
+          +s 12 and 18:                                                  
+      296 +  - 0 clean claim pairs with the same member + diagnosis 1–7 d
+          +ays apart. With the same claims and dates placed at random, ab
+          +out 8 such pairs appear (4–17 over 200 shuffles).             
+      297 +  - 0 clean amounts in 47,500–49,999, although 370 clean claim
+          +s are ≥ 40,000. On K35.80 [P-1008, B-9002] this leaves a visib
+          +le gap: 17 clean claims in 45,000–47,499, none in the band, 14
+          + in 50,000–52,499.                                            
+      298 +- Fraudulent claims carry tells that no rule uses:            
+      299 +  - Every dx_procedure_mismatch claim (20/20) and every unbund
+          +ling claim (25/25) has a diagnosis + procedure combination tha
+          +t no clean claim has. Unbundling combinations are also too sma
+          +ll for upcoding, which accounts for all 25 upcoding skips.    
+      300 +  - No upcoded or mismatch amount is a multiple of 100 (0 of 5
+          +0, against 9.9% of clean claims; about 0.5% by chance).       
+      301 +  - Fraudulent claims are more often inpatient (37% vs 25%) an
+          +d on weekends (16.5% vs 7.5%). This comes from the weekend and
+          + clustering patterns themselves.                              
+      302 +  - Mean claim_id rank is 917 for fraud and 1,010 for clean cl
+          +aims (1,000.5 if uninformative), mainly because the 31 phantom
+          + claims share one date and so have consecutive IDs.           
+      303 +- Upcoding recall is fixed at generation time. `verify.ts` com
+          +putes the same statistic as the rule, a leave-one-out mean and
+          + sample SD over the same procedure-code combination with the s
+          +ame `min_other_claims` from config. The rule computes it in O(
+          +1) from group sums, `verify.ts` with `leaveOneOutStats` from `
+          +stats.ts`, and the upcoding tests check that the two agree. Th
+          +e generator rejects any dataset in which an upcoded claim has 
+          +z < 2.5, above the rule's `z_threshold` of 2. It also rejects 
+          +any clustering claim with z above `z_threshold`, so clustering
+          + never fires upcoding.                                        
+      304 +                                                              
+      305 +**Decision:**                                                 
+      306 +- Keep Decisions 12 and 18. Do not add noise to clean claims. 
+      307 +- The data is synthetic. The README will say that 100% recall 
+          +is a consequence of how the data is built, not evidence of det
+          +ection performance on real claims.                            
+      308 +- `npm run inspect` prints the tells above on any dataset, und
+          +er the heading "Known tells of the synthetic data (not used by
+          + any rule)". It reads labels.csv, but it is a diagnostic only:
+          + nothing it computes reaches the rules or the score.          
+      309 +                                                              
+      310 +**Consequence:**                                              
+      311 +- Per-pattern recall only shows that each rule implements its 
+          +own definition on cases built to match it. For upcoding it is 
+          +guaranteed by the generator's check.                          
+      312 +- The only natural noise the engine meets is upcoding on clean
+          + claims (46 on seed 42, 42 on seed 7; 3.5% of clean claims exc
+          +eed 2 SD) and the clean claims on the phantom day (6 and 7, De
+          +cision 5). FPR (2.9% and 2.7%) is therefore an optimistic esti
+          +mate.                                                         
+      313 +- A model trained on this data could separate fraud by the uns
+          +een-combination and amount-rounding tells. The rules do not us
+          +e them, and they are not a reason to trust the results.       
+  ⎿  Updated docs/PLAN.md (+3 -2)
+      10  - Wrote `src/csv.ts`, an RFC 4180 claims reader and writer.
+      11  - Wrote `src/stats.ts` for leave-one-out mean and sample SD (De
+          cision 15).
+      12  
+      13 -## Phase 1 — Generator (done) and inspect                      
+      13 +## Phase 1 — Generator (done) and inspect (done, see Decision 2
+         +1)                                                             
+      14  
+      15  - **`npm run generate`:** a seeded PRNG builds `data/claims.csv
+          ` and `data/labels.csv` following DATA_DESIGN.md. The seed is a
+           CLI argument and is also used for the holdout run.
+      16 -- **`npm run inspect`:** sanity checks that fail loudly:       
+      16 +- **`npm run inspect`** (`src/inspect.ts`, done) prints the kno
+         +wn tells of the synthetic data (Decision 21): mean claim_id ran
+         +k, share of amounts divisible by 100, weekend and inpatient sha
+         +re, diagnosis + procedure combinations never seen on clean clai
+         +ms (per fraud type), clean claims in the clustering band, and c
+         +lean same member + diagnosis pairs 1–7 days apart. It prints an
+         +d does not fail. The counts and structural checks below are enf
+         +orced by `src/generate/verify.ts`, which stops the generator on
+         + failure.                                                      
+      17 +- Original sanity checks for inspect, now covered by `verify.ts
+         +` or by the printed tells:                                     
+      18    - 2,000 claims, 200 labeled fraud, the per-pattern counts, an
+          d about 500 members and 50 providers;
+      19    - no clean amount in 47,500–49,999;
+      20    - weekday-only providers have no clean weekend claims; every 
+          provider that receives weekend injections has ≥ 30 surgical cla
+          ims;
+
+⏺ Câu "đã được verify.ts bao phủ" cần kiểm chứng, không nên viết khi chưa chắc:
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ Chỉ một phần kiểm tra là đúng: verify.ts có kiểm tra số lượng claim theo
+  pattern và ràng buộc cuối tuần, nhưng chưa kiểm tra số member/provider và dải
+  clustering. Mình sẽ ghi lại chi tiết từng mục cho chính xác.
+
+⏺ Bash(python3 - <<'EOF'
+      p='docs/PLAN.md'…)
+  ⎿  Updated docs/PLAN.md (+6 -6)
+      13  ## Phase 1 — Generator (done) and inspect (done, see Decision 2
+          1)
+      14  
+      15  - **`npm run generate`:** a seeded PRNG builds `data/claims.csv
+          ` and `data/labels.csv` following DATA_DESIGN.md. The seed is a
+           CLI argument and is also used for the holdout run.
+      16 -- **`npm run inspect`** (`src/inspect.ts`, done) prints the kno
+         -wn tells of the synthetic data (Decision 21): mean claim_id ran
+         -k, share of amounts divisible by 100, weekend and inpatient sha
+         -re, diagnosis + procedure combinations never seen on clean clai
+         -ms (per fraud type), clean claims in the clustering band, and c
+         -lean same member + diagnosis pairs 1–7 days apart. It prints an
+         -d does not fail. The counts and structural checks below are enf
+         -orced by `src/generate/verify.ts`, which stops the generator on
+         - failure.                                                      
+      17 -- Original sanity checks for inspect, now covered by `verify.ts
+         -` or by the printed tells:                                     
+      18 -  - 2,000 claims, 200 labeled fraud, the per-pattern counts, an
+         -d about 500 members and 50 providers;                          
+      19 -  - no clean amount in 47,500–49,999;                          
+      20 -  - weekday-only providers have no clean weekend claims; every 
+         -provider that receives weekend injections has ≥ 30 surgical cla
+         -ims;                                                           
+      21 -  - no label leakage: `claim_id` order and amount roundness do 
+         -not separate fraud from clean claims.                          
+      16 +- **`npm run inspect`** (`src/inspect.ts`, done) prints the kno
+         +wn tells of the synthetic data (Decision 21): mean claim_id ran
+         +k, share of amounts divisible by 100, weekend and inpatient sha
+         +re, diagnosis + procedure combinations never seen on clean clai
+         +ms (per fraud type), clean claims in the clustering band, and c
+         +lean same member + diagnosis pairs 1–7 days apart. It prints an
+         +d does not fail.                                               
+      17 +- The sanity checks originally planned for inspect, and where e
+         +ach one lives now:                                             
+      18 +  - 2,000 claims, 200 labeled fraud and the per-pattern counts:
+         + enforced by `src/generate/verify.ts`, which stops the generato
+         +r. About 500 members and 50 providers: printed by `npm run gene
+         +rate`, not enforced.                                           
+      19 +  - no clean amount in 47,500–49,999: printed by inspect, not e
+         +nforced.                                                       
+      20 +  - weekday-only providers have no clean weekend claims; every 
+         +provider that receives weekend injections has ≥ 30 surgical cla
+         +ims: enforced by `verify.ts`.                                  
+      21 +  - no label leakage through `claim_id` order or amount roundne
+         +ss: printed by inspect, not enforced. Mild tells remain (Decisi
+         +on 21).                                                        
+      22  - Rapid copies only use originals that have at least one weekda
+          y offset in 1..7 that stays within 2024.
+      23  
+      24  ## Phase 2 — Rules
+
+  Ran 1 shell command (ctrl+o to expand)
+⏺ Đã xong cả ba việc và commit ff965c0 feat(inspect): leakage and realism
+  checks; document data limits. Working tree sạch.
+
+  > tsc --noEmit
+
+   Test Files  20 passed (20)
+        Tests  183 passed (183)
+
+  Bốn điểm khác so với yêu cầu, cần bạn biết
+
+  1. Mình ghi thành Decision 21, không phải 20. Decision 20 đã có sẵn (chuẩn hóa
+     điểm, viết ở phase scoring). Nếu ghi đè số 20 thì các tham chiếu tới nó sẽ
+     sai.
+  2. Mình tạo thêm một commit trước commit bạn yêu cầu. Toàn bộ phần scoring,
+     metrics và holdout trước đó chưa được commit. Nếu gộp tất cả vào commit
+     feat(inspect) thì lịch sử git sẽ ghi sai nội dung. Vì vậy phần cũ nằm ở
+     3869f4c feat(score,report): ... (Decision 20), chỉ ở local. Nếu bạn muốn
+     một commit duy nhất, mình gộp lại được.
+  3. Mình sửa test cách ly nhãn. inspect.ts cần đọc labels.csv theo đúng yêu cầu
+     của bạn, nên test giờ cho phép inspect.ts bên cạnh metrics.ts. Đây là thay
+     đổi yêu cầu, không phải sửa test để cho pass. Phần quan trọng vẫn giữ
+     nguyên: rules, engine, context và score không được nhắc tới nhãn.
+  4. Mình đính chính một điều đã nói ở báo cáo trước. Rule upcoding không gọi
+     hàm trong stats.ts: rule tính bằng tổng tích lũy O(1), còn verify.ts gọi
+     leaveOneOutStats. Hai bên tính cùng một đại lượng, trên cùng nhóm, với cùng
+     min_other_claims trong config, và test upcoding đối chiếu hai cách tính.
+     Hệ quả còn chặt hơn "gần như bảo đảm": verify loại mọi dataset có claim
+     upcoding với z < 2,5, mà ngưỡng rule là 2, nên recall upcoding được bảo đảm
+     hoàn toàn. Decision 21 ghi đúng như vậy.
+
+  Đã làm
+
+  - src/inspect.ts: npm run inspect đã chạy được, và có --data DIR để xem
+    holdout. Báo cáo in mọi chỉ số bạn liệt kê cho nhóm sạch, nhóm toàn bộ gian
+    lận và từng loại gian lận, cùng hai số đếm nhiễu bị thiếu (đều bằng 0 trên
+    cả hai seed). Hai ngưỡng (dải clustering và cửa sổ 1–7 ngày) đọc từ config,
+    không hard-code. Số liệu in ra khớp với lần phân tích trước.
+  - tests/inspect.test.ts: test chạy inspect trên dữ liệu seed 42, kiểm tra có
+    tiêu đề, đủ các cột, và hai số đếm bằng 0 đúng như Decision 12 và 18.
+  - Decision 21 trong docs/DECISIONS.md: giữ nguyên Decision 12 và 18, ghi các
+    dấu hiệu kèm số liệu, ghi rằng recall 100% là do cách dựng dữ liệu và README
+    sẽ nêu rõ, và ghi rằng FPR 2,7–2,9% là ước lượng lạc quan.
+  - docs/PLAN.md Phase 1: ghi rõ từng kiểm tra ban đầu nằm ở đâu. verify.ts chặn
+    số lượng claim theo pattern và các ràng buộc cuối tuần. Số member/provider,
+    dải clustering và rò rỉ qua ID hay độ tròn số tiền thì chỉ được in ra,
+    không có gì chặn.
+
+  README chưa có. Việc ghi phần giới hạn này vào README thuộc Phase 5.
