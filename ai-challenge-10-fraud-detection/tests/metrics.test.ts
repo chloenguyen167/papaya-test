@@ -287,10 +287,17 @@ describe('label isolation', () => {
     );
   const files = srcFiles(join(root, 'src')).map((f) => ({ path: relative(root, f), text: readFileSync(f, 'utf8') }));
 
-  it('lets only metrics.ts read labels.csv; the generator only writes it', () => {
-    expect(files.filter((f) => f.text.includes('labels.csv')).map((f) => f.path).sort()).toEqual(['src/generate/generate.ts', 'src/metrics.ts']);
-    // The pipeline only passes the labels path to runReport; it never opens the file.
-    expect(files.filter((f) => /from '\.\.?\/(\.\.\/)*metrics\.js'/.test(f.text)).map((f) => f.path)).toEqual(['src/pipeline.ts']);
+  it('lets only metrics.ts and the inspect diagnostic read labels.csv; the generator only writes it', () => {
+    expect(files.filter((f) => f.text.includes('labels.csv')).map((f) => f.path).sort()).toEqual([
+      'src/generate/generate.ts',
+      'src/inspect.ts',
+      'src/metrics.ts',
+    ]);
+    // The pipeline only passes the labels path to runReport; inspect (Decision 21) reuses the labels parser.
+    expect(files.filter((f) => /from '\.\.?\/(\.\.\/)*metrics\.js'/.test(f.text)).map((f) => f.path).sort()).toEqual([
+      'src/inspect.ts',
+      'src/pipeline.ts',
+    ]);
   });
 
   it('keeps fraud labels out of the rules, the engine and the scorer', () => {

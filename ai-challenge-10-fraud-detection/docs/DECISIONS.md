@@ -286,3 +286,28 @@ Both choices change the result at the boundary, so a test cannot pin the behavio
 - Each extra flag raises the score by less than the previous one; 100 needs raw ≥ 22.
 - A claim's score depends only on its own flags and the config, so it is the same on any dataset.
 - Patterns detected only by weight-2 rules are Low priority but still flagged (Decision 9).
+
+---
+
+## 21. Clean data stays as designed; perfect recall comes from how the data is built
+
+**Context:** Recall is 100% for every pattern on both seed 42 and seed 7, and 6 of the 8 rules never fire on a clean claim. An audit of the generated data (now `npm run inspect`) found why:
+- The clean data lacks two kinds of natural noise, by Decisions 12 and 18:
+  - 0 clean claim pairs with the same member + diagnosis 1–7 days apart. With the same claims and dates placed at random, about 8 such pairs appear (4–17 over 200 shuffles).
+  - 0 clean amounts in 47,500–49,999, although 370 clean claims are ≥ 40,000. On K35.80 [P-1008, B-9002] this leaves a visible gap: 17 clean claims in 45,000–47,499, none in the band, 14 in 50,000–52,499.
+- Fraudulent claims carry tells that no rule uses:
+  - Every dx_procedure_mismatch claim (20/20) and every unbundling claim (25/25) has a diagnosis + procedure combination that no clean claim has. Unbundling combinations are also too small for upcoding, which accounts for all 25 upcoding skips.
+  - No upcoded or mismatch amount is a multiple of 100 (0 of 50, against 9.9% of clean claims; about 0.5% by chance).
+  - Fraudulent claims are more often inpatient (37% vs 25%) and on weekends (16.5% vs 7.5%). This comes from the weekend and clustering patterns themselves.
+  - Mean claim_id rank is 917 for fraud and 1,010 for clean claims (1,000.5 if uninformative), mainly because the 31 phantom claims share one date and so have consecutive IDs.
+- Upcoding recall is fixed at generation time. `verify.ts` computes the same statistic as the rule, a leave-one-out mean and sample SD over the same procedure-code combination with the same `min_other_claims` from config. The rule computes it in O(1) from group sums, `verify.ts` with `leaveOneOutStats` from `stats.ts`, and the upcoding tests check that the two agree. The generator rejects any dataset in which an upcoded claim has z < 2.5, above the rule's `z_threshold` of 2. It also rejects any clustering claim with z above `z_threshold`, so clustering never fires upcoding.
+
+**Decision:**
+- Keep Decisions 12 and 18. Do not add noise to clean claims.
+- The data is synthetic. The README will say that 100% recall is a consequence of how the data is built, not evidence of detection performance on real claims.
+- `npm run inspect` prints the tells above on any dataset, under the heading "Known tells of the synthetic data (not used by any rule)". It reads labels.csv, but it is a diagnostic only: nothing it computes reaches the rules or the score.
+
+**Consequence:**
+- Per-pattern recall only shows that each rule implements its own definition on cases built to match it. For upcoding it is guaranteed by the generator's check.
+- The only natural noise the engine meets is upcoding on clean claims (46 on seed 42, 42 on seed 7; 3.5% of clean claims exceed 2 SD) and the clean claims on the phantom day (6 and 7, Decision 5). FPR (2.9% and 2.7%) is therefore an optimistic estimate.
+- A model trained on this data could separate fraud by the unseen-combination and amount-rounding tells. The rules do not use them, and they are not a reason to trust the results.

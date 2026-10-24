@@ -10,14 +10,15 @@ Phases run in order. Each phase ends with `npm run typecheck` and `npm test` pas
 - Wrote `src/csv.ts`, an RFC 4180 claims reader and writer.
 - Wrote `src/stats.ts` for leave-one-out mean and sample SD (Decision 15).
 
-## Phase 1 — Generator (done) and inspect
+## Phase 1 — Generator (done) and inspect (done, see Decision 21)
 
 - **`npm run generate`:** a seeded PRNG builds `data/claims.csv` and `data/labels.csv` following DATA_DESIGN.md. The seed is a CLI argument and is also used for the holdout run.
-- **`npm run inspect`:** sanity checks that fail loudly:
-  - 2,000 claims, 200 labeled fraud, the per-pattern counts, and about 500 members and 50 providers;
-  - no clean amount in 47,500–49,999;
-  - weekday-only providers have no clean weekend claims; every provider that receives weekend injections has ≥ 30 surgical claims;
-  - no label leakage: `claim_id` order and amount roundness do not separate fraud from clean claims.
+- **`npm run inspect`** (`src/inspect.ts`, done) prints the known tells of the synthetic data (Decision 21): mean claim_id rank, share of amounts divisible by 100, weekend and inpatient share, diagnosis + procedure combinations never seen on clean claims (per fraud type), clean claims in the clustering band, and clean same member + diagnosis pairs 1–7 days apart. It prints and does not fail.
+- The sanity checks originally planned for inspect, and where each one lives now:
+  - 2,000 claims, 200 labeled fraud and the per-pattern counts: enforced by `src/generate/verify.ts`, which stops the generator. About 500 members and 50 providers: printed by `npm run generate`, not enforced.
+  - no clean amount in 47,500–49,999: printed by inspect, not enforced.
+  - weekday-only providers have no clean weekend claims; every provider that receives weekend injections has ≥ 30 surgical claims: enforced by `verify.ts`.
+  - no label leakage through `claim_id` order or amount roundness: printed by inspect, not enforced. Mild tells remain (Decision 21).
 - Rapid copies only use originals that have at least one weekday offset in 1..7 that stays within 2024.
 
 ## Phase 2 — Rules
