@@ -1,7 +1,8 @@
 /**
  * `npm run report`: compares the scored output with the fraud labels and writes
- * metrics.md. Apart from the `npm run inspect` diagnostic (Decision 21), this is the
- * only module that reads labels.csv; the rules, the engine and the scorer never see labels.
+ * metrics.md. Only metrics.ts and inspect.ts read labels.csv; inspect.ts is a diagnostic
+ * only (Decision 21), and nothing it computes reaches the rules or the score. The rules,
+ * the engine and the scorer never see labels.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
