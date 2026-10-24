@@ -11,7 +11,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover (2 of 2 billed procedures, claim amount 2,570). Valid procedures for K80.20 (4): B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
       }
     ]
   },
@@ -2057,7 +2057,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis J06.9 (OUTPATIENT) is billed with procedures P-1008 (Abdominal CT), B-9002 (Appendectomy package) that it does not cover. Valid procedures: P-1001 (Consultation), P-1002 (Complete blood count)"
+        "evidence": "Diagnosis J06.9 (OUTPATIENT) is billed with procedures P-1008 (Abdominal CT), B-9002 (Appendectomy package) that it does not cover (2 of 2 billed procedures, claim amount 53,300). Valid procedures for J06.9 (2): P-1001 (Consultation), P-1002 (Complete blood count)"
       }
     ]
   },
@@ -2090,7 +2090,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedure B-9004 (Root canal package) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedure B-9004 (Root canal package) that it does not cover (1 of 1 billed procedures, claim amount 6,970). Valid procedures for K80.20 (4): B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
       }
     ]
   },
@@ -2123,7 +2123,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis N39.0 (OUTPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3004 (Tooth extraction) that it does not cover. Valid procedures: P-1001 (Consultation), P-1005 (Urinalysis)"
+        "evidence": "Diagnosis N39.0 (OUTPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3004 (Tooth extraction) that it does not cover (2 of 2 billed procedures, claim amount 1,650). Valid procedures for N39.0 (2): P-1001 (Consultation), P-1005 (Urinalysis)"
       }
     ]
   },
@@ -2145,7 +2145,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedures P-1001 (Consultation), P-1010 (HbA1c) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedures P-1001 (Consultation), P-1010 (HbA1c) that it does not cover (2 of 2 billed procedures, claim amount 1,420). Valid procedures for K80.20 (4): B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
       }
     ]
   },
@@ -2156,7 +2156,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K35.80 (INPATIENT) is billed with procedure B-9004 (Root canal package) that it does not cover. Valid procedures: B-9002 (Appendectomy package), P-1007 (Abdominal ultrasound), P-1008 (Abdominal CT), P-2001 (Appendectomy), P-2002 (Anesthesia)"
+        "evidence": "Diagnosis K35.80 (INPATIENT) is billed with procedure B-9004 (Root canal package) that it does not cover (1 of 1 billed procedures, claim amount 5,970). Valid procedures for K35.80 (5): B-9002 (Appendectomy package), P-1007 (Abdominal ultrasound), P-1008 (Abdominal CT), P-2001 (Appendectomy), P-2002 (Anesthesia)"
       }
     ]
   },
@@ -2167,7 +2167,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis S52.50 (INPATIENT) is billed with procedure P-3001 (Dental filling) that it does not cover. Valid procedures: P-1006 (X-ray), P-2002 (Anesthesia), P-2004 (Forearm fracture fixation)"
+        "evidence": "Diagnosis S52.50 (INPATIENT) is billed with procedure P-3001 (Dental filling) that it does not cover (1 of 1 billed procedures, claim amount 2,000). Valid procedures for S52.50 (3): P-1006 (X-ray), P-2002 (Anesthesia), P-2004 (Forearm fracture fixation)"
       }
     ]
   },
@@ -2200,7 +2200,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K02.9 (DENTAL) is billed with procedures P-1007 (Abdominal ultrasound), B-9002 (Appendectomy package) that it does not cover. Valid procedures: P-3001 (Dental filling), P-3002 (Dental X-ray)"
+        "evidence": "Diagnosis K02.9 (DENTAL) is billed with procedures P-1007 (Abdominal ultrasound), B-9002 (Appendectomy package) that it does not cover (2 of 2 billed procedures, claim amount 43,490). Valid procedures for K02.9 (2): P-3001 (Dental filling), P-3002 (Dental X-ray)"
       }
     ]
   },
@@ -2277,7 +2277,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedures P-1007 (Abdominal ultrasound), B-9002 (Appendectomy package) that it does not cover. Valid procedures: P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
+        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedures P-1007 (Abdominal ultrasound), B-9002 (Appendectomy package) that it does not cover (2 of 2 billed procedures, claim amount 33,250). Valid procedures for K08.1 (2): P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
       }
     ]
   },
@@ -2310,7 +2310,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K02.9 (DENTAL) is billed with procedures P-1006 (X-ray), P-2004 (Forearm fracture fixation), P-2002 (Anesthesia) that it does not cover. Valid procedures: P-3001 (Dental filling), P-3002 (Dental X-ray)"
+        "evidence": "Diagnosis K02.9 (DENTAL) is billed with procedures P-1006 (X-ray), P-2004 (Forearm fracture fixation), P-2002 (Anesthesia) that it does not cover (3 of 3 billed procedures, claim amount 66,430). Valid procedures for K02.9 (2): P-3001 (Dental filling), P-3002 (Dental X-ray)"
       }
     ]
   },
@@ -2409,7 +2409,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedure P-3001 (Dental filling) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedure P-3001 (Dental filling) that it does not cover (1 of 1 billed procedures, claim amount 1,200). Valid procedures for K80.20 (4): B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
       }
     ]
   },
@@ -2431,7 +2431,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K04.0 (DENTAL) is billed with procedure P-1001 (Consultation) that it does not cover. Valid procedures: B-9004 (Root canal package), P-3001 (Dental filling), P-3002 (Dental X-ray), P-3003 (Root canal treatment)"
+        "evidence": "Diagnosis K04.0 (DENTAL) is billed with procedure P-1001 (Consultation) that it does not cover (1 of 1 billed procedures, claim amount 640). Valid procedures for K04.0 (4): B-9004 (Root canal package), P-3001 (Dental filling), P-3002 (Dental X-ray), P-3003 (Root canal treatment)"
       }
     ]
   },
@@ -2442,7 +2442,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedure P-1001 (Consultation) that it does not cover. Valid procedures: P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
+        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedure P-1001 (Consultation) that it does not cover (1 of 1 billed procedures, claim amount 700). Valid procedures for K08.1 (2): P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
       }
     ]
   },
@@ -2497,7 +2497,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis J06.9 (OUTPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover. Valid procedures: P-1001 (Consultation), P-1002 (Complete blood count)"
+        "evidence": "Diagnosis J06.9 (OUTPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover (2 of 2 billed procedures, claim amount 1,960). Valid procedures for J06.9 (2): P-1001 (Consultation), P-1002 (Complete blood count)"
       }
     ]
   },
@@ -2541,7 +2541,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover. Valid procedures: B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
+        "evidence": "Diagnosis K80.20 (INPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover (2 of 2 billed procedures, claim amount 1,820). Valid procedures for K80.20 (4): B-9003 (Cholecystectomy package), P-1007 (Abdominal ultrasound), P-2002 (Anesthesia), P-2003 (Laparoscopic cholecystectomy)"
       }
     ]
   },
@@ -2563,7 +2563,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K02.9 (DENTAL) is billed with procedures P-1001 (Consultation), P-1002 (Complete blood count) that it does not cover. Valid procedures: P-3001 (Dental filling), P-3002 (Dental X-ray)"
+        "evidence": "Diagnosis K02.9 (DENTAL) is billed with procedures P-1001 (Consultation), P-1002 (Complete blood count) that it does not cover (2 of 2 billed procedures, claim amount 1,140). Valid procedures for K02.9 (2): P-3001 (Dental filling), P-3002 (Dental X-ray)"
       }
     ]
   },
@@ -2607,7 +2607,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis S52.50 (INPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover. Valid procedures: P-1006 (X-ray), P-2002 (Anesthesia), P-2004 (Forearm fracture fixation)"
+        "evidence": "Diagnosis S52.50 (INPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3001 (Dental filling) that it does not cover (2 of 2 billed procedures, claim amount 1,930). Valid procedures for S52.50 (3): P-1006 (X-ray), P-2002 (Anesthesia), P-2004 (Forearm fracture fixation)"
       }
     ]
   },
@@ -2651,7 +2651,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis A09 (OUTPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3004 (Tooth extraction) that it does not cover. Valid procedures: P-1001 (Consultation), P-1002 (Complete blood count)"
+        "evidence": "Diagnosis A09 (OUTPATIENT) is billed with procedures P-3002 (Dental X-ray), P-3004 (Tooth extraction) that it does not cover (2 of 2 billed procedures, claim amount 1,480). Valid procedures for A09 (2): P-1001 (Consultation), P-1002 (Complete blood count)"
       }
     ]
   },
@@ -2706,7 +2706,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedure B-9005 (General health check) that it does not cover. Valid procedures: P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
+        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedure B-9005 (General health check) that it does not cover (1 of 1 billed procedures, claim amount 2,540). Valid procedures for K08.1 (2): P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
       }
     ]
   },
@@ -2739,7 +2739,7 @@
       {
         "rule": "dx_procedure_mismatch",
         "severity": 2,
-        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedures P-1001 (Consultation), P-1002 (Complete blood count) that it does not cover. Valid procedures: P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
+        "evidence": "Diagnosis K08.1 (DENTAL) is billed with procedures P-1001 (Consultation), P-1002 (Complete blood count) that it does not cover (2 of 2 billed procedures, claim amount 1,190). Valid procedures for K08.1 (2): P-3002 (Dental X-ray), P-3004 (Tooth extraction)"
       }
     ]
   }

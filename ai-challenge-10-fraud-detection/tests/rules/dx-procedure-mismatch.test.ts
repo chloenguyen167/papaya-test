@@ -58,6 +58,25 @@ describe('dxProcedureMismatch', () => {
     expect(evidence).toContain('P-1002 (Complete blood count)');
   });
 
+  it('puts the claim amount, the stray count over the billed codes and the number of valid procedures in the evidence', () => {
+    const evidence = evaluate(makeClaim({ procedure_codes: ['P-2001'], submitted_amount: 30_500 }))?.evidence ?? '';
+    expect(evidence).toContain('claim amount 30,500');
+    expect(evidence).toContain('1 of 1 billed procedures');
+    // J06.9: P-1001 and P-1002.
+    expect(evidence).toContain('Valid procedures for J06.9 (2)');
+  });
+
+  it('counts only the stray codes against all billed codes when some are valid', () => {
+    const evidence = evaluate(makeClaim({ procedure_codes: ['P-1001', 'P-2001', 'P-3004'] }))?.evidence ?? '';
+    expect(evidence).toContain('2 of 3 billed procedures');
+  });
+
+  it('counts bundle codes and their components among the valid procedures', () => {
+    // E11.9: P-1001, P-1010, B-9001 and its components P-1002, P-1003, P-1004.
+    const evidence = evaluate(makeClaim({ diagnosis_code: 'E11.9', procedure_codes: ['P-2001'] }))?.evidence ?? '';
+    expect(evidence).toContain('Valid procedures for E11.9 (6)');
+  });
+
   it('lists bundle components and bundle codes among the valid procedures with their names', () => {
     const evidence = evaluate(makeClaim({ diagnosis_code: 'E11.9', procedure_codes: ['P-2001'] }))?.evidence ?? '';
     expect(evidence).toContain('B-9001 (Basic blood panel)');

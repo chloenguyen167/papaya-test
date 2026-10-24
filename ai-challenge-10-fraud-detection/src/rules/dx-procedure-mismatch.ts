@@ -1,4 +1,5 @@
 import { describeCode } from '../codes.js';
+import { formatNumber } from '../format.js';
 import type { Claim, Flag, RuleContext } from '../types.js';
 
 /**
@@ -21,7 +22,8 @@ export function dxProcedureMismatch(claim: Claim, ctx: RuleContext): Flag | null
     severity: config.weights.dx_procedure_mismatch,
     evidence:
       `Diagnosis ${claim.diagnosis_code} (${claimType}) is billed with ${noun} ` +
-      `${stray.map((code) => describeCode(code, config)).join(', ')} that it does not cover. ` +
-      `Valid procedures: ${valid.map((code) => describeCode(code, config)).join(', ')}`,
+      `${stray.map((code) => describeCode(code, config)).join(', ')} that it does not cover ` +
+      `(${stray.length} of ${claim.procedure_codes.length} billed procedures, claim amount ${formatNumber(claim.submitted_amount)}). ` +
+      `Valid procedures for ${claim.diagnosis_code} (${valid.length}): ${valid.map((code) => describeCode(code, config)).join(', ')}`,
   };
 }
