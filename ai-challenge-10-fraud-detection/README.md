@@ -38,6 +38,8 @@ npm run all     # generate → score → report; writes data/ and output/
 npm test        # unit tests
 ```
 
+`.npmrc` sets `legacy-peer-deps=true` because npm 11.0.0 failed to install vitest.
+
 Other commands: `npm run typecheck`, `npm run inspect`. Holdout run: `npm run all -- --seed 7 --out data/holdout`.
 
 ## 3. Project structure
@@ -148,18 +150,18 @@ Source: [docs/TIMELOG.md](docs/TIMELOG.md). The estimate was written before any 
 | Phase | Scope | Estimate | Actual |
 | :--- | :--- | ---: | ---: |
 | 0 | Repo setup, brief, this estimate | 0.25 h | 0.25 h |
-| 1 | Understand the brief, decisions, data design, plan | 0.75 h | 75 h (as logged) |
-| 2–3 | Skeleton, types, config, seeded data generator | 1.0 h | not logged |
-| 4 | 8 rules, test-first | 1.5 h | not logged |
-| 5 | Scoring, metrics, threshold sweep, holdout | 0.75 h | not logged |
-| 6–7 | Review, README, AI log index, submission | 0.75 h | not logged |
-| | **Total** | **5.0 h** | not logged |
+| 1 | Understand the brief, decisions, data design, plan | 0.75 h | 0.7 h |
+| 2–3 | Skeleton, types, config, seeded data generator | 1.0 h | 0.9 h |
+| 4 | 8 rules, test-first | 1.5 h | 0.4 h |
+| 5 | Scoring, metrics, threshold sweep, holdout | 0.75 h | 0.4 h |
+| 6–7 | Review, README, AI log index, submission | 0.75 h | 1.0 h |
+| | **Total** | **5.0 h** | **3.65 h** |
 
-The retrospective in the time log is still empty.
+Actual times come from git commit times. The sleep break (about 04:30–07:15) is not counted. Phases 2–4 were faster than estimated because the plan, decisions and prompts were prepared in Claude chat beforehand. The fixes after the review and the Logical Questions came on top of the estimate and are not in the total.
 
 ## 10. How I worked with AI
 
-I used Claude chat to study the brief and plan the work, including drafting the prompts. I used Claude Code to write all the code, with one session per phase. I picked the model and effort per task: Opus for planning and review, Sonnet for writing code against a settled plan.
+I used Claude chat to study the brief and plan the work, including drafting the prompts. I used Claude Code to write all the code, with one session per phase. I switched models per task; the logs show the /model commands.
 
 ### Session logs
 
@@ -167,7 +169,7 @@ I used Claude chat to study the brief and plan the work, including drafting the 
 | :--- | :--- |
 | [01-understand-and-plan.txt](ai-conversation/01-understand-and-plan.txt) | Read the brief, summarized the 8 rules, listed ambiguities, wrote DECISIONS.md, DATA_DESIGN.md and CLAUDE.md. |
 | [02-03-setup-generator.txt](ai-conversation/02-03-setup-generator.txt) | Project setup (types, config, CSV), settled the open design points (Decisions 12–18), planned and wrote the seeded generator. |
-| [04.txt](ai-conversation/04.txt) | Context indexes, the amount_clustering and weekend_anomaly rules, a fix to the weekend denominator, rule index and engine. |
+| [04.txt](ai-conversation/04.txt) | Context indexes, rules 1–6 (one commit each), weekend_anomaly, upcoding, a fix to the weekend denominator, rule index and engine. |
 | [05.txt](ai-conversation/05.txt) | Scoring, metrics report, pipeline, seed-7 holdout, an audit of the perfect results, `npm run inspect`. |
 | [06.txt](ai-conversation/06.txt) | Reviewer pass: BRIEF requirements table, five biggest risks, four small fixes, fast-forward merge to main. |
 

@@ -1,4 +1,4 @@
-# Câu hỏi tư duy — <Nguyễn Phi Yến>
+# Câu hỏi tư duy — Nguyễn Phi Yến
 
 
 Mình trả lời Q1 và Q5 (bắt buộc), cùng Q6, Q7, Q8, Q9, Q10.

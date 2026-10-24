@@ -316,5 +316,5 @@ Both choices change the result at the boundary, so a test cannot pin the behavio
 
 **Consequence:**
 - Per-pattern recall only shows that each rule implements its own definition on cases built to match it. For upcoding it is guaranteed by the generator's check.
-- The only natural noise the engine meets is upcoding on clean claims (46 on seed 42, 42 on seed 7; 3.5% of clean claims exceed 2 SD) and the clean claims on the phantom day (6 and 7, Decision 5). FPR (2.9% and 2.7%) is therefore an optimistic estimate.
+- The only natural noise the engine meets is upcoding on clean claims (46 on seed 42, 42 on seed 7; 46 and 42 clean claims fired the rule, 2.6% and 2.3% of clean claims) and the clean claims on the phantom day (6 and 7, Decision 5). FPR (2.9% and 2.7%) is therefore an optimistic estimate.
 - A model trained on this data could separate fraud by the unseen-combination and amount-rounding tells. The rules do not use them, and they are not a reason to trust the results.
